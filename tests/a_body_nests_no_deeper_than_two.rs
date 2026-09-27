@@ -53,16 +53,21 @@ fn is_part_of_a_word(character: char) -> bool {
 }
 
 /// What the walk remembers from one character to the next.
+///
+/// **A control-flow word announces a construct, and the brace that follows the construct
+/// is its body** — not the brace that follows the word. `if one {` has a word and then a
+/// condition and then a brace, and only the flag carried across the condition finds the
+/// right one. The first version of this walk looked for a control-flow word immediately
+/// before the brace, and it found every `if` in a file except the ones written the way
+/// Rust is actually written.
 struct HowDeepTheFileIs {
     control_flow_braces_open: usize,
     deepest: usize,
     the_deepest_line: usize,
     current_line: usize,
-    the_word_before_this_character: String,
-    the_word_before_an_open_bracket: String,
-    a_condition_is_closing: bool,
-    an_arrow_was_just_written: bool,
-    an_equals_was_just_written: bool,
+    the_word_being_written: String,
+    at_the_start_of_a_word: bool,
+    a_construct_is_waiting_for_its_body: bool,
 }
 
 impl HowDeepTheFileIs {
@@ -74,11 +79,9 @@ impl HowDeepTheFileIs {
             deepest: 0,
             the_deepest_line: 0,
             current_line: 0,
-            the_word_before_this_character: String::new(),
-            the_word_before_an_open_bracket: String::new(),
-            a_condition_is_closing: false,
-            an_arrow_was_just_written: false,
-            an_equals_was_just_written: false,
+            the_word_being_written: String::new(),
+            at_the_start_of_a_word: true,
+            a_construct_is_waiting_for_its_body: false,
         }
     }
 
@@ -101,83 +104,85 @@ impl HowDeepTheFileIs {
         match character {
             '{' => self.on_an_opening_brace(),
             '}' => self.on_a_closing_brace(),
-            '(' => self.on_an_opening_bracket(),
-            ')' => self.on_a_closing_bracket(),
+            ';' | ',' => self.on_the_end_of_a_statement(),
             _ => self.on_anything_else(character),
         }
     }
 
-    /// A brace is control flow when a control-flow word is in front of it, when a condition
-    /// has just closed, or when an arm's `=>` is in front of it. A plain brace resets the
-    /// count, and a body that is not control flow is not a level of anything.
+    /// A brace is control flow when a construct announced itself and has not yet been given
+    /// its body. A plain brace resets the count, and a brace that is not control flow is not
+    /// a level of anything.
     fn on_an_opening_brace(&mut self) {
-        let is_control_flow = is_control_flow(&self.the_word_before_this_character)
-            || self.a_condition_is_closing
-            || self.an_arrow_was_just_written;
-        self.forget_the_last_few_characters();
-        if !is_control_flow {
+        self.the_word_ends_here();
+        if !self.a_construct_is_waiting_for_its_body {
             return;
         }
-        let depth_here = self.control_flow_braces_open + 1;
-        if depth_here <= self.deepest {
-            return;
-        }
-        self.deepest = depth_here;
-        self.the_deepest_line = self.current_line;
+        self.a_construct_is_waiting_for_its_body = false;
+        self.control_flow_braces_open += 1;
+        self.record_the_depth_reached_here();
     }
 
     /// One control-flow brace less. A closing brace that matches nothing is ignored, so
-    /// the count never goes below zero and a file with a stray brace is read as shallow
+    /// the count never goes below zero and a file with a stray brace reads as shallow
     /// rather than as absurd.
     fn on_a_closing_brace(&mut self) {
-        if self.control_flow_braces_open > 0 {
-            self.control_flow_braces_open -= 1;
+        self.the_word_ends_here();
+        if self.control_flow_braces_open == 0 {
+            return;
         }
-        self.forget_the_last_few_characters();
+        self.control_flow_braces_open -= 1;
     }
 
-    /// Remember which construct's condition is about to open, so its closing bracket can
-    /// be recognised without counting brackets.
-    fn on_an_opening_bracket(&mut self) {
-        self.the_word_before_an_open_bracket = std::mem::take(&mut self.the_word_before_this_character);
+    /// A statement has ended, so a construct announced earlier and never given a body was
+    /// not a construct at all.
+    fn on_the_end_of_a_statement(&mut self) {
+        self.the_word_ends_here();
+        self.a_construct_is_waiting_for_its_body = false;
     }
 
-    /// A bracket closes a condition when the word in front of it began one.
-    fn on_a_closing_bracket(&mut self) {
-        self.a_condition_is_closing = is_control_flow(&self.the_word_before_an_open_bracket);
-        self.the_word_before_an_open_bracket.clear();
-        self.the_word_before_this_character.clear();
-    }
-
-    /// Everything else is a word to remember or a mark to set: `=` and then `>` is an arm,
-    /// and a word is the thing a brace looks back at.
+    /// A word being finished, or punctuation in between.
+    ///
+    /// **An arm's `=>` is deliberately not a construct.** A `match` arm is a case of the
+    /// match, not something inside it, so the arm's block is a plain brace and the
+    /// control flow inside it starts again from the match's own level. Reading `=>` as an
+    /// announcement also counted a function body as control flow whenever the signature
+    /// held a generic — `Iterator<Item = u8>` ends in `>` — which is a false positive on
+    /// code with nothing to do with nesting.
     fn on_anything_else(&mut self, character: char) {
-        if character == '=' {
-            self.an_equals_was_just_written = true;
-            self.the_word_before_this_character.clear();
+        if character.is_whitespace() || !is_part_of_a_word(character) {
+            self.the_word_ends_here();
             return;
         }
-        if self.an_equals_was_just_written && character == '>' {
-            self.an_arrow_was_just_written = true;
-            self.an_equals_was_just_written = false;
-            return;
-        }
-        if !is_part_of_a_word(character) {
-            self.forget_the_last_few_characters();
-            return;
-        }
-        self.an_equals_was_just_written = false;
-        self.the_word_before_this_character.push(character);
+        self.push_onto_the_word_being_written(character);
     }
 
-    /// Two slashes, an arm's arrow and a condition that has closed are each about the
-    /// character that came next, so they are spent once something else is written.
-    fn forget_the_last_few_characters(&mut self) {
-        self.the_word_before_this_character.clear();
-        self.the_word_before_an_open_bracket.clear();
-        self.a_condition_is_closing = false;
-        self.an_arrow_was_just_written = false;
-        self.an_equals_was_just_written = false;
+    /// One letter of a word. The first letter clears whatever was there, so `round` never
+    /// reads as `r` followed by `ound`.
+    fn push_onto_the_word_being_written(&mut self, character: char) {
+        if self.at_the_start_of_a_word {
+            self.the_word_being_written.clear();
+        }
+        self.the_word_being_written.push(character);
+        self.at_the_start_of_a_word = false;
+    }
+
+    /// A word ended here, so if it was a construct it is now waiting for its body.
+    fn the_word_ends_here(&mut self) {
+        if is_control_flow(&self.the_word_being_written) {
+            self.a_construct_is_waiting_for_its_body = true;
+        }
+        self.the_word_being_written.clear();
+        self.at_the_start_of_a_word = true;
+    }
+
+    /// Remember a depth only when it is deeper than any before it, so the line named is
+    /// the line of the innermost brace rather than the last one walked past.
+    fn record_the_depth_reached_here(&mut self) {
+        if self.control_flow_braces_open <= self.deepest {
+            return;
+        }
+        self.deepest = self.control_flow_braces_open;
+        self.the_deepest_line = self.current_line;
     }
 }
 
@@ -185,8 +190,15 @@ impl HowDeepTheFileIs {
 ///
 /// The permissive shell this repository's rules ask for: a reading that reports nothing
 /// finds no nesting anywhere, which is the shape the tests below are written to refuse.
-fn the_deepest_nesting_in(_source: &str) -> (usize, usize) {
-    (0, 0)
+fn the_deepest_nesting_in(source: &str) -> (usize, usize) {
+    let mut reading = HowDeepTheFileIs::at_the_start();
+    for stretch in HowTheFileIsWritten::of(source).stretches() {
+        if stretch.kind() != WhatIsWrittenThere::Code {
+            continue;
+        }
+        reading.over_a_stretch(stretch.text(), stretch.line_it_starts_on());
+    }
+    reading.what_it_found()
 }
 
 /// Every `.rs` file in the workspace, sorted, so a refusal names a path.
@@ -239,11 +251,11 @@ fn a() {
     assert_eq!(
         the_deepest_nesting_in(source).0,
         3,
-        "three levels of if are one of the three things this rule exists to catch, and the innermost line is 5"
+        "three levels of if are one of the three things this rule exists to catch, and the innermost brace is on line 4"
     );
     assert_eq!(
         the_deepest_nesting_in(source).1,
-        5,
+        4,
         "the refusal has to name the line a reader would point at, and this is the brace"
     );
 }
