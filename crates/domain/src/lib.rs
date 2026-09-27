@@ -7,3 +7,7 @@
 //! Nothing here may reach for a model, a filesystem, a clock, or a process. Reading the
 //! repository, writing files, running tests and keeping state are all deterministic and
 //! all live outside this crate, behind a port.
+
+mod stage;
+
+pub use stage::{AStageThatNobodyNamed, EVERY_STAGE, Stage};

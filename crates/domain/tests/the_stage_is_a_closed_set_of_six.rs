@@ -1,7 +1,7 @@
 //! The gate for RULE 2.5: a stage is a type, and the set of stages is closed.
 //!
 //! The six are transcribed here rather than imported, on purpose. A test that reads its
-//! own expectation from the code it checks proves nothing, and `EveryStage` is the thing
+//! own expectation from the code it checks proves nothing, and `EVERY_STAGE` is the thing
 //! being checked — so importing it would be a gate that agrees with whatever the code
 //! happens to say today.
 //!
@@ -11,7 +11,7 @@
 //! property; they hold the spelling, the count and the refusal, which are the parts a
 //! reader would otherwise have to take on trust.
 
-use aisdlc_domain::{AStageThatNobodyNamed, EveryStage, Stage};
+use aisdlc_domain::{EVERY_STAGE, Stage};
 
 /// The six stages, written as the specification writes them, in its order.
 ///
@@ -29,10 +29,9 @@ const THE_SIX_STAGES_THE_SPECIFICATION_NAMES: [&str; 6] = [
 
 #[test]
 fn a_stage_is_written_with_its_own_name_in_capitals() {
-    let written: Vec<String> = EveryStage.map(|stage| stage.to_string());
+    let written: Vec<String> = EVERY_STAGE.iter().map(|stage| stage.to_string()).collect();
     assert_eq!(
-        written,
-        THE_SIX_STAGES_THE_SPECIFICATION_NAMES,
+        written, THE_SIX_STAGES_THE_SPECIFICATION_NAMES,
         "a stage is an enum and it is written in capitals, and a reader reads the written form rather than the variant"
     );
 }
@@ -40,7 +39,7 @@ fn a_stage_is_written_with_its_own_name_in_capitals() {
 #[test]
 fn there_are_exactly_six_stages() {
     assert_eq!(
-        EveryStage.len(),
+        EVERY_STAGE.len(),
         6,
         "the set is closed and this is its size, and a seventh one is a change to the specification rather than a change to this file"
     );
@@ -58,7 +57,14 @@ fn every_stage_the_specification_names_exists() {
 
 #[test]
 fn a_name_nobody_wrote_is_not_a_stage() {
-    for name in ["STARTED", "IN_REVIEW", "", "   ", "idle", "AWAITING_HUMAN_APPROVAL "] {
+    for name in [
+        "STARTED",
+        "IN_REVIEW",
+        "",
+        "   ",
+        "idle",
+        "AWAITING_HUMAN_APPROVAL ",
+    ] {
         let refused = Stage::try_from(name);
         assert!(
             refused.is_err(),
@@ -72,14 +78,14 @@ fn a_name_nobody_wrote_says_which_name_it_was_looking_for() {
     let Err(refusal) = Stage::try_from("IN_REVIEW") else {
         panic!("IN_REVIEW is not one of the six, so the refusal is the only answer");
     };
+    assert_eq!(
+        refusal.what_was_looked_for(),
+        "IN_REVIEW",
+        "a refusal that does not quote the name back spends a correction and teaches the caller nothing"
+    );
     let said = refusal.to_string();
     assert!(
         said.contains("IN_REVIEW"),
-        "a refusal that does not quote the name back spends a correction and teaches the caller nothing: {said}"
-    );
-    let said_of_an_empty_name = AStageThatNobodyNamed::what_was_looked_for("").to_string();
-    assert!(
-        said_of_an_empty_name.contains('"'),
-        "an empty name is still a name to quote, and a refusal that printed nothing is a refusal a reader cannot act on"
+        "the written refusal names the name too, and a reader debugging a run reads the written one: {said}"
     );
 }
