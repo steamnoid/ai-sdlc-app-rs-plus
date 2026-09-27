@@ -23,6 +23,7 @@ nobody looked at twice.
 | a **bolded** entry | a blessed name — every type the domain defines must be one of them |
 | a **code span** in ordinary prose | a blessed name, for the same reason |
 | a code span in a table column headed **`Not`** | **refused, and not blessed.** Read by `a_synonym_is_never_used`. |
+| a code span in prose naming a refused word | **refused, and not blessed** — which is why a refused word is written in plain prose here |
 | anything under **`## Banned vocabulary`** | **refused, and not blessed** |
 
 **Two exclusions, and neither is optional.** A prohibition read as a term is exactly
@@ -34,11 +35,17 @@ documentation can disable it is one careless edit away from being off, so the wh
 is removed before the reading begins.
 
 The second was every `Not` column, and it was found by a worker rather than by a failing
-test: `Task`, `Ticket`, `Job`, `Entity`, `Status`, `State`, `Phase`, `Step`, `Owner`,
-`Assignee`, `Team`, `move_to`, `set_stage`, `advance`, `change_state`, `handle`, `check`,
-`verify` and `assert_valid` were all in the blessed set, because they are written in code
+test: Task, Ticket, Job, Entity, Status, State, Phase, Step, Owner, Assignee, Team, move_to,
+set_stage, advance, change_state, handle, check, verify and assert_valid were all in the blessed set, because they are written in code
 spans inside a table. The reader decides by the **table's header row**: a cell in a column
 headed `Not` is not a name, whatever else the column is.
+
+The second shape was the same mistake one level deeper, and the reader cannot fix it: a
+refused word written in backticks in **ordinary prose** is a blessed name, because prose
+and a cell are read the same way. The reader can only empty cells, so the **document**
+carries the obligation: **a refused word appears once, in a `Not` column, and nowhere else
+in backticks.** Every other mention of one in this file is plain prose, on purpose, and a
+sentence explaining the rule that backticked its own example has brought the ban down again.
 
 ---
 
@@ -106,7 +113,7 @@ Nothing in the transition table targets `READY`, and that is a property rather t
 the framework cannot put work in its own queue, and a stage added next year is bounded by
 the same table.
 
-**`Status` and `State` are on the `Not` list on purpose.** Three different words have been
+**Status and State are in a Not column on purpose.** Three different words have been
 used for the same fact across the two implementations, and a reader who has seen two of
 them has to stop and work out which one this is. One word: `Stage`.
 
@@ -369,7 +376,7 @@ that is false, and a host may answer it differently from a request that makes no
 all. **A credential is never in the address**, because the address is what a run records
 and quotes.
 
-**`ThereIsNoSuchFile` and `WhyThereIsNoFile` — and not `PathNotInRepository`, which is the
+**`ThereIsNoSuchFile` and `WhyThereIsNoFile` — and not PathNotInRepository, which is the
 name the earlier implementation used.** That name covers one of the two reasons, and a
 name covering half a rule is trusted for the other half. A `403` answers with a body that
 parses and says nothing about a file, so the caller's next question — *was my path wrong,
@@ -399,7 +406,7 @@ something else.
 **`APushedBranch`** — a branch that is on the remote, with the address it went to, so a
 caller can go and look at it rather than take the tool's word for it.
 
-**`TheBranchIsAlreadyOnTheRemote`** — and **not** `NothingToPushError`, which is what the
+**`TheBranchIsAlreadyOnTheRemote`** — and **not** NothingToPushError, which is what the
 earlier implementation calls it. "Nothing to push" describes only the case where the
 branch already holds this run's own commit. It says nothing about **a branch somebody else
 is using**, which is the case with teeth.
@@ -647,7 +654,7 @@ because the guard judges the last word. `Repository` itself is exempt because th
 blesses it here: this system's repository is a public GitHub repository, and it is not the
 same thing at all.
 
-**`State` and `Status` were used for `Stage` in two implementations.** Both are refused
+**Status and State were used for Stage in two implementations.** Both are refused
 now, so the third one has to learn the word.
 
 ---
@@ -656,7 +663,7 @@ now, so the third one has to learn the word.
 
 1. **Spell it out.** No abbreviations: `work_item`, not `wi`.
 2. **One concept, one name, everywhere** — in production and in tests. If `WorkItem` is
-   the term, `Task`, `Ticket`, `Job` and `Entity` are all wrong.
+   the term, Task, Ticket, Job and Entity are all wrong.
 3. **The verb is `transition` or `validate_state`**, or it is not a state operation.
 4. **A type is a domain type.** `Stage`, not `String`; `None`, not `"none"`.
 5. **A boundary payload is a named type**, not a tuple and not a map.
