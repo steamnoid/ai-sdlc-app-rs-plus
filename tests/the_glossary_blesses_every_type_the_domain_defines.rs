@@ -654,30 +654,38 @@ fn the_glossary_blesses_every_type_the_domain_defines() {
     );
 }
 
+/// Every word the glossary refuses, as the `Not` columns spell them.
+///
+/// A table rather than a list inside a test, because a table is a `const` and a `const`
+/// has no body — and because a list of nineteen names written one per line is 28 counted
+/// lines, which is the rule this repository refuses and which caught this very test when
+/// the names were first written inline.
+const EVERY_WORD_A_NOT_COLUMN_REFUSES: [&str; 19] = [
+    "Task",
+    "Ticket",
+    "Job",
+    "Entity",
+    "Status",
+    "State",
+    "Phase",
+    "Step",
+    "Owner",
+    "Assignee",
+    "Team",
+    "move_to",
+    "set_stage",
+    "advance",
+    "change_state",
+    "handle",
+    "check",
+    "verify",
+    "assert_valid",
+];
+
 #[test]
 fn a_word_in_a_not_column_is_a_refusal_and_not_a_blessed_name() {
     let blessed = the_blessed_names();
-    for refused in [
-        "Task",
-        "Ticket",
-        "Job",
-        "Entity",
-        "Status",
-        "State",
-        "Phase",
-        "Step",
-        "Owner",
-        "Assignee",
-        "Team",
-        "move_to",
-        "set_stage",
-        "advance",
-        "change_state",
-        "handle",
-        "check",
-        "verify",
-        "assert_valid",
-    ] {
+    for refused in EVERY_WORD_A_NOT_COLUMN_REFUSES {
         assert!(
             !blessed.contains(&normalised(refused)),
             "{refused} is written in a Not column, which is a prohibition, and a prohibition read as a term is a synonym gate with nothing left to refuse"
