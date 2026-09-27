@@ -516,37 +516,6 @@ fn the_bodies_too_long_in(source: &str) -> Vec<ABody> {
         .collect()
 }
 
-/// Where these tests run from: the manifest of the crate holding them when cargo built
-/// this file, and the working directory when it did not. Both are read rather than
-/// assumed, so the walk finds the workspace from wherever it was compiled.
-fn the_directory_the_tests_run_from() -> PathBuf {
-    if let Some(manifest_directory) = option_env!("CARGO_MANIFEST_DIR") {
-        return PathBuf::from(manifest_directory);
-    }
-    match std::env::current_dir() {
-        Ok(here) => here,
-        Err(problem) => panic!("there is no directory to walk the workspace from: {problem}"),
-    }
-}
-
-/// The path of the first entry named `wanted` at or above this directory, so the walk
-/// finds the workspace from a test run inside a crate as well as from the root.
-fn the_path_to(wanted: &str) -> PathBuf {
-    let mut directory = the_directory_the_tests_run_from();
-    loop {
-        if directory.join(wanted).exists() {
-            return directory.join(wanted);
-        }
-        match directory.parent() {
-            Some(above) => directory = above.to_path_buf(),
-            None => panic!(
-                "no {wanted} above {}",
-                the_directory_the_tests_run_from().display()
-            ),
-        }
-    }
-}
-
 /// Every body in every Rust file of the workspace, with the file each was found in. One
 /// walk, so the count this gate reports and the refusals it makes come from one reading.
 fn every_body_in_the_workspace() -> Vec<ABodyInAFile> {
