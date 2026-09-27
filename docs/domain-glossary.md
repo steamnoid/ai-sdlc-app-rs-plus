@@ -585,6 +585,20 @@ only thing that may, but a rule enforced by a pattern is a rule nobody can read 
 stops matching. The source is read the way a person reads it, one character at a time, and
 that walk is this repository's own code.
 
+**`ASuppression`** — an `#[allow(…)]` or an `#[expect(…)]` found in a source file, with
+the line it stands on and the attribute exactly as written. **The bare word `suppression`
+is a name; the attribute is the thing.** It is refused everywhere, and the reason is that
+`cargo clippy -- -D warnings` already denies every warning — so an `#[allow]` in this
+repository can only be silencing something the gate command would already have refused. It
+is either a bug in the code or a loophole in the rule, and either way it is a place where
+the two have stopped agreeing without anybody deciding anything.
+
+**A `Cargo.toml` `[lints]` table is not one.** It configures clippy for a whole crate
+rather than standing in a source file, and the root one carries five `allow`s on purpose —
+`module_name_repetitions` among them — because `WorkItem` has a `work_item_id` and the
+domain is right about that and clippy is not. Reading it as a suppression would be the
+same error as reading a `.gitignore` line as a comment.
+
 **`HowTheFileIsWritten`** — a source file, taken apart into the stretches it is made of,
 each one knowing what it is and where it starts. It is a value rather than a service,
 because six gates ask the same two questions of it and the answer must not be six
