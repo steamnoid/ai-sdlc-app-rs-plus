@@ -64,9 +64,6 @@ const THE_HEADING_OF_ANY_SECTION: &str = "## ";
 /// The directory the system itself lives in, which is what this gate reads.
 const THE_DIRECTORY_OF_THE_SYSTEM: &str = "crates";
 
-/// The document the names are read from, relative to the root of the checkout.
-const THE_DOCUMENT_OF_THE_NAMES: &str = "docs/domain-glossary.md";
-
 /// How many names the parse must have found before its count means anything.
 ///
 /// Forty is well under what the document holds today and well over what a parse that read
