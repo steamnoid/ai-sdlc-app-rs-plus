@@ -22,7 +22,7 @@ nobody looked at twice.
 |---|---|
 | a **bolded** entry | a blessed name — every type the domain defines must be one of them |
 | a **code span** in ordinary prose | a blessed name, for the same reason |
-| a code span in a table column headed **`Not`** | **refused, and not blessed.** Read by `a_synonym_is_never_used`. |
+| a code span in a table column headed **`Not`** | **refused, and not blessed.** Read by `a_synonym_is_never_used`, which also reads the next section and knows which of these are a whole name only. |
 | a code span in prose naming a refused word | **refused, and not blessed** — which is why a refused word is written in plain prose here |
 | anything under **`## Banned vocabulary`** | **refused, and not blessed** |
 
@@ -620,6 +620,41 @@ exists.
 **Block comments nest in Rust**, unlike in C. `/* /* */ */` is one comment, and a scanner
 that stops at the first `*/` treats the rest as code — which would let a whole file hide
 behind a comment the gate believed it had read.
+
+---
+
+## Words that are a whole name and not a word inside one
+
+**Six of the words in the `Not` columns are ordinary English, and a gate that refused them
+inside a name would refuse this repository for writing prose.**
+
+The synonym gate refuses a name built out of a refused word, so that a compound carrying
+Status is caught. Applied to Step that refuses `step_back_over_the_white_space_at_the_end`,
+which is a real function in `src/scanning.rs` and is about whitespace. **A reading cannot
+tell a synonym from an English word, so this document has to say which of its refusals are
+which.** The six, as a block rather than as a table, because a table of them in backticks
+would bless every one of them:
+
+```text
+Step   check   handle   Owner   Assignee   Team
+```
+
+A word in that block is refused when a name **is** that word and not when a name **has**
+it. Every other word in a `Not` column is refused either way — and the compound carrying
+State is **accepted** as a whole, because it is blessed and a gate asks the blessing before
+it asks the words.
+
+**Why the split falls where it does.** Status and State are the same fact as Stage, and a
+compound carrying one of them is carrying the wrong word, so they are refused anywhere.
+Step is not a word anybody reaches for when they mean Stage; it is a word people use, and
+the only thing this repository wants to say about it is that a stage is not a step.
+
+**Every word in this section is written without backticks, and that is the third time this
+document has had to be told.** A backtick here is a blessing, whatever the sentence around
+it intends: the first version of this section blessed every prohibition it named, the
+second blessed the very compound it was refusing, and this paragraph is the third. The
+rule is therefore no longer a sentence in a table at the top of the file — it is a section
+of its own, and the reading has a test that fails the day a refused word is blessed.
 
 ---
 

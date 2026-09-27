@@ -278,11 +278,81 @@ fn code_spans(text: &str) -> Vec<String> {
 /// The names the glossary blesses, lowercased and normalised. A name is allowed when it
 /// is one of these whatever its last word is, which is what lets `WorkItem` and `Stage`
 /// exist in a repository that bans `item` and once banned `state`.
+/// The document with every table cell in a column headed `Not` emptied, before it is read
+/// for blessed names.
+///
+/// **This gate shipped without it and worked anyway, which is the worst way for a gate to
+/// be wrong.** A prohibition read as a term is exactly backwards: `Status`, `State`,
+/// `move_to` and `advance` were in the blessed set, so a public name ending on one of them
+/// was allowed here. Nothing failed, because the workspace happened to hold no public name
+/// near any of them. A gate that is right by luck stops being right the day somebody
+/// renames something, and the sibling
+/// `the_glossary_blesses_every_type_the_domain_defines` documents the same mistake in the
+/// same words.
+fn the_document_with_the_not_columns_blanked(document: &str) -> String {
+    let mut out = String::new();
+    let mut not_column: Option<usize> = None;
+    let mut row_in_this_table = 0;
+    for line in document.lines() {
+        out.push_str(&the_line_as_it_should_be_read(
+            line,
+            &mut not_column,
+            &mut row_in_this_table,
+        ));
+        out.push('\n');
+    }
+    out
+}
+
+fn the_line_as_it_should_be_read(
+    line: &str,
+    not_column: &mut Option<usize>,
+    row_in_this_table: &mut usize,
+) -> String {
+    if !is_a_table_row(line) {
+        *not_column = None;
+        *row_in_this_table = 0;
+        return line.to_string();
+    }
+    if *row_in_this_table == 0 {
+        *not_column = the_column_a_table_refuses_in(line);
+    }
+    let read = if *row_in_this_table < 2 {
+        line.to_string()
+    } else {
+        with_the_refusal_emptied(line, *not_column)
+    };
+    *row_in_this_table += 1;
+    read
+}
+
+fn the_column_a_table_refuses_in(line: &str) -> Option<usize> {
+    line.split('|')
+        .map(str::trim)
+        .position(|cell| cell.eq_ignore_ascii_case("not"))
+}
+
+fn is_a_table_row(line: &str) -> bool {
+    line.starts_with('|') && line.ends_with('|') && line.len() > 1
+}
+
+fn with_the_refusal_emptied(line: &str, column: Option<usize>) -> String {
+    let Some(column) = column else {
+        return line.to_string();
+    };
+    let mut cells: Vec<String> = line.split('|').map(str::to_string).collect();
+    if column < cells.len() {
+        cells[column] = String::new();
+    }
+    cells.join("|")
+}
+
 fn the_blessed_names() -> Vec<String> {
     let glossary = scanning::the_glossary_text();
     let without_the_list = the_document_with_the_banned_section_removed(&glossary);
-    let mut names = bolded_entries(&without_the_list);
-    names.extend(code_spans(&without_the_list));
+    let without_the_refusals = the_document_with_the_not_columns_blanked(&without_the_list);
+    let mut names = bolded_entries(&without_the_refusals);
+    names.extend(code_spans(&without_the_refusals));
     names.iter().map(|name| normalised(name)).collect()
 }
 
@@ -754,4 +824,15 @@ fn no_public_name_in_the_workspace_uses_banned_vocabulary() {
     );
     let refused = names_refused_in_the_workspace();
     assert!(refused.is_empty(), "{}", what_a_refused_name_says(&refused));
+}
+
+#[test]
+fn a_word_in_a_not_column_is_not_blessed_here_either() {
+    let blessed = the_blessed_names();
+    for refused in ["Status", "State", "move_to", "advance", "set_stage", "Task"] {
+        assert!(
+            !blessed.contains(&normalised(refused)),
+            "{refused} is a prohibition in this document, and a prohibition read as a term is a name this gate has blessed"
+        );
+    }
 }
