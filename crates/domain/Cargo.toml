@@ -1,0 +1,11 @@
+[package]
+name = "aisdlc-domain"
+description = "The rules: what a work item is, and which moves are legal"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license-file.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true

@@ -1,0 +1,588 @@
+# Domain glossary
+
+The source of truth for naming in this repository. A concept that is not here does not
+get used yet, and a term in the code that is not here is a violation. The second
+direction is checked by a test; the first is a reviewer's job, because this file
+deliberately names things that have not been built.
+
+A test reads this file rather than restating it, so that the guards follow the document
+instead of drifting from it. Every guard is also exercised on a name it must catch and on
+names it must leave alone, because a guard that has never been seen to fail is not
+evidence of anything.
+
+This file is the **first** thing written, before the first type. The reason is a rule
+rather than a preference: a name decided while writing the code that uses it is a name
+nobody looked at twice.
+
+---
+
+## How this file is read
+
+| Section | What it does |
+|---|---|
+| **Bolded terms** and **code spans** | blessed names — every type the domain defines must be one of them |
+| **`Not` columns** | synonyms that are refused — read by `a_synonym_is_never_used` |
+| **`## Banned vocabulary`** | the list itself, excluded from the blessed names, because a prohibition read as a term is backwards |
+
+---
+
+## The core nouns
+
+**`WorkItem`** — one tracked unit of work against a repository. The first-class domain
+object. Its stage is never changed by assignment; `transition` is the only door.
+
+**`WorkItemId`** — the name a work item is tracked by. A work item cannot be approved,
+persisted or pointed at by an approval without one, so a blank one is refused where it
+enters.
+
+**`WhoCommissioned`** — the party that asked for the work. **Who asked** and **which
+discipline answers** are two questions in two fields. An `aisdlc-` identifier here means a
+policy asked on somebody's behalf, and the name is kept verbatim.
+
+**`AgentIdentifier`** — an agent, named. Absence is `None` and never a string that says
+"absent": `"none"`, `""` and `"   "` are all refused, because the state machine decides
+whether an agent is present by asking whether there is one.
+
+**`Repository`** — a public GitHub repository, named by its owner and its name. A half of
+that boundary that is blank names nothing, and a half carrying a slash is both halves
+pasted into one field.
+
+**`CommissionedRequest`** — what somebody asked for, in the words they used. **Text, not
+an address.** The words arrive with the work, the work item keeps them, and a stage that
+reads them nine reads later reads what the first one read.
+
+**`WhichArtifact`** — which of the eight artifacts a decision was about.
+
+**`WhichOrganisationReasons`** — who does the reasoning: `openai`, `ollama`,
+`openai_compatible`, `openai_responses`. A closed set of four. Distinct from
+`AReasoningModel`, which is the thing that reasons; this is the company it works for.
+
+**`EveryStage`**, **`EveryRole`** — all six stages and all five disciplines, so a caller
+crossing one thing with every stage does not write a second list to keep in step.
+
+**`AStageThatNobodyNamed`**, **`ARoleThatNobodyNamed`** — a name that is not one of the
+closed set. They exist because a document names its stages and roles in capitals and the
+documentation guard has to read them. They are also the only ways into a `Stage` or a
+`Role` from text, so a name nobody wrote down never becomes one.
+
+**`AnArtifactVersion`** — which version of an artifact somebody ruled on. Counts from one;
+there is no zeroth version of anything.
+
+---
+
+## The stages
+
+The closed set. `Stage` is an enum; a stage is never a bare string, and it is written
+with its own name in capitals.
+
+| Value | Meaning | The agent must be | Not |
+|---|---|---|---|
+| `IDLE` | Nothing is happening. | absent | `Status`, `State`, `Phase`, `Step` |
+| `AWAITING_AGENT_PICKUP` | An agent may claim this item. | present | |
+| `IN_PROGRESS_BY_AGENT` | An agent is acting on this item. | present | |
+| `AWAITING_HUMAN_APPROVAL` | A human must rule before anything continues. | absent | |
+| `READY` | The entry state. A person queued this, and nobody holds it yet. | absent | |
+| `DONE` | Finished. Terminal, no outgoing transition. | absent | |
+
+A table rather than prose, because a test reads it to check the code against it.
+
+Nothing in the transition table targets `READY`, and that is a property rather than a gap:
+the framework cannot put work in its own queue, and a stage added next year is bounded by
+the same table.
+
+**`Status` and `State` are on the `Not` list on purpose.** Three different words have been
+used for the same fact across the two implementations, and a reader who has seen two of
+them has to stop and work out which one this is. One word: `Stage`.
+
+---
+
+## The roles
+
+**`Role`** — the discipline accountable for a work item. The closed set. A table for the
+same reason the stages are a table.
+
+| Role | Meaning | Not |
+|---|---|---|
+| `PO` | product, accountable for what should be built | |
+| `DEV` | implementation, accountable for code | |
+| `QA` | quality, accountable for test strategy and verification | |
+| `SEC` | security, accountable for risk | |
+| `ARCH` | architecture, accountable for structure | `Owner`, `Assignee`, `Team` |
+
+Every one of them is legitimate at every stage. The role is a discipline, and nothing ties
+it to where the work item happens to be. There is no `AI`: a handoff is not a discipline,
+and a set whose own definition excludes one of its members is not a set of disciplines.
+
+---
+
+## The two verbs of the domain
+
+The specification states exactly two operations on state. These are the two, and a third
+is a bug.
+
+| Verb | What it is | Not |
+|---|---|---|
+| `transition` | move a work item to a legal next stage and hand back the moved work item | `move_to`, `set_stage`, `advance`, `change_state`, `handle` |
+| `validate_state` | assert that a work item satisfies the invariants of its own state | `check`, `verify`, `assert_valid` |
+
+A birth is not an operation. `a_work_item_commissioned_for_an_agent` is the only way a
+work item enters the lifecycle and it adds no third verb.
+
+---
+
+## The three doors into a work item
+
+**This is where a clean domain earns its keep.** A work item has private fields, so the
+only ways to build one are the doors below, and **every one of them validates**. An
+earlier shape had a constructor that did not, which meant a work item could be built at a
+stage that needs an agent and hold nobody — and a checkpoint carrying exactly that was
+read back as a real work item.
+
+| Door | What it is | Refuses |
+|---|---|---|
+| `standing_at` | a work item at a stage, held by nobody | a stage that needs an agent |
+| `held_by` | the same work item, held by an agent | holding a stage where nobody may hold |
+| `answering` | the same work item, carrying the request | nothing; a request is a fact, not a position |
+
+**Serialization is not a fourth door.** The domain has no `serde`, no wire types and no
+knowledge that a disk exists. Every type that crosses a boundary is written by hand in
+`aisdlc-outside`, and it builds its work item by calling the three doors above. A
+checkpoint is therefore validated by the same code that validates a fresh one, which is
+the whole point: a derived `Deserialize` never calls a constructor, and a boundary that
+does not call one is a boundary nobody checked.
+
+**`AnUncheckedWorkItem`** — the door said no. One refusal type for all three, because a
+caller that has just been told "this cannot exist" has one question, and three types would
+make it choose which one to ask.
+
+---
+
+## The ports
+
+**A port is a question the domain cannot answer by itself.** It is declared in
+`aisdlc-run` and implemented in `aisdlc-outside`, and the direction is one-way: the
+adapters know the ports, the ports know nothing about the adapters. There are nine, and
+two of the splits are not inventions — they are lines this domain had already drawn.
+
+| Port | Asks | Implemented by |
+|---|---|---|
+| `AReasoningModel` | to answer with a validated artifact | four organisations, one at a time |
+| `AGitHubWeReadFrom` | for a checkout, and for a file at a ref | HTTPS, no credential |
+| `AGitHubWeWriteTo` | for a branch, and for a pull request | `git` over SSH, always a credential |
+| `TheProjectOnDisk` | for a listing, and for a file's text | the local filesystem |
+| `AProgramWeRun` | for our own programs, on the host | `git` and this project's tooling |
+| `AnUntrustedTestSuite` | for a repository's own tests, in a container | Docker, no host credential |
+| `TheClock` | how long it has been, and to wait | the operating system, or a test's zero |
+| `ARecordOfARun` | to remember a run, and to read it back | a SQLite table |
+| `APersonToDecide` | to rule on an exact artifact | a person, or a policy on their behalf |
+
+### Why reading and writing GitHub are two ports
+
+Because **reading a public repository needs no credential and writing always needs one.**
+When both were one port, a delivery had to be made by hand: the clone's credentials
+belonged to some other account, and the reason appeared nowhere. Two ports means the type
+says which half needs a secret, and the half that must not need one cannot be given one.
+
+### Why our programs and a repository's tests are two ports
+
+Because **executing a repository is the dangerous operation in this system.** Reading one
+is not. An implementation agent writes code and a verification agent then runs that code,
+with the developer's credentials and filesystem in reach. So the boundary goes around
+*execution*, not around the run, and it goes around exactly the half that is untrusted.
+
+**`AnUntrustedTestSuite`** — a test suite whose code this system did not write and cannot
+veto. The word is a security fact, not a slur, and it is in the glossary because the
+system has the fact and until now had no word for it.
+
+**`AProgramWeRun`** — a program we run ourselves, on the host, with our own arguments and
+our own inputs. Its `working_directory` is a convenience, not a promise that anything may
+be run there.
+
+### What a port never carries
+
+A port's arguments are named types, never a `String` and never a tuple. A port never
+carries a credential, a token or a path that has not been through the project boundary
+rules. **And a port with no implementation behind it is not a port** — it is a trait
+nobody calls, so one arrives with the first caller that needs it and not before.
+
+### `TheClock`, and why it is a port
+
+The domain asks the clock two questions and never reads a system time itself. A bound that
+depends on a caller is not a bound, and a test that has to sleep to prove a timeout works
+is a test nobody runs. `TheClock`'s test implementation is an instant zero, so a
+thirty-second bound is proven in no time at all.
+
+### `APersonToDecide`, and why it is a port
+
+Human approval is a hard architectural boundary, and a boundary that is a function call
+inside one process still has to be an interface, because that is what stops the domain from
+deciding for itself. **The thing behind the port may be a person or a policy, and the
+record keeps the difference** — a record naming a person for a decision a policy made is a
+forged audit trail, and it would look exactly like the real thing at the moment somebody
+needs to tell them apart. An `aisdlc-` identifier is a policy; anything else is a person.
+
+---
+
+## The addresses of a repository
+
+One repository is known by **five different strings**, and none of them is interchangeable.
+They are five functions rather than one with a flag, because the choice has to be visible
+at the call site.
+
+**`the_address_of`** — what a person reads. `https://github.com/owner/name`, **with no
+`.git`**, because this string ends up in a summary and the suffix is a thing `git` needs
+and a person does not want.
+
+**`the_clone_url_of`** — what `git` fetches from. The same string with `.git` on the end.
+**No credential in it, ever, and the signature is what guarantees that**: the function is
+handed a `&Repository` and returns a `String`, so there is nothing in scope that could
+carry a token.
+
+**`the_push_address_of`** — where a repository is **written**, which is a different place
+from where it is read. Over SSH, and separately from every read address.
+
+**`the_read_address_of`** — where one file of one repository at one **ref** lives. The ref
+is a parameter rather than the repository's default branch, because reading a file at a
+pull request's head is the question this address exists to answer.
+
+**`Addresses`** — the two addresses of a clone: `fetch_from` is where this system's copy
+lives and may be pushed to, `origin_of_the_code` is where the code was written and may
+only be read. `git clone` sets `origin` and nothing else, so without the second a reader
+running `git remote -v` months later cannot tell a fork from a mystery.
+
+**A path and a ref are escaped, or they are not.** A `path` holding `?` or `#` changes
+which ref is fetched. This is recorded here as an obligation, not as a gap that is
+acceptable: the boundary in `a_path_in_the_project` is about *project* paths and does not
+apply to *repository* paths, and `://` is not the only thing to refuse.
+
+---
+
+## Reading the project
+
+A repository is cloned onto local disk before any agent reads it, and every agent reads
+that clone. These are the words for the two rules that keep a string from becoming a path
+it must not become. **Whether a string can be a path at all, and whether the path that
+results lands inside the project, are two questions with two answers**, and only the second
+was ever about confinement.
+
+**`a_path_in_the_project`** — the shape rule, asked before anything touches the disk.
+Refuses a string that is only whitespace, a character no filesystem holds, an empty
+segment, and any segment over `THE_LONGEST_A_COMPONENT_MAY_BE`. The bound is per segment
+rather than per path, because a repository has paths longer than 255 bytes and they are
+ordinary. A model wrote a 433-byte sentence into a path field once, and the operating
+system raised about that rather than answering, which is why this rule comes first.
+
+**`the_path_inside_the_project`** — the confinement rule. Decides by the **resolved
+location**, not by the spelling, because `..` is a way out however it is written and a
+symlink is a way out however innocent it looks. Resolution returns a *different spelling*
+from the one it was given, and a caller that compares strings without resolving will call
+a correct read a wrong one.
+
+**`AStringThatIsNotAPath`** — a string that cannot be one, named for the rule and quoting
+the input back. A refusal the model that wrote the input cannot match against what it
+produced spends a correction and teaches it nothing.
+
+**`APathOutsideTheProject`** — the path asked for lands outside. **A refusal on
+principle**, and it carries *why* in a separate field, because the two reasons want
+different answers: an address (`://`) is a request to fetch something, which a filesystem
+has no business doing, and a path that resolves elsewhere is an escape.
+
+**`APathThatIsNotInTheProject`** — it is inside the project and simply not there. **A fact
+about the clone, not a refusal**, which is why it is not the previous noun: the only
+sensible response to it is to ask for a different path.
+
+**`ProjectFile`** — a file and the text it holds. **`ProjectListing`** — a directory's
+entries told apart as directories and files, because a listing of bare names forces every
+caller to stat each entry to learn whether it may descend into it.
+
+**`ReadingTheProjectFailed`** — the ways reading failed: it leaves the project, it is not
+there, it is a file where a directory was asked for, or it is there and could not be read.
+**Four, because the fourth was the third doing two jobs.** "There and could not be read"
+answered *a directory was expected* and *a file was expected* with the same words.
+
+**`a_project_directory`** — the directory a run's artifacts and clone live under, and the
+boundary `TheProjectOnDisk` is confined to. Derived rather than chosen, so two runs of the
+same work item find the same place and a resumed run does not re-clone underneath itself.
+
+---
+
+## Cloning a repository
+
+**`ARepositoryToClone`** — the request: which repository, from where it is fetched, and
+where it lands. The destination is a field and not a convention because it is **derived,
+not chosen**.
+
+**`AClonedRepository`** — a checkout on disk, and **the commit and the ref it is standing
+on, both read from the clone and never remembered.** A value kept from an earlier run is a
+value about the wrong commit.
+
+**`ref_name`, and not `branch`.** A checkout is not always on a branch: cloning a detached
+ref leaves none behind, and the honest answer for a checkout that is on none is `HEAD`.
+Naming the field `branch` would be a lie in precisely the case where the value matters.
+
+**`CloningTheRepositoryFailed`** — four ways, and the last two are this system's own
+findings. *The destination already holds something* is a refusal on principle: a run
+resumes, the directory is derived, and **a refusal that arrives after the damage is not a
+refusal**. *The repository is not there* quotes git's own words inside ours, because the
+caller has to tell *no such repository* from *git is unhappy* from *git is not installed*.
+*The repository has nothing in it yet*: somebody created a repository and has not committed
+to it, and **a value read out of a command that failed is that command's complaint wearing
+a field's name.**
+
+**A full clone, and not a shallow one.** The run does things with the history — a diff
+against a base, `git log` for how a file got the way it is — and a shallow clone answers
+none of them. The cheapest clone is a false economy paid at the first review.
+
+**`upstream`, set after the clone.** `git clone` sets `origin` and nothing else, so a clone
+of this system's own copy would carry no memory of what it is a copy of.
+
+---
+
+## Reading one file out of a repository
+
+**`AFileToRead`** — which file, of which repository, at which ref. **`ARepositoryFile`** — a
+file and what was in it, and **the path kept exactly as it was asked for.**
+
+**`ARequestToGitHub`** — where it goes, what it says about who is asking, and how long it
+may take. **The bound is a field and not a convention**, so a request that carries no
+bound is a value that cannot be built.
+
+**No `Authorization` header when the deployment stated no credential**, which is the
+ordinary case. An `Authorization: Bearer ` with an empty value is a claim about the caller
+that is false, and a host may answer it differently from a request that makes no claim at
+all. **A credential is never in the address**, because the address is what a run records
+and quotes.
+
+**`ThereIsNoSuchFile` and `WhyThereIsNoFile` — and not `PathNotInRepository`, which is the
+name the earlier implementation used.** That name covers one of the two reasons, and a
+name covering half a rule is trusted for the other half. A `403` answers with a body that
+parses and says nothing about a file, so the caller's next question — *was my path wrong,
+or was my request refused* — has a different answer for each.
+
+**The refusal may say the repository might not be public, because that is what an operator
+has to check. It must not say it knows**, and it must not talk about permissions: a
+private repository is answered exactly as an absent path is.
+
+**Every status this tool cannot interpret is a refusal, and only `200` is a file.** A `500`
+whose body happens to carry a `content` field must not be handed back as the file a run
+asked for: a run that quotes an error page as a file is a run whose report is a lie with a
+path on it.
+
+**The three facts a caller is asked — path, repository, ref — are fields and not a
+sentence**, so the message cannot forget one.
+
+---
+
+## Putting a branch on a remote
+
+**`ABranchToPush`** — the branch a run wants and the commit it points at. **The commit is
+taken from the clone and not asked for**: a caller that could name the commit could push a
+commit it has not read, and every later claim about what was delivered would be about
+something else.
+
+**`APushedBranch`** — a branch that is on the remote, with the address it went to, so a
+caller can go and look at it rather than take the tool's word for it.
+
+**`TheBranchIsAlreadyOnTheRemote`** — and **not** `NothingToPushError`, which is what the
+earlier implementation calls it. "Nothing to push" describes only the case where the
+branch already holds this run's own commit. It says nothing about **a branch somebody else
+is using**, which is the case with teeth.
+
+**One rule produces both cases, so one refusal covers both.** This run does not move a
+branch it did not create.
+
+**`TheRemoteRefusedThePush`** — separate from the above, because the two need different
+answers from a person: a branch that already existed is this run's own doing, and a remote
+that is not there is not.
+
+**`ls-remote`, asked before anything is pushed.** It reads the remote without changing it,
+which is what makes the refusal possible *before* rather than after — **and a push that has
+already landed is not something to undo.** A branch name is quoted into a command whose
+shape is fixed: nothing a caller supplies reaches the program as an option.
+
+**`HEAD:refs/heads/<name>` rather than a local branch name.** Pushing the branch the
+checkout is standing on would move *that* branch on the remote.
+
+**A delivery is a git operation, so it goes through `AProgramWeRun` and not the GitHub
+API.** The clone is here, the commit is in it, and pushing it is what `git` is for.
+
+---
+
+## Approval
+
+**`Approval`** — a record that somebody approved an exact artifact at an exact version of
+one work item. It stops covering that the moment any of the three changes.
+
+**`WhoDecided`** — the party that ruled, recorded verbatim and never replaced. A person's
+name and a policy's name are both valid and the record keeps the difference.
+
+**`ApprovalQuestion`** — the exact artifact and its version, presented for a ruling.
+Presenting the version is not politeness: an approval that names no version still covers
+the artifact after it has been rewritten, which makes the record a claim rather than a
+decision.
+
+**`ApprovalDecision`** — the ruling itself, and it carries the `WhoDecided` verbatim.
+
+**`AgentDecidedError`** — an agent tried to rule. The prohibition is not a convention here;
+it is an assertion, and this error exists to be raised. An agent may ask for work and may
+not rule on the result, and those are two halves enforced in two places.
+
+**The gate refuses a work item that is not standing at it**, in any stage but
+`AWAITING_HUMAN_APPROVAL`. `DONE` is the case that matters: a finished work item has
+nothing left to approve, and the record would be evidence that a human ruled on work that
+was already over.
+
+---
+
+## Asking a model for an artifact
+
+**`AnAnswerIsNotYetAnArtifact`** — what a model said when it was asked for an artifact,
+before anything has checked it. **The name is the point.** Nothing guarantees a model
+honoured the request, so the answer is data until something validates it, and a type called
+`QaPlan` on the way out of a model call would be a reader treating a dictionary as a plan.
+
+**The tool is forced, not offered.** A gateway that does not enforce the JSON-schema method
+a structured-output call defaults to answers a structured request three ways across three
+runs — prose, then YAML, then JSON carrying one of four fields — and each becomes a
+validation failure. **The model was never the difficulty.** So the request forces a tool
+call, because only a tool call can be forced: `json_mode` asks for JSON inside a message,
+and **a request this system cannot compel is a request whose failure it pays for.**
+
+**The artifact's own name is the tool name**, so the forcing names the artifact rather
+than a label invented beside it.
+
+**The call collects rather than streams.** A gateway that parses a tool call's arguments
+incrementally cannot complete a forced call until the fragments are all there, so
+streaming and forcing are the same problem seen from two sides. Worse, a streaming failure
+happens *inside* that parse, so the answer never reaches the correction loop — **and the
+correction loop is the only route to a plan on a model that does not do structured output.**
+
+**`TheModelRefused`** — one refusal naming the artifact and the field. A run asks eight
+agents for eight different artifacts, so *"the shape was wrong"* without saying which is a
+question rather than a diagnosis.
+
+**Every type a model is asked for refuses unknown fields.** Otherwise a model invents a
+field and the system silently ignores it, and an artifact that says something the
+specification does not have is an artifact nobody checked.
+
+---
+
+## What a run says while it is doing it
+
+**`WhatAModelSaid`** — what a run asked a model, what it answered and how long it took,
+said as it happens. **Not to be confused with `ARecordOfARun`**, which is the durable
+record of a whole run written afterwards; this is one call, alive while it is happening.
+
+**The bare word is not a name.** The banned list covers `log`, `trace`, `record`,
+`telemetry`, `metrics`, `instrumentation` and `span` for this entry — while calling the
+entry *a record of what a model said*. The ban is scoped to the bare word, not to the word
+inside a longer name: each of those seven says nothing, and `WhatAModelSaid` says what
+happened.
+
+**A record installed in one place, and not a change to the agents.** Eight agents each
+wrapping their own model call is eight chances to forget, and a run that reports no
+duration for the one call that mattered.
+
+**A refusal names the artifact and the field, and the model name is an argument.** The
+model is the same on every call, so the model cannot stand in for which artifact was
+refused. And a line naming the wrong model is worse than no line, because the question the
+line exists to answer is *which model was that*.
+
+**The fragments are kept though they are not printed.** On a failure they are the whole
+diagnosis: *a model asked for JSON and answered in prose* is the difference between *the
+gateway is broken* and *this model does not do structured output*, and nothing else in the
+system can tell those apart.
+
+**The size of a question, never its text.** A 400-character prompt and a 40 000-character
+one are two different lengths of wait, and the number tells them apart without putting a
+repository's contents into somebody's terminal.
+
+**Every line carries the elapsed time, because a label alone says nothing while the thing
+it labels is still happening.** `planning` says a call is outstanding; `planned in 41s`
+says the model answered.
+
+**A whole run writes its lines to a file; anything shorter prints.** Appended and flushed,
+because a run that overwrites answers "where is it now" and loses the rest. A file is not
+captured by anything and outlives the process.
+
+---
+
+## The three layers, and the one direction
+
+| Layer | Crate | May name | Rule |
+|---|---|---|---|
+| the domain | `aisdlc-domain` | nothing outside itself | **no dependencies, no `async`, no `unsafe`, no I/O** |
+| the run | `aisdlc-run` | the domain, and its own ports | no organisation, no filesystem, no runtime |
+| the outside | `aisdlc-outside` | everything | implements the ports and nothing else |
+| the desk | `aisdlc-desk` | everything | the only place a concrete type is named |
+
+**`aisdlc-domain` has no `[dependencies]` section at all.** Not "few", not "only serde".
+Nothing. This is the one rule that the compiler enforces without being asked, and it is the
+rule every other boundary rests on.
+
+**There is no `dyn` in `aisdlc-domain` or `aisdlc-run`.** Ports are generic, and the
+composition root monomorphises. The cost is a longer type at each boundary and a louder
+compile error when a test double drifts from the real thing; the gain is that no trait has
+to be made object-safe, no `async` macro has to rewrite a signature, and a reader can
+follow what a port returns without knowing a trait exists.
+
+**No `thiserror` in the domain**, and the rule above is why: a derive that generates a
+`Display` is a dependency, and the domain has none. `Display` is written by hand. It is
+eight lines each and a reader can see the whole error message.
+
+**A file belongs to exactly one layer, and an LLM is a Layer B fact.** Reading the
+repository, writing files, running tests, keeping state and routing are all deterministic
+and belong outside the reasoning. Nothing in `aisdlc-domain` may reach for a model.
+
+---
+
+## Banned vocabulary
+
+Read by `a_name_is_never_generic_vocabulary`, which does not restate this list. A banned
+word is a noun a name **ends** on, because the last word of an identifier is what the name
+claims the thing *is*. A family is matched as a prefix or a suffix, so a name built on one
+is caught while a word that merely contains it is not.
+
+When one of these is genuinely the right idea, the honest question is which domain concept
+is being obscured.
+
+```text
+Manager   Handler   Processor   Helper   Util   Utils   Common   Base<Domain>
+Data      Info      Payload     Params   Result Item     Entity   Dto
+Cfg       Meta      Misc        Temp     Temp0   Foo     Bar      Whatever
+Adapter   Port      UseCase     Builder  Factory Runner   Executor Engine
+Service   Context   State       Status
+```
+
+**`Adapter`, `Port` and `UseCase` are on the list on purpose.** This repository is Clean
+Architecture, and those three are its own words for the things this glossary names
+properly: a port is `AReasoningModel` or `TheProjectOnDisk`, not `ModelPort`; the thing
+that implements one is named after what it reaches, not after the fact that it implements
+something. **A word borrowed from a pattern is the first step towards a codebase that
+talks about the pattern instead of about the work.**
+
+**`Repository` is refused as a suffix and blessed as a word.** `AWorkRepository` and
+`GitHubRepository` are persistence abstractions wearing a domain word, and they are caught
+because the guard judges the last word. `Repository` itself is exempt because the glossary
+blesses it here: this system's repository is a public GitHub repository, and it is not the
+same thing at all.
+
+**`State` and `Status` were used for `Stage` in two implementations.** Both are refused
+now, so the third one has to learn the word.
+
+---
+
+## Naming rules at a glance
+
+1. **Spell it out.** No abbreviations: `work_item`, not `wi`.
+2. **One concept, one name, everywhere** — in production and in tests. If `WorkItem` is
+   the term, `Task`, `Ticket`, `Job` and `Entity` are all wrong.
+3. **The verb is `transition` or `validate_state`**, or it is not a state operation.
+4. **A type is a domain type.** `Stage`, not `String`; `None`, not `"none"`.
+5. **A boundary payload is a named type**, not a tuple and not a map.
+6. **Errors are named after the rule they protect.** `StateMachineError`, not `AppError`.
+7. **A port is named after what it reaches**, not after the fact that it is a port.
+8. **A table is a `const`, not a function body**, which is why the twenty-line rule does
+   not apply to it.
+9. **If you cannot name it in domain words, you do not understand it yet.** Rename it or
+   delete it. Never abbreviate to escape the question.

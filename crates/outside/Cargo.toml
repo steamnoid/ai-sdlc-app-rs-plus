@@ -1,0 +1,15 @@
+[package]
+name = "aisdlc-outside"
+description = "The implementations of the ports, and nothing else"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license-file.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+aisdlc-domain = { path = "../domain" }
+aisdlc-run = { path = "../run" }
