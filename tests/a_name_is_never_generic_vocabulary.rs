@@ -9,6 +9,8 @@ use std::fmt::Write as _;
 use std::fs;
 use std::path::{Path, PathBuf};
 
+use aisdlc_gates::scanning::{HowTheFileIsWritten, WhatIsWrittenThere};
+
 /// The kinds of declaration a name may be read off. `pub use` is not one of them,
 /// because a name brought in from elsewhere was declared somewhere this gate does not
 /// read, and a gate that judges another repository's names is judging the wrong thing.
@@ -106,13 +108,19 @@ fn is_this_name_allowed(identifier: &str) -> bool {
 /// The glossary as it stands on disk, read on every call so an edit to the list is an
 /// edit to this gate, with nothing re-declared here to fall behind.
 fn the_glossary_text() -> String {
-    let path = the_path_to("docs/domain-glossary.md");
-    match fs::read_to_string(&path) {
+    the_text_at(&the_path_to("docs/domain-glossary.md"))
+}
+
+/// The text of the file at `path`, or a panic naming the file and what the read said.
+///
+/// A file that cannot be read is not a file that has nothing in it. It is a file nobody
+/// has looked at, and calling it clean is the one wrong answer here that leaves nothing to
+/// argue with: every other refusal this gate makes names a name in a file, and a file that
+/// was never opened is the one failure with nothing at all in the report.
+fn the_text_at(path: &Path) -> String {
+    match fs::read_to_string(path) {
         Ok(text) => text,
-        Err(problem) => panic!(
-            "the glossary at {} is unreadable: {problem}",
-            path.display()
-        ),
+        Err(problem) => panic!("{} cannot be read as source: {problem}", path.display()),
     }
 }
 
@@ -325,35 +333,58 @@ fn collect_rust_files(directory: &Path, found: &mut Vec<PathBuf>) {
     }
 }
 
-/// The names every `pub` declaration in one file claims to be. Only `pub` counts, and
-/// only the seven kinds a type, a module or a constant is declared with.
+/// The names every `pub` declaration in the text it is given claims to be. Only `pub`
+/// counts, and only the seven kinds a type, a module or a constant is declared with.
+///
+/// The declarations are read out of the code of the file and out of nothing else. A name
+/// in a comment is a name somebody is *talking about*, and a name in a string is a
+/// message or a fixture: neither declares anything, and a gate that refuses one teaches
+/// its reader to argue with it instead of to read it. `src/scanning.rs` is what says
+/// which stretch of a file is which, and a stretch of code never holds a line ending, so
+/// one stretch is the code of one line and is read as one.
+///
+/// **Three things the reading gets wrong, none of which this gate can reach**, written
+/// down so that a reader does not have to find them a second time. An unclosed string
+/// makes the rest of the file one string and hides every declaration after it: that is a
+/// false negative and the dangerous direction, and it cannot happen in a file cargo
+/// compiled, because an unclosed string does not compile — so it is recorded rather than
+/// worked around. Edition 2024's `c"…"` and `cr#"…"#` are read as code and then as a
+/// string, and a declaration is not a C string. A form feed, a vertical tab and a byte
+/// order mark are read as code rather than as space, and none of the three can hold a
+/// `pub`.
 fn public_names_in(text: &str) -> Vec<String> {
+    let read = HowTheFileIsWritten::of(text);
+    let the_code = read
+        .stretches()
+        .iter()
+        .filter(|stretch| stretch.kind() == WhatIsWrittenThere::Code);
     let mut names: Vec<String> = Vec::new();
-    for line in text.lines() {
-        collect_a_public_name(line, &mut names);
+    for stretch in the_code {
+        collect_a_public_name(stretch.text(), &mut names);
     }
     names
 }
 
-/// One line's worth: every `pub` on it, and for each of them the name the keyword after
-/// it introduces. `pub(crate) async fn` and `pub struct WorkItem<T>` are both one name.
-fn collect_a_public_name(line: &str, names: &mut Vec<String>) {
-    for at in the_offsets_of_pub(line) {
-        let after = &line[at + 3..];
+/// The code of one line: every `pub` in it, and for each of them the name the keyword
+/// after it introduces. `pub(crate) async fn` and `pub struct WorkItem<T>` are both one
+/// name.
+fn collect_a_public_name(code: &str, names: &mut Vec<String>) {
+    for at in the_offsets_of_pub(code) {
+        let after = &code[at + 3..];
         if let Some(name) = the_name_after_a_declaration_keyword(after) {
             names.push(name);
         }
     }
 }
 
-/// Where each `pub` on this line begins. A `pub` inside a longer word is not one, which
+/// Where each `pub` in this code begins. A `pub` inside a longer word is not one, which
 /// is why `publisher` is not read as a declaration.
-fn the_offsets_of_pub(line: &str) -> Vec<usize> {
+fn the_offsets_of_pub(code: &str) -> Vec<usize> {
     let mut offsets: Vec<usize> = Vec::new();
     let mut from = 0;
-    while let Some(at) = line[from..].find("pub") {
+    while let Some(at) = code[from..].find("pub") {
         let offset = from + at;
-        if opens_a_declaration(&line[offset + 3..]) {
+        if opens_a_declaration(&code[offset + 3..]) {
             offsets.push(offset);
         }
         from = offset + 3;
@@ -416,10 +447,10 @@ fn names_refused_in_the_workspace() -> Vec<ANameRefused> {
     refused
 }
 
-/// One file's worth, judged name by name.
+/// One file's worth, judged name by name. The text comes from `the_text_at`, so a file
+/// that cannot be read stops the walk by saying so rather than passing it in silence.
 fn the_names_refused_in(path: &Path) -> Vec<ANameRefused> {
-    let text = fs::read_to_string(path).unwrap_or_default();
-    public_names_in(&text)
+    public_names_in(&the_text_at(path))
         .into_iter()
         .filter(|name| !is_this_name_allowed(name))
         .map(|name| ANameRefused {
@@ -676,6 +707,86 @@ fn a_use_declaration_is_left_alone() {
         public_names_in(text).is_empty(),
         "a name brought in from elsewhere was declared where this gate does not read"
     );
+}
+
+#[test]
+fn a_declaration_written_in_documentation_is_not_a_declaration() {
+    let text = "\
+/// The earlier shape was a `pub struct SessionManager`, and this is what replaced it.
+pub struct TheProjectOnDisk;
+";
+    assert_eq!(
+        public_names_in(text),
+        vec![String::from("TheProjectOnDisk")],
+        "a name in a line of documentation is a name somebody is talking about, and this repository's own documents name the banned ones constantly"
+    );
+}
+
+#[test]
+fn a_declaration_written_in_the_documentation_of_a_module_is_not_a_declaration() {
+    let text = "\
+//! A `pub struct SessionManager` used to be what this module was.
+pub struct TheProjectOnDisk;
+";
+    assert_eq!(
+        public_names_in(text),
+        vec![String::from("TheProjectOnDisk")],
+        "an exclamation mark after the slashes documents the module and is still a comment"
+    );
+}
+
+#[test]
+fn a_declaration_written_in_a_block_comment_is_not_a_declaration() {
+    let text = "\
+/* the shape before was a `pub struct SessionManager`, and a reader was told so */
+pub struct TheProjectOnDisk;
+";
+    assert_eq!(
+        public_names_in(text),
+        vec![String::from("TheProjectOnDisk")],
+        "words inside a block comment are what the file says to its reader, and the comment is one stretch whatever it spans"
+    );
+}
+
+#[test]
+fn a_declaration_written_in_a_string_is_not_a_declaration() {
+    let text = "\
+const NOTE: &str = \"pub struct SessionManager;\";
+pub struct TheProjectOnDisk;
+";
+    assert_eq!(
+        public_names_in(text),
+        vec![String::from("TheProjectOnDisk")],
+        "a name in a string is a message or a fixture, and neither of them declares anything"
+    );
+}
+
+#[test]
+fn a_declaration_written_in_code_is_still_refused() {
+    let found = public_names_in("pub struct SessionManager;\n");
+    let refused: Vec<String> = found
+        .into_iter()
+        .filter(|name| !is_this_name_allowed(name))
+        .collect();
+
+    assert_eq!(
+        refused,
+        vec![String::from("SessionManager")],
+        "a declaration in the code of a file is what this gate exists to read, and a repair that stopped reading code would pass every test above"
+    );
+}
+
+/// A path that is there and cannot be read as source, which is what a mistyped walk root
+/// looks like. A file's permissions would be the other way to make one and they are not a
+/// thing a test may count on: whoever runs this may be a user the mode does not stop.
+///
+/// The `///` above is the one place in this file where the test carries its own reasoning
+/// above it rather than in the assertion, because there is no assertion: what this asserts
+/// is that a read which failed takes the gate down with it.
+#[test]
+#[should_panic(expected = "cannot be read as source")]
+fn a_file_that_cannot_be_read_is_a_failure_and_not_an_empty_one() {
+    the_names_refused_in(&the_path_to("crates"));
 }
 
 #[test]
