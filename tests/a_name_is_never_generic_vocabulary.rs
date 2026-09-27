@@ -6,10 +6,9 @@
 //! `item` sits on the list.
 
 use std::fmt::Write as _;
-use std::fs;
 use std::path::{Path, PathBuf};
 
-use aisdlc_gates::scanning::{HowTheFileIsWritten, WhatIsWrittenThere};
+use aisdlc_gates::scanning::{self, HowTheFileIsWritten, WhatIsWrittenThere, the_text_at};
 
 /// The kinds of declaration a name may be read off. `pub use` is not one of them,
 /// because a name brought in from elsewhere was declared somewhere this gate does not
@@ -105,25 +104,6 @@ fn is_this_name_allowed(identifier: &str) -> bool {
     !the_name_is_built_on_a_banned_family(identifier)
 }
 
-/// The glossary as it stands on disk, read on every call so an edit to the list is an
-/// edit to this gate, with nothing re-declared here to fall behind.
-fn the_glossary_text() -> String {
-    the_text_at(&the_path_to("docs/domain-glossary.md"))
-}
-
-/// The text of the file at `path`, or a panic naming the file and what the read said.
-///
-/// A file that cannot be read is not a file that has nothing in it. It is a file nobody
-/// has looked at, and calling it clean is the one wrong answer here that leaves nothing to
-/// argue with: every other refusal this gate makes names a name in a file, and a file that
-/// was never opened is the one failure with nothing at all in the report.
-fn the_text_at(path: &Path) -> String {
-    match fs::read_to_string(path) {
-        Ok(text) => text,
-        Err(problem) => panic!("{} cannot be read as source: {problem}", path.display()),
-    }
-}
-
 /// Where these tests run from: the manifest of the crate that holds them when cargo
 /// built this file, and the working directory when it did not. Both are read rather
 /// than assumed, so the gate finds the document from wherever it was compiled.
@@ -204,10 +184,12 @@ fn the_fenced_text_block(section: &str) -> String {
 /// is a family and every other token is a noun, which is how `Base<Domain>` and `Temp0`
 /// are both read without either being mistaken for a word of its own kind.
 fn the_banned_entries() -> Vec<String> {
-    the_fenced_text_block(&the_banned_vocabulary_section(&the_glossary_text()))
-        .split_whitespace()
-        .map(String::from)
-        .collect()
+    the_fenced_text_block(&the_banned_vocabulary_section(
+        &scanning::the_glossary_text(),
+    ))
+    .split_whitespace()
+    .map(String::from)
+    .collect()
 }
 
 /// The generic nouns, lowercased. `item` is on this list, and `WorkItem` is on the
@@ -297,40 +279,11 @@ fn code_spans(text: &str) -> Vec<String> {
 /// is one of these whatever its last word is, which is what lets `WorkItem` and `Stage`
 /// exist in a repository that bans `item` and once banned `state`.
 fn the_blessed_names() -> Vec<String> {
-    let glossary = the_glossary_text();
+    let glossary = scanning::the_glossary_text();
     let without_the_list = the_document_with_the_banned_section_removed(&glossary);
     let mut names = bolded_entries(&without_the_list);
     names.extend(code_spans(&without_the_list));
     names.iter().map(|name| normalised(name)).collect()
-}
-
-/// Every Rust file this workspace is made of, found by walking down from the root: the
-/// crates, and the gates' own library. The library is in the walk because a gate is code
-/// in this repository too, and a rule applied only to other people's code is a rule about
-/// other people.
-fn every_rust_file_in_the_workspace() -> Vec<PathBuf> {
-    let mut found: Vec<PathBuf> = Vec::new();
-    for directory in ["crates", "src"] {
-        collect_rust_files(&the_path_to(directory), &mut found);
-    }
-    found
-}
-
-/// One directory's worth of the walk. A directory this gate cannot open is skipped rather
-/// than fatal, because a gate that stops on an unreadable directory judges nothing at
-/// all and says so by passing.
-fn collect_rust_files(directory: &Path, found: &mut Vec<PathBuf>) {
-    let Ok(entries) = fs::read_dir(directory) else {
-        return;
-    };
-    for entry in entries.flatten() {
-        let path = entry.path();
-        if path.is_dir() {
-            collect_rust_files(&path, found);
-        } else if path.extension().is_some_and(|ending| ending == "rs") {
-            found.push(path);
-        }
-    }
 }
 
 /// The names every `pub` declaration in the text it is given claims to be. Only `pub`
@@ -441,7 +394,7 @@ struct ANameRefused {
 /// The names in the workspace this gate refuses, each with the file it came from.
 fn names_refused_in_the_workspace() -> Vec<ANameRefused> {
     let mut refused: Vec<ANameRefused> = Vec::new();
-    for path in every_rust_file_in_the_workspace() {
+    for path in scanning::every_rust_file_in_the_workspace() {
         refused.extend(the_names_refused_in(&path));
     }
     refused
@@ -782,16 +735,19 @@ fn a_declaration_written_in_code_is_still_refused() {
 ///
 /// The `///` above is the one place in this file where the test carries its own reasoning
 /// above it rather than in the assertion, because there is no assertion: what this asserts
-/// is that a read which failed takes the gate down with it.
+/// is that a read which failed takes the gate down with it. The wording it expects is the
+/// shared reader's, not this file's own — the read moved to `scanning::the_text_at` when
+/// four copies became one, and a test that names a message it does not own is a test that
+/// breaks for a reason nobody can act on.
 #[test]
-#[should_panic(expected = "cannot be read as source")]
+#[should_panic(expected = "must be readable")]
 fn a_file_that_cannot_be_read_is_a_failure_and_not_an_empty_one() {
     the_names_refused_in(&the_path_to("crates"));
 }
 
 #[test]
 fn no_public_name_in_the_workspace_uses_banned_vocabulary() {
-    let files = every_rust_file_in_the_workspace();
+    let files = scanning::every_rust_file_in_the_workspace();
     assert!(
         !files.is_empty(),
         "the walk read no file at all, which is a pass this gate has not earned"

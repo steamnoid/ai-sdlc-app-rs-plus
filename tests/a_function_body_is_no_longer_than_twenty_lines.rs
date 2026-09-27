@@ -23,10 +23,11 @@
 //! the assertion is what the walk actually read.
 
 use std::fmt::Write as _;
-use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
-use aisdlc_gates::scanning::{AStretchOfTheFile, HowTheFileIsWritten, WhatIsWrittenThere};
+use aisdlc_gates::scanning::{
+    self, AStretchOfTheFile, HowTheFileIsWritten, WhatIsWrittenThere, the_text_at,
+};
 
 /// The most lines a body may hold, counted from its opening brace to its closing one.
 ///
@@ -546,51 +547,11 @@ fn the_path_to(wanted: &str) -> PathBuf {
     }
 }
 
-/// The text of the file at `path`, or a panic naming the file and what the read said.
-///
-/// A file that cannot be read is not a file with nothing in it. It is a file nobody has
-/// looked at, and calling it clean is the one wrong answer here that leaves nothing to
-/// argue with.
-fn the_text_at(path: &Path) -> String {
-    match fs::read_to_string(path) {
-        Ok(text) => text,
-        Err(problem) => panic!("{} cannot be read as source: {problem}", path.display()),
-    }
-}
-
-/// Every Rust file in the workspace: the crates, the gates' own library, and the gates
-/// themselves. The gates are in the walk because a gate is code in this repository too,
-/// and a rule applied only to other people's code is a rule about other people.
-fn every_rust_file_in_the_workspace() -> Vec<PathBuf> {
-    let mut found: Vec<PathBuf> = Vec::new();
-    for directory in ["crates", "src", "tests"] {
-        collect_rust_files(&the_path_to(directory), &mut found);
-    }
-    found
-}
-
-/// One directory's worth of the walk. A directory this gate cannot open is skipped rather
-/// than fatal, because a gate that stops on an unreadable directory judges nothing at all
-/// and says so by passing.
-fn collect_rust_files(directory: &Path, found: &mut Vec<PathBuf>) {
-    let Ok(entries) = fs::read_dir(directory) else {
-        return;
-    };
-    for entry in entries.flatten() {
-        let path = entry.path();
-        if path.is_dir() {
-            collect_rust_files(&path, found);
-        } else if path.extension().is_some_and(|ending| ending == "rs") {
-            found.push(path);
-        }
-    }
-}
-
 /// Every body in every Rust file of the workspace, with the file each was found in. One
 /// walk, so the count this gate reports and the refusals it makes come from one reading.
 fn every_body_in_the_workspace() -> Vec<ABodyInAFile> {
     let mut found: Vec<ABodyInAFile> = Vec::new();
-    for path in every_rust_file_in_the_workspace() {
+    for path in scanning::every_rust_file_in_the_workspace() {
         found.extend(
             the_bodies_in(&the_text_at(&path))
                 .into_iter()
@@ -932,7 +893,7 @@ fn two_slashes_written_inside_a_string_are_one_line_and_not_two() {
 /// would be a lie told with a green tick.
 #[test]
 fn no_body_in_the_workspace_is_longer_than_twenty_lines() {
-    let files = every_rust_file_in_the_workspace();
+    let files = scanning::every_rust_file_in_the_workspace();
     let bodies = every_body_in_the_workspace();
     let refused = the_bodies_too_long_in_the_workspace(&bodies);
 

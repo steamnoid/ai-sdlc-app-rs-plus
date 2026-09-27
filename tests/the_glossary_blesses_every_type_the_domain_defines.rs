@@ -33,10 +33,11 @@
 //! happened to reach.
 
 use std::fmt::Write as _;
-use std::fs;
 use std::path::{Path, PathBuf};
 
-use aisdlc_gates::scanning::{HowTheFileIsWritten, WhatIsWrittenThere};
+use aisdlc_gates::scanning::{
+    self, HowTheFileIsWritten, WhatIsWrittenThere, the_root_of_the_checkout, the_text_at,
+};
 
 /// The four keywords a type is declared with, and no others.
 ///
@@ -94,41 +95,6 @@ fn normalised(text: &str) -> String {
         .filter(|character| character.is_alphanumeric())
         .flat_map(char::to_lowercase)
         .collect()
-}
-
-/// The root of this checkout, found by walking up from where cargo compiled this file.
-///
-/// `crates` is what is worth walking up to, because it is in the root of the system and
-/// the document of the names is beside it.
-fn the_root_of_the_checkout() -> PathBuf {
-    let mut here = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    while !here.join(THE_DIRECTORY_OF_THE_SYSTEM).is_dir() {
-        assert!(
-            here.pop(),
-            "no crates/ directory above where this file was compiled"
-        );
-    }
-    here
-}
-
-/// The text of the file at `path`, or a panic naming the file and what the read said.
-///
-/// A file that cannot be read is not a file that has nothing in it. It is a file nobody has
-/// looked at, and agreeing with it silently is the one wrong answer available here that
-/// leaves nothing to argue with, because every other refusal names a type in a file and a
-/// file that was never opened is the one failure with nothing at all to say.
-fn the_text_at(path: &Path) -> String {
-    match fs::read_to_string(path) {
-        Ok(text) => text,
-        Err(problem) => panic!("{} cannot be read as source: {problem}", path.display()),
-    }
-}
-
-/// The glossary as it stands on disk, read on every call so that an edit to the document
-/// is an edit to this gate, with nothing re-declared here to fall behind.
-fn the_glossary_text() -> String {
-    let path = the_root_of_the_checkout().join(THE_DOCUMENT_OF_THE_NAMES);
-    the_text_at(&path)
 }
 
 /// The document with the section of prohibitions taken out, which is the only form the
@@ -200,7 +166,7 @@ fn code_spans(text: &str) -> Vec<String> {
 /// reading the same document had nothing left to refuse. A prohibition read as a term is
 /// exactly backwards, and this repository has now made that mistake twice in two shapes.
 fn the_blessed_names() -> Vec<String> {
-    let glossary = the_glossary_text();
+    let glossary = scanning::the_glossary_text();
     let without_the_prohibitions = the_document_with_the_banned_section_removed(&glossary);
     let without_the_refusals = the_document_with_the_not_columns_blanked(&without_the_prohibitions);
     let mut entries = bolded_entries(&without_the_refusals);
@@ -279,42 +245,6 @@ fn with_the_refusal_emptied(line: &str, column: Option<usize>) -> String {
         cells[column] = String::new();
     }
     cells.join("|")
-}
-
-/// The `.rs` files of the system, which is `crates/` and nothing else.
-///
-/// **`aisdlc-gates` is not walked, and that is a decision rather than an oversight.** It is
-/// a package of the workspace and deliberately not a part of the system, and this rule is
-/// about the code of the system. Its own library is read for banned vocabulary by
-/// `a_name_is_never_generic_vocabulary`, and its types are the subject of the section of
-/// the glossary headed "How a file is read by the gates" — which is the section to extend
-/// if this rule is ever meant to reach them.
-fn every_rust_file_of_the_system() -> Vec<PathBuf> {
-    let root = the_root_of_the_checkout();
-    let mut found: Vec<PathBuf> = Vec::new();
-    collect_rust_files_under(&root.join(THE_DIRECTORY_OF_THE_SYSTEM), &mut found);
-    found
-}
-
-/// One directory's worth of the walk, and the files in it appended to the ones found.
-///
-/// A directory this gate cannot open is skipped rather than fatal, and the trade is paid
-/// for from the other side: `the_walk_read_the_crates_of_the_system` asks the walk what it
-/// found, so a root that stopped being walkable is a count of zero rather than an
-/// agreement. **A gate that stopped reading judges nothing at all and says so by passing**,
-/// which is the one failure this repository exists to make impossible.
-fn collect_rust_files_under(directory: &Path, found: &mut Vec<PathBuf>) {
-    let Ok(entries) = fs::read_dir(directory) else {
-        return;
-    };
-    for entry in entries.flatten() {
-        let path = entry.path();
-        if path.is_dir() {
-            collect_rust_files_under(&path, found);
-        } else if path.extension().is_some_and(|ending| ending == "rs") {
-            found.push(path);
-        }
-    }
 }
 
 /// Every type declared in `source`, read out of the stretches that are code.
@@ -451,7 +381,7 @@ fn the_types_the_glossary_does_not_bless_in(
 fn the_types_the_system_does_not_bless() -> Vec<ATypeTheGlossaryDoesNotBless> {
     let blessed = the_blessed_names();
     let mut refused: Vec<ATypeTheGlossaryDoesNotBless> = Vec::new();
-    for file in every_rust_file_of_the_system() {
+    for file in scanning::every_rust_file_of_the_system() {
         let source = the_text_at(&file);
         refused.extend(the_types_the_glossary_does_not_bless_in(
             &file, &source, &blessed,
@@ -627,7 +557,7 @@ fn a_type_the_glossary_does_name_is_not_reported() {
 
 #[test]
 fn the_walk_read_the_crates_of_the_system() {
-    let found = every_rust_file_of_the_system();
+    let found = scanning::every_rust_file_of_the_system();
     assert!(
         !found.is_empty(),
         "the walk opened no .rs file under {}, so it agreed with a directory it never read",

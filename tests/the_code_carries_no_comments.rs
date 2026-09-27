@@ -30,10 +30,12 @@
 //! is wrong somewhere" is a gate nobody can act on.
 
 use std::fmt::Write as _;
-use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
-use aisdlc_gates::scanning::{AStretchOfTheFile, HowTheFileIsWritten, WhatIsWrittenThere};
+use aisdlc_gates::scanning::{
+    self, AStretchOfTheFile, HowTheFileIsWritten, WhatIsWrittenThere, the_root_of_the_checkout,
+    the_text_at,
+};
 
 /// What a comment above a declaration begins with, and the only third character this gate
 /// allows. A fourth slash is still this: it is documentation, and the first character after
@@ -138,79 +140,11 @@ fn what_a_refused_comment_says(the_file: &Path, refused: &[AStretchOfTheFile]) -
 /// is the file and the line, not how many there were.
 fn what_the_workspace_would_have_to_answer_for() -> String {
     let mut said = String::new();
-    for path in every_rust_file_in_the_workspace() {
+    for path in scanning::every_rust_file_in_the_workspace() {
         let refused = comments_refused_in(&the_text_at(&path));
         said.push_str(&what_a_refused_comment_says(&path, &refused));
     }
     said
-}
-
-/// Every Rust file this repository is made of, found by walking down from its root.
-///
-/// The three roots are the three places this workspace keeps code: the gates' own library,
-/// every crate under `crates/`, and `tests/`. **`crates` is walked whole rather than
-/// `crates/*/src`** because a rule about the code of this repository is not a rule about
-/// one package's layout, and a crate's own tests are code here too. The gates' own files
-/// are in the walk for the same reason a rule applied only to other people's code is a rule
-/// about other people: a gate that does not read itself has a hole shaped like itself.
-fn every_rust_file_in_the_workspace() -> Vec<PathBuf> {
-    let mut found: Vec<PathBuf> = Vec::new();
-    for root in ["src", "crates", "tests"] {
-        collect_rust_files(&the_root_of_the_checkout().join(root), &mut found);
-    }
-    found
-}
-
-/// One directory's worth of the walk, and the files in it appended to the ones already
-/// found.
-///
-/// A directory that cannot be opened is skipped rather than fatal, and that is the one
-/// decision here that is not free: it trades a loud failure for a quiet pass. The trade is
-/// covered from the other side by `the_walk_read_a_file_under_every_root_and_found_documentation`,
-/// which asks each of the three roots how many files were read out of it, so a root that
-/// stopped being walkable shows up as a count of zero rather than as an agreement.
-fn collect_rust_files(directory: &Path, found: &mut Vec<PathBuf>) {
-    let Ok(entries) = fs::read_dir(directory) else {
-        return;
-    };
-    for entry in entries.flatten() {
-        let path = entry.path();
-        if path.is_dir() {
-            collect_rust_files(&path, found);
-        } else if path.extension().is_some_and(|ending| ending == "rs") {
-            found.push(path);
-        }
-    }
-}
-
-/// The root of this checkout, found by walking up from where cargo compiled this file.
-///
-/// `CARGO_MANIFEST_DIR` is fixed by cargo when this file is compiled and names the checkout
-/// itself, so this is a thing a reader can follow and not a thing a test has to be
-/// configured with. `crates` is what is worth walking up to, because it is in every root
-/// and none of the three would be found without it.
-fn the_root_of_the_checkout() -> PathBuf {
-    let mut here = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    while !here.join("crates").is_dir() {
-        assert!(
-            here.pop(),
-            "no crates/ directory above where this file was compiled"
-        );
-    }
-    here
-}
-
-/// The text of the file at `path`, or a panic naming the file and what the read said.
-///
-/// A file that cannot be read is not a file that has nothing in it. It is a file nobody has
-/// looked at, and agreeing with it silently is the one wrong answer here that leaves nothing
-/// to argue with, because every other refusal this gate makes names a comment in a file and
-/// a file that was never opened is the one failure with nothing at all to say.
-fn the_text_at(path: &Path) -> String {
-    match fs::read_to_string(path) {
-        Ok(text) => text,
-        Err(problem) => panic!("{} cannot be read as source: {problem}", path.display()),
-    }
 }
 
 /// How many of the files the walk found sit under `root`, which is how this gate asks
@@ -222,7 +156,7 @@ fn the_text_at(path: &Path) -> String {
 /// roots and would look exactly like a walk that opened nothing.
 fn how_many_were_found_under(root: &str) -> usize {
     let under = the_root_of_the_checkout().join(root);
-    every_rust_file_in_the_workspace()
+    scanning::every_rust_file_in_the_workspace()
         .iter()
         .filter(|path| path.starts_with(&under))
         .count()
@@ -242,7 +176,7 @@ fn how_many_documentation_comments_are_in(source: &str) -> usize {
 
 /// How many comments in this repository are documentation, over every file the walk found.
 fn how_many_documentation_comments_the_workspace_holds() -> usize {
-    every_rust_file_in_the_workspace()
+    scanning::every_rust_file_in_the_workspace()
         .iter()
         .map(|path| how_many_documentation_comments_are_in(&the_text_at(path)))
         .sum()

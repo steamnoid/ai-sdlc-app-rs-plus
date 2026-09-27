@@ -45,6 +45,7 @@
 //! no `path` in it, and is caught anyway: a crate of this workspace is one whose directory
 //! sits under `crates/`, and that is asked about as well as the path.
 
+use aisdlc_gates::scanning::the_root_of_the_checkout;
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::PathBuf;
 
@@ -382,23 +383,6 @@ fn the_crate_directories() -> Vec<PathBuf> {
         }
     }
     found
-}
-
-/// The root of the checkout, found by walking up from where cargo compiled this file.
-///
-/// `CARGO_MANIFEST_DIR` is fixed by cargo when this file is compiled and names the checkout
-/// itself, so it is a thing a reader can follow and not a thing a test has to be configured
-/// with. `crates/` is the thing worth walking up to, because it is the workspace and the
-/// rule is about the workspace.
-fn the_root_of_the_checkout() -> PathBuf {
-    let mut here = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    while !here.join("crates").is_dir() {
-        assert!(
-            here.pop(),
-            "no crates/ directory above where this file was compiled"
-        );
-    }
-    here
 }
 
 /// The dependencies one manifest declares, read out of every table it may declare one in.

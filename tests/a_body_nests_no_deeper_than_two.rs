@@ -22,9 +22,9 @@
 //! is a line and an offset into it.
 
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
-use aisdlc_gates::scanning::{HowTheFileIsWritten, WhatIsWrittenThere};
+use aisdlc_gates::scanning::{self, HowTheFileIsWritten, WhatIsWrittenThere};
 
 /// The words a control-flow construct begins with.
 ///
@@ -199,31 +199,6 @@ fn the_deepest_nesting_in(source: &str) -> (usize, usize) {
         reading.over_a_stretch(stretch.text(), stretch.line_it_starts_on());
     }
     reading.what_it_found()
-}
-
-/// Every `.rs` file in the workspace, sorted, so a refusal names a path.
-fn every_rust_file_in_the_workspace() -> Vec<PathBuf> {
-    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    let mut found = Vec::new();
-    for relative in ["src", "crates", "tests"] {
-        collect_rust_files_under(&root.join(relative), &mut found);
-    }
-    found.sort();
-    found
-}
-
-fn collect_rust_files_under(directory: &Path, found: &mut Vec<PathBuf>) {
-    let Ok(entries) = fs::read_dir(directory) else {
-        return;
-    };
-    for entry in entries.flatten() {
-        let path = entry.path();
-        if path.is_dir() {
-            collect_rust_files_under(&path, found);
-        } else if path.extension().is_some_and(|extension| extension == "rs") {
-            found.push(path);
-        }
-    }
 }
 
 /// Read one file and say what it found, or refuse to say anything about it.
@@ -462,7 +437,7 @@ trait Asking {
 
 #[test]
 fn the_walk_reads_the_files_before_it_judges_them() {
-    let files = every_rust_file_in_the_workspace();
+    let files = scanning::every_rust_file_in_the_workspace();
     assert!(
         files.len() > 5,
         "the walk read {} files, which is too few to be this repository's source",
@@ -482,7 +457,7 @@ fn the_walk_reads_the_files_before_it_judges_them() {
 #[test]
 fn no_file_in_the_workspace_nests_too_deeply() {
     let mut refused = Vec::new();
-    for path in every_rust_file_in_the_workspace() {
+    for path in scanning::every_rust_file_in_the_workspace() {
         let (depth, line) = what_one_file_says(&path).expect("every file can be read");
         if depth > THE_DEEPEST_NESTING_ALLOWED {
             refused.push(format!("{}:{} nests {} deep", path.display(), line, depth));

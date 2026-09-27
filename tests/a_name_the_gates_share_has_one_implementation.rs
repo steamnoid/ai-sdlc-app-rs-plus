@@ -17,60 +17,26 @@
 //! public place, and this gate is the argument for the second.
 
 use std::collections::BTreeMap;
-use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
-use aisdlc_gates::scanning::{HowTheFileIsWritten, WhatIsWrittenThere};
+use aisdlc_gates::scanning::{self, HowTheFileIsWritten, WhatIsWrittenThere, the_text_at};
 
 /// The helpers more than one gate has needed, and the place each one has to live.
 ///
 /// A gate may add a helper here. A gate may not define a helper of one of these names
 /// anywhere else, and the table is here so that the rule is a list a reader can check
 /// rather than a judgement about what counts as a helper.
-const THE_HELPERS_THE_GATES_SHARE: [&str; 5] = [
+const THE_HELPERS_THE_GATES_SHARE: [&str; 6] = [
     "the_root_of_the_checkout",
     "the_text_at",
-    "every_rust_file_in_the_workspace",
-    "collect_rust_files_under",
     "the_glossary_text",
+    "every_rust_file_under",
+    "every_rust_file_in_the_workspace",
+    "every_rust_file_of_the_system",
 ];
 
 /// Where a shared helper is allowed to be defined: the library, and nowhere else.
 const THE_LIBRARY: &str = "src/";
-
-/// Every `.rs` file under `tests/`, sorted, so a refusal names a path.
-fn every_test_file() -> Vec<PathBuf> {
-    let mut found = Vec::new();
-    collect_rust_files_under(&the_root_of_the_checkout().join("tests"), &mut found);
-    found.sort();
-    found
-}
-
-fn collect_rust_files_under(directory: &Path, found: &mut Vec<PathBuf>) {
-    let Ok(entries) = fs::read_dir(directory) else {
-        return;
-    };
-    for entry in entries.flatten() {
-        let path = entry.path();
-        if path.is_dir() {
-            collect_rust_files_under(&path, found);
-        } else if path.extension().is_some_and(|extension| extension == "rs") {
-            found.push(path);
-        }
-    }
-}
-
-fn the_root_of_the_checkout() -> PathBuf {
-    let mut here = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    while !here.join("crates").is_dir() {
-        assert!(here.pop(), "no crates/ directory above where this file was compiled");
-    }
-    here
-}
-
-fn the_text_at(path: &Path) -> String {
-    fs::read_to_string(path).unwrap_or_else(|why| panic!("{} must be readable: {why}", path.display()))
-}
 
 /// The lines of code a test file holds, so a definition inside a `///` is not counted.
 ///
@@ -93,8 +59,10 @@ fn the_code_lines_of(path: &Path) -> Vec<String> {
 /// can fix in a minute.
 fn every_line_of_every_test() -> BTreeMap<String, Vec<String>> {
     let mut lines = BTreeMap::new();
-    for path in every_test_file() {
-        let name = path.file_name().map_or_default(|n| n.to_string_lossy().to_string());
+    for path in scanning::every_rust_file_under(&["tests"]) {
+        let name = path
+            .file_name()
+            .map_or_default(|n| n.to_string_lossy().to_string());
         lines.insert(name, the_code_lines_of(&path));
     }
     lines
@@ -141,7 +109,7 @@ fn the_table_of_shared_helpers_is_not_empty() {
         "the table of shared helpers holds {} entries, which is too few to be the list",
         THE_HELPERS_THE_GATES_SHARE.len()
     );
-    let found = every_test_file();
+    let found = scanning::every_rust_file_under(&["tests"]);
     assert!(
         found.len() > 5,
         "the walk read {} test files, which is too few to be this repository's gates",
