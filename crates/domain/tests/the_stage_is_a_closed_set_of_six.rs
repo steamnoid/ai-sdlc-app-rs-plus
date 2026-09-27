@@ -29,7 +29,7 @@ const THE_SIX_STAGES_THE_SPECIFICATION_NAMES: [&str; 6] = [
 
 #[test]
 fn a_stage_is_written_with_its_own_name_in_capitals() {
-    let written: Vec<String> = EVERY_STAGE.iter().map(|stage| stage.to_string()).collect();
+    let written: Vec<String> = EVERY_STAGE.iter().map(ToString::to_string).collect();
     assert_eq!(
         written, THE_SIX_STAGES_THE_SPECIFICATION_NAMES,
         "a stage is an enum and it is written in capitals, and a reader reads the written form rather than the variant"
