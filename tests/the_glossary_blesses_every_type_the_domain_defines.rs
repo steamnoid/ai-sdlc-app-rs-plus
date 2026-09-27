@@ -9,11 +9,13 @@
 //! ## What is a type here, and what is not
 //!
 //! A `pub` `struct`, `enum`, `trait` or `type`, read out of the stretches a source file is
-//! made of and out of nothing else. **A `///`, a `//!` and a string are not code**, so a
-//! declaration written in one of them is a name a reader is being *told* about, and this
-//! is not the gate that judges it: `a_name_is_never_generic_vocabulary` already refuses a
-//! banned name found in a comment, which is the opposite direction, and a file that
-//! discusses a type must not be read as declaring one.
+//! made of and out of nothing else. **A comment is not code and a string is not code** —
+//! a `///`, a `//!`, a `/* */` and a string all say what the file holds rather than what the
+//! compiler is given — so a declaration written in one of them is a name a reader is being
+//! *told* about, and this is not the gate that judges it:
+//! `a_name_is_never_generic_vocabulary` already refuses a banned name found in a comment,
+//! which is the opposite direction, and a file that discusses a type must not be read as
+//! declaring one.
 //!
 //! ## The known state of the repository, which is not a passing rule
 //!
@@ -23,8 +25,8 @@
 //! purpose, and neither of the two available repairs is taken: weakening the gate so that
 //! the absence reads as agreement is the mistake this repository exists to not make, and
 //! writing a type to make the gate non-vacuous is a cycle that belongs to the domain and
-//! not to a gate. What is here instead is the evidence. The walk is asked what it found
-//! before anything is judged, and
+//! not to a gate. What is here instead is the evidence: the walk is asked what it found
+//! before anything is judged, and the fixture
 //! `a_type_the_glossary_does_not_name_is_reported_by_name` proves the judgement bites by
 //! handing the checker a type the glossary has never heard of. **Delete this file and the
 //! real assertion is worth nothing**, because it would be agreeing with whatever the walk
@@ -177,7 +179,11 @@ fn bolded_entries(text: &str) -> Vec<String> {
 /// fenced block, what it holds will be read as a name, and that is named here rather than
 /// fixed by a line that would change nothing until then.
 fn code_spans(text: &str) -> Vec<String> {
-    text.split('`').skip(1).step_by(2).map(String::from).collect()
+    text.split('`')
+        .skip(1)
+        .step_by(2)
+        .map(String::from)
+        .collect()
 }
 
 /// Every name the glossary blesses, in the order the document says them, normalised.
@@ -205,10 +211,11 @@ fn the_blessed_names() -> Vec<String> {
 /// The `.rs` files of the system, which is `crates/` and nothing else.
 ///
 /// **`aisdlc-gates` is not walked, and that is a decision rather than an oversight.** It is
-/// a package of the workspace and deliberately not a part of the system, and the two types
-/// it writes are named by the section of the glossary headed "How a file is read by the
-/// gates" and are judged there by `a_name_is_never_generic_vocabulary`, which does read
-/// them.
+/// a package of the workspace and deliberately not a part of the system, and this rule is
+/// about the code of the system. Its own library is read for banned vocabulary by
+/// `a_name_is_never_generic_vocabulary`, and its types are the subject of the section of
+/// the glossary headed "How a file is read by the gates" — which is the section to extend
+/// if this rule is ever meant to reach them.
 fn every_rust_file_of_the_system() -> Vec<PathBuf> {
     let root = the_root_of_the_checkout();
     let mut found: Vec<PathBuf> = Vec::new();
@@ -243,8 +250,106 @@ fn collect_rust_files_under(directory: &Path, found: &mut Vec<PathBuf>) {
 /// and is read as one. Nothing else in the file is read at all, which is what makes a
 /// declaration written in documentation, in a block comment or in a string a name the
 /// reader is told about rather than a name the file declares.
-fn the_types_declared_in(_source: &str) -> Vec<String> {
-    Vec::new()
+fn the_types_declared_in(source: &str) -> Vec<String> {
+    let mut names: Vec<String> = Vec::new();
+    for stretch in HowTheFileIsWritten::of(source).stretches() {
+        if stretch.kind() != WhatIsWrittenThere::Code {
+            continue;
+        }
+        names.extend(the_types_declared_on_one_line(stretch.text()));
+    }
+    names
+}
+
+/// The types this one line of code declares.
+///
+/// The `pub` is looked for at every word rather than assumed to be the first, because
+/// `#[derive(Clone)] pub struct WorkItemId(String);` is one line declaring one type, and
+/// a gate that misses a declaration because of where a formatter put an attribute is a
+/// gate that agrees with a formatting choice.
+fn the_types_declared_on_one_line(code: &str) -> Vec<String> {
+    let words = the_words_of_one_line(code);
+    let mut names: Vec<String> = Vec::new();
+    for (at, word) in words.iter().enumerate() {
+        if word.as_str() == "pub" {
+            collect_the_type_declared_after(&words, at + 1, &mut names);
+        }
+    }
+    names
+}
+
+/// The type the declaration beginning at `at` introduces, added to `names`.
+///
+/// The three steps are read in order and the first two are optional: a parenthesised
+/// visibility, a `const`, and then one of `THE_TYPE_KEYWORDS`. **Nothing is looked for
+/// *somewhere ahead***, because `pub use domain::type_name;` holds the letters of a keyword
+/// and declares no type at all — and a keyword is a whole word, which is why the words are
+/// read first and the name is read out of them rather than out of the text.
+fn collect_the_type_declared_after(words: &[String], at: usize, names: &mut Vec<String>) {
+    let mut at = at;
+    if words.get(at).is_some_and(|word| word.starts_with('(')) {
+        at += 1;
+    }
+    if words.get(at).is_some_and(|word| word.as_str() == "const") {
+        at += 1;
+    }
+    if let Some(name) = the_name_a_type_keyword_opens(words, at) {
+        names.push(name);
+    }
+}
+
+/// The name the keyword at `at` opens, or nothing when the word there opens no type.
+///
+/// The name is the run of letters and digits after the keyword, so `WorkItem<T>` and
+/// `Stage;` are each the one name rather than the name and its punctuation: a unit struct
+/// is `Stage` and not `Stage;`.
+fn the_name_a_type_keyword_opens(words: &[String], at: usize) -> Option<String> {
+    let keyword = words.get(at)?;
+    if !THE_TYPE_KEYWORDS.contains(&keyword.as_str()) {
+        return None;
+    }
+    let named: String = words
+        .get(at + 1)?
+        .chars()
+        .take_while(|character| character.is_alphanumeric() || *character == '_')
+        .collect();
+    (!named.is_empty()).then_some(named)
+}
+
+/// The words one line of code is written in, with a parenthesised group held as one word.
+///
+/// `pub(crate)` is one step of a declaration and `pub(crate` is not, and the difference is
+/// a bracket — which is why this cannot be `split_whitespace`, and why a bracket is also
+/// where one word ends and the next begins. `#[derive(Clone)]` therefore reads as two words
+/// and not as one, and the keyword after the attribute is still a word of its own.
+fn the_words_of_one_line(code: &str) -> Vec<String> {
+    let mut words: Vec<String> = Vec::new();
+    let mut current = String::new();
+    let mut how_many_brackets_are_open: usize = 0;
+    for character in code.chars() {
+        let closing = usize::from(character == ')');
+        how_many_brackets_are_open = how_many_brackets_are_open.saturating_sub(closing);
+        if how_many_brackets_are_open == 0 && begins_a_word(character) {
+            words.push(std::mem::take(&mut current));
+        }
+        if !character.is_whitespace() {
+            current.push(character);
+        }
+        how_many_brackets_are_open += usize::from(character == '(');
+    }
+    words.push(current);
+    words.retain(|word| !word.is_empty());
+    words
+}
+
+/// Whether this character begins a word rather than continuing the one before it.
+///
+/// White space begins a word and is not part of either, and so does the bracket that opens
+/// a parenthesised group, because that group is one step of a declaration and the thing
+/// before it is a word of its own. A closing bracket is neither: it belongs to the group it
+/// closes, and the white space after it is what begins the next word.
+fn begins_a_word(character: char) -> bool {
+    character.is_whitespace() || character == '('
 }
 
 /// The types in one file the glossary does not bless, each with the file it came from.
@@ -275,7 +380,9 @@ fn the_types_the_system_does_not_bless() -> Vec<ATypeTheGlossaryDoesNotBless> {
     let mut refused: Vec<ATypeTheGlossaryDoesNotBless> = Vec::new();
     for file in every_rust_file_of_the_system() {
         let source = the_text_at(&file);
-        refused.extend(the_types_the_glossary_does_not_bless_in(&file, &source, &blessed));
+        refused.extend(the_types_the_glossary_does_not_bless_in(
+            &file, &source, &blessed,
+        ));
     }
     refused
 }
@@ -451,7 +558,9 @@ fn the_walk_read_the_crates_of_the_system() {
     assert!(
         !found.is_empty(),
         "the walk opened no .rs file under {}, so it agreed with a directory it never read",
-        the_root_of_the_checkout().join(THE_DIRECTORY_OF_THE_SYSTEM).display()
+        the_root_of_the_checkout()
+            .join(THE_DIRECTORY_OF_THE_SYSTEM)
+            .display()
     );
 }
 
