@@ -22,6 +22,7 @@
 //! build found. The reasoning is why the rule exists and does not change from run to run;
 //! the assertion is what the walk actually read.
 
+use std::fmt::Write as _;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -163,73 +164,12 @@ fn the_lines_with_code_in(source: &str) -> Vec<usize> {
     lines
 }
 
-/// A function of exactly `counted` counted lines and nothing else inside it. The two braces
-/// are counted like any other line, so a caller asking for twenty-one gets twenty-one.
-fn a_function_of(counted: usize) -> String {
-    a_function_of_with(counted, A_LINE_OF_CODE, 0)
-}
-
-/// A function of exactly `counted` counted lines, with `filler` written inside it once for
-/// each of the `lines` asked for.
+/// Every line counted in the body, and nothing else: the lines between its two braces that
+/// have code written on them.
 ///
-/// `filler` is a line that is not code — a line of documentation, or an empty line —
-/// because those are the two the rule does not count, and it is written before the code so
-/// that a fixture with both in it is the fixture for a body that is long and short at once.
-fn a_function_of_with(counted: usize, filler: &str, lines: usize) -> String {
-    let mut source = String::from("fn a_function() {\n");
-    for _ in 0..lines {
-        source.push_str(filler);
-        source.push('\n');
-    }
-    for _ in 0..counted.saturating_sub(2) {
-        source.push_str(A_LINE_OF_CODE);
-        source.push('\n');
-    }
-    source.push_str("}\n");
-    source
-}
-
-/// A function holding a block of twenty-five counted lines inside it: the block opens on
-/// the second line and closes on the twenty-sixth, and the function's own body runs from
-/// the first to the twenty-seventh. Both are over twenty, and the two of them are told
-/// apart by the line each opens on.
-fn a_function_holding_a_block_of_twenty_five_lines() -> String {
-    let mut source = String::from("fn a_function() {\n    loop {\n");
-    for _ in 0..23 {
-        source.push_str(A_LINE_OF_CODE);
-        source.push('\n');
-    }
-    source.push_str("    }\n}\n");
-    source
-}
-
-/// A function of four counted lines in which one of them writes a brace inside a string a
-/// value holds, because that is the case a walk reading text rather than stretches gets
-/// wrong: it ends the body at the brace in the string and counts two lines where there are
-/// four.
-fn a_function_holding_a_brace_in_a_string() -> String {
-    String::from("fn a_function() {\n    let kept = \"{ and }\";\n    let one = 1;\n}\n")
-}
-
-/// How many small methods the `impl` fixture holds, which is what makes its block thirty
-/// lines long: the brace that opens it, two lines for each method, and the brace that
-/// closes it.
-const THE_METHODS_IN_THE_IMPLEMENTATION: usize = 14;
-
-/// An `impl` block of thirty lines holding fourteen methods whose bodies are one line each.
-///
-/// The block is longer than the rule allows and is not a function body, and the fourteen
-/// bodies inside it are shorter than the rule allows. Both halves of that are the same
-/// assertion: the walk finds the methods and does not find the block.
-fn an_implementation_of_thirty_lines() -> String {
-    let mut source = String::from("impl AWorkItem {\n");
-    for _ in 0..THE_METHODS_IN_THE_IMPLEMENTATION {
-        source.push_str("    /// what this method is for\n    fn a_method() -> u8 { 1 }\n");
-    }
-    source.push_str("}\n");
-    source
-}
-
+/// The two braces have code written on them, which is what "counted from `{` to `}` inclusive"
+/// means, and comparing lines rather than counting stretches is what makes a line holding two
+/// stretches — a comment and the code after it — count once.
 fn the_lines_counted_in(body: &ABodyInTheCode, lines_with_code: &[usize]) -> Vec<usize> {
     lines_with_code
         .iter()
@@ -239,9 +179,16 @@ fn the_lines_counted_in(body: &ABodyInTheCode, lines_with_code: &[usize]) -> Vec
 }
 
 /// A body begins where the body before it is not this one: the lines of one body are
-/// written together, and that is the only thing this relies on.
+/// written together, and that is the only thing this relies on. The function is part of the
+/// question because a `fn` written inside another `fn` is walked twice — once as a block
+/// inside the function around it, and once as the function it is — and those two are two
+/// bodies that happen to open on the same line.
 fn a_body_begins_at(at: usize, lines: &[ALineInABody]) -> bool {
-    at == 0 || lines[at].the_body_opens_at != lines[at - 1].the_body_opens_at
+    if at == 0 {
+        return true;
+    }
+    lines[at].the_function != lines[at - 1].the_function
+        || lines[at].the_body_opens_at != lines[at - 1].the_body_opens_at
 }
 
 /// Write one counted line into `into`, with the function it is in and the place its body
@@ -261,13 +208,273 @@ fn write_the_lines_counted_in(
     }
 }
 
+/// Every place in the code of the file holding one of `these`, in the order the file writes
+/// them, and the character written there.
+///
+/// **A brace inside a string is in a stretch of its own kind and is not here**, and neither
+/// is a brace inside a line of documentation. That is the whole reason this walks stretches
+/// rather than text: a `{` is a character a value holds, and a walk that counted it would
+/// close a body in the middle of a line.
+fn every_place_holding_one_of(source: &str, these: &str) -> Vec<(char, APlaceInTheFile)> {
+    let mut places: Vec<(char, APlaceInTheFile)> = Vec::new();
+
+    for stretch in the_code_stretches_in(source) {
+        for (how_far_into_it, character) in stretch.text().char_indices() {
+            if these.contains(character) {
+                let is_at = APlaceInTheFile::on(stretch.line_it_starts_on(), how_far_into_it);
+                places.push((character, is_at));
+            }
+        }
+    }
+    places
+}
+
+/// Every brace written in the code of the file, in the order the file writes them: which
+/// way it opens, and where. Nothing pairs them here — pairing is what tells a body from a
+/// list of braces, and `every_body_from` is where that happens.
+fn the_braces_in_the_code_of(source: &str) -> Vec<ABraceInTheCode> {
+    every_place_holding_one_of(source, "{}")
+        .into_iter()
+        .map(|(character, is_at)| ABraceInTheCode {
+            is_opening: character == '{',
+            is_at,
+        })
+        .collect()
+}
+
+/// Every semicolon written in the code of the file, in the order the file writes them.
+///
+/// A semicolon ends a statement, and a semicolon before any brace of a declaration ends the
+/// declaration itself, which is how a `trait` method is recognised.
+fn the_semicolons_in_the_code_of(source: &str) -> Vec<APlaceInTheFile> {
+    every_place_holding_one_of(source, ";")
+        .into_iter()
+        .map(|(_, is_at)| is_at)
+        .collect()
+}
+
+/// Every `fn` written in the code of the file, in the order the file writes them, each with
+/// the place it is written and the name it was given.
+///
+/// A `fn` inside a string is text a value holds and a `fn` in a line of documentation is
+/// something a reader is shown, and neither of them declares a function.
+fn every_function_written_in(source: &str) -> Vec<AFunctionWritten> {
+    let mut written: Vec<AFunctionWritten> = Vec::new();
+
+    for stretch in the_code_stretches_in(source) {
+        written.extend(the_functions_named_in(
+            stretch.text(),
+            stretch.line_it_starts_on(),
+        ));
+    }
+    written
+}
+
+/// The `fn` written in one line of code, as the place it is written and the name after it.
+///
+/// A `fn` inside a longer word is not a declaration — `fnord` is a name and not a function —
+/// so the two characters on either side of it decide, and that is the same question
+/// `a_name_is_never_generic_vocabulary` asks about the last word of a name.
+fn the_functions_named_in(code: &str, the_line: usize) -> Vec<AFunctionWritten> {
+    let mut written: Vec<AFunctionWritten> = Vec::new();
+    let mut from = 0;
+
+    while let Some(at) = code[from..].find("fn") {
+        let begins = from + at;
+        from = begins + 2;
+        if a_whole_word_is_at(code, begins) {
+            let is_written_at = APlaceInTheFile::on(the_line, begins);
+            written.push(AFunctionWritten {
+                is_written_at,
+                the_name: the_name_after(code, from),
+            });
+        }
+    }
+    written
+}
+
+/// Whether the `fn` at `at` is a whole word rather than two letters inside a longer name.
+fn a_whole_word_is_at(code: &str, at: usize) -> bool {
+    let before = code[..at].chars().next_back();
+    let after = code[at + 2..].chars().next();
+
+    !is_part_of_a_name(before) && !is_part_of_a_name(after)
+}
+
+/// Whether this character is one an identifier is made of, which is a letter, a digit or an
+/// underscore and nothing else. Nothing at all is none of them, and that is how the
+/// question is answered at the end of a line and at the end of the file.
+fn is_part_of_a_name(character: Option<char>) -> bool {
+    character.is_some_and(|one| one.is_alphanumeric() || one == '_')
+}
+
+/// The name written after a `fn`, which is the run of characters an identifier is made of
+/// from there on.
+///
+/// The name is empty when nothing follows the `fn` on that line, which is a `fn` and its
+/// name written on two lines. Nothing in this repository is written that way, and a refusal
+/// naming a function by nothing would say nothing anybody could act on — so an empty name
+/// is carried rather than invented, and the count of the body is unaffected either way.
+fn the_name_after(code: &str, from: usize) -> String {
+    code[from..]
+        .trim_start()
+        .chars()
+        .take_while(|character| character.is_alphanumeric() || *character == '_')
+        .collect()
+}
+
+/// The brace the body of the function declared at `is_written_at` opens with, and nothing at
+/// all when the declaration has no body.
+///
+/// From the `fn` onwards the earlier of the two decides what a declaration is: an opening
+/// brace is the body, and a semicolon before any brace is a function declared without one,
+/// which is what a `trait` method is. **The walk is anchored on `fn` and not on any brace**
+/// because an `impl` block of thirty lines is not a function body, and a gate that refused
+/// it would be refusing something this rule does not name.
+fn where_the_body_begins(
+    is_written_at: APlaceInTheFile,
+    braces: &[ABraceInTheCode],
+    semicolons: &[APlaceInTheFile],
+) -> Option<ABraceInTheCode> {
+    let the_body_opens_at = the_first_opening_brace_after(is_written_at, braces);
+    if a_semicolon_comes_first(is_written_at, semicolons, the_body_opens_at) {
+        return None;
+    }
+    the_body_opens_at
+}
+
+/// The first brace after the declaration at `is_written_at` that opens something, and
+/// nothing at all for a `fn` with no opening brace after it — a declaration that opens
+/// nothing and closes nothing, which a compiled file does not have.
+fn the_first_opening_brace_after(
+    is_written_at: APlaceInTheFile,
+    braces: &[ABraceInTheCode],
+) -> Option<ABraceInTheCode> {
+    braces
+        .iter()
+        .find(|brace| brace.is_opening && brace.is_at > is_written_at)
+        .copied()
+}
+
+/// Whether a semicolon is written between the declaration at `is_written_at` and the brace
+/// that would be its body, which is what a function declared without a body looks like.
+///
+/// `None` is earlier than every place there is, because it is where nothing was found: a
+/// declaration with a semicolon after it and no brace after that has no body, and a
+/// declaration with neither after it has no body either. The two are told apart by the
+/// semicolon rather than by the brace, and that is the whole of the comparison below.
+///
+/// A semicolon inside a parameter's own type — `fn a(what: [u8; 4])` — is a semicolon the
+/// gate cannot see past, and such a function is read as declared without a body. It is
+/// written down rather than worked around: the fix is a bracket the walk would have to
+/// understand, and this rule is worth a reader understanding rather than a walk guessing.
+fn a_semicolon_comes_first(
+    is_written_at: APlaceInTheFile,
+    semicolons: &[APlaceInTheFile],
+    the_body_opens_at: Option<ABraceInTheCode>,
+) -> bool {
+    let the_first = semicolons
+        .iter()
+        .copied()
+        .find(|place| *place > is_written_at);
+
+    the_first.is_some() && the_first < the_body_opens_at.map(|brace| brace.is_at)
+}
+
+/// The bodies of one function: the one its own `fn` opens, and every block written inside
+/// it, in the order the file writes them. Nothing at all for a function declared without a
+/// body, which is a `trait` method and has nothing in it to count.
+///
+/// **Every `{` inside a function body is judged, and that is where the strictness is.** A
+/// `match` with twenty-five arms, an `impl` written inside a function, a struct literal
+/// twenty-five lines long: each of them is a body somebody has to read and each of them is
+/// refused. What it costs is a false alarm on a table of values written inline, and the
+/// answer to that is the glossary's eighth naming rule — a table is a `const`, and a
+/// `const` is not a function body — rather than an exception here.
+fn the_bodies_of(
+    function: &AFunctionWritten,
+    braces: &[ABraceInTheCode],
+    semicolons: &[APlaceInTheFile],
+) -> Vec<ABodyInTheCode> {
+    let Some(opens_with) = where_the_body_begins(function.is_written_at, braces, semicolons) else {
+        return Vec::new();
+    };
+
+    every_body_from(the_place_of(opens_with, braces), braces)
+}
+
+/// Where in the list of braces this one is, which is what lets a walk that has found a brace
+/// go on from it rather than read the whole list a second time.
+fn the_place_of(opens_with: ABraceInTheCode, braces: &[ABraceInTheCode]) -> usize {
+    braces
+        .iter()
+        .position(|brace| brace.is_at == opens_with.is_at)
+        .expect("a brace that came out of this list is in this list")
+}
+
+/// Every body written inside the one that opens at `at` in this list, and that one itself
+/// first, each paired with the brace that closes it.
+///
+/// A stack of opening braces is what pairs them, because the file writes them in order and
+/// the last one opened is the first one closed — which is how a `match` arm and a block
+/// written inside it come back as two bodies rather than as two halves of one. The bodies
+/// therefore come out in the order their braces closed, which is the reverse of the order
+/// they were written in, and turning them round is what puts a function's own body ahead of
+/// what is written inside it.
+///
+/// The walk stops at the closing brace that empties the stack, and a file whose braces do not
+/// balance ends the walk with the bodies it did find rather than reading to the end of it.
+fn every_body_from(at: usize, braces: &[ABraceInTheCode]) -> Vec<ABodyInTheCode> {
+    let mut unclosed: Vec<APlaceInTheFile> = Vec::new();
+    let mut closed: Vec<ABodyInTheCode> = Vec::new();
+
+    for brace in &braces[at..] {
+        if brace.is_opening {
+            unclosed.push(brace.is_at);
+            continue;
+        }
+        closed.push(the_body_closing_at(brace, &mut unclosed));
+        if unclosed.is_empty() {
+            break;
+        }
+    }
+    closed.reverse();
+    closed
+}
+
+/// The body this closing brace closes, which is the one the last opening brace opened.
+fn the_body_closing_at(
+    closes: &ABraceInTheCode,
+    unclosed: &mut Vec<APlaceInTheFile>,
+) -> ABodyInTheCode {
+    let opens_at = unclosed
+        .pop()
+        .expect("a closing brace closes the last opening brace, or the file does not compile");
+
+    ABodyInTheCode {
+        opens_at,
+        closes_at: closes.is_at,
+    }
+}
+
 /// Every counted line in every body of the file, and the body it was counted in.
 ///
 /// A body is what the rule judges and the lines are what it counts, so one line is written
 /// once for each body it lies in: a line inside a block written inside a function is
-/// counted for that block and for the function, and both are judged.
-fn the_lines_in_the_bodies_of(_source: &str) -> Vec<ALineInABody> {
-    Vec::new()
+/// counted for that block and for the function, and both of those are judged. The lines of
+/// one body are written together, and that is what makes a body recoverable from them.
+fn the_lines_in_the_bodies_of(source: &str) -> Vec<ALineInABody> {
+    let braces = the_braces_in_the_code_of(source);
+    let semicolons = the_semicolons_in_the_code_of(source);
+    let lines_with_code = the_lines_with_code_in(source);
+    let mut lines: Vec<ALineInABody> = Vec::new();
+
+    for function in every_function_written_in(source) {
+        for body in the_bodies_of(&function, &braces, &semicolons) {
+            write_the_lines_counted_in(&function.the_name, &body, &lines_with_code, &mut lines);
+        }
+    }
+    lines
 }
 
 /// Every body in the file, in the order the file writes them, with the lines counted in
@@ -384,14 +591,26 @@ fn collect_rust_files(directory: &Path, found: &mut Vec<PathBuf>) {
 fn every_body_in_the_workspace() -> Vec<ABodyInAFile> {
     let mut found: Vec<ABodyInAFile> = Vec::new();
     for path in every_rust_file_in_the_workspace() {
-        found.extend(the_bodies_in(&the_text_at(&path)).into_iter().map(|the_body| {
-            ABodyInAFile {
-                file: path.to_path_buf(),
-                the_body,
-            }
-        }));
+        found.extend(
+            the_bodies_in(&the_text_at(&path))
+                .into_iter()
+                .map(|the_body| ABodyInAFile {
+                    file: path.clone(),
+                    the_body,
+                }),
+        );
     }
     found
+}
+
+/// The bodies the rule refuses out of the ones already read, kept as its own step so that a
+/// test can assert what the walk found before it asks what the walk refused.
+fn the_bodies_too_long_in_the_workspace(bodies: &[ABodyInAFile]) -> Vec<ABodyInAFile> {
+    bodies
+        .iter()
+        .filter(|one| one.the_body.lines_counted > THE_MOST_LINES_IN_A_BODY)
+        .cloned()
+        .collect()
 }
 
 /// What a refusal says when there is one, and what it says when there is none, because a
@@ -403,20 +622,87 @@ fn what_a_refusal_says(refused: &[ABodyInAFile], bodies_found: usize) -> String 
             "every one of the {bodies_found} bodies in this workspace is at most twenty lines"
         );
     }
-    let mut said = format!(
-        "a body over twenty lines, out of {bodies_found} bodies read:\n"
-    );
+    let mut said = format!("a body over twenty lines, out of {bodies_found} bodies read:\n");
+
     for one in refused {
-        said.push_str(&format!(
-            "{}:{} `fn {}` opens on line {} and holds {} counted lines\n",
+        writeln!(
+            said,
+            "{}:{} `fn {}` opens there and holds {} counted lines",
             one.file.display(),
             one.the_body.opens_on_line,
             one.the_body.the_function,
-            one.the_body.opens_on_line,
             one.the_body.lines_counted
-        ));
+        )
+        .expect("a `String` is written to rather than a file, so this cannot fail");
     }
     said
+}
+
+/// A function of exactly `counted` counted lines and nothing else inside it. The two braces
+/// are counted like any other line, so a caller asking for twenty-one gets twenty-one.
+fn a_function_of(counted: usize) -> String {
+    a_function_of_with(counted, A_LINE_OF_CODE, 0)
+}
+
+/// A function of exactly `counted` counted lines, with `filler` written inside it once for
+/// each of the `lines` asked for.
+///
+/// `filler` is a line that is not code — a line of documentation, or an empty line —
+/// because those are the two the rule does not count, and it is written before the code so
+/// that a fixture with both in it is the fixture for a body that is long and short at once.
+fn a_function_of_with(counted: usize, filler: &str, lines: usize) -> String {
+    let mut source = String::from("fn a_function() {\n");
+    for _ in 0..lines {
+        source.push_str(filler);
+        source.push('\n');
+    }
+    for _ in 0..counted.saturating_sub(2) {
+        source.push_str(A_LINE_OF_CODE);
+        source.push('\n');
+    }
+    source.push_str("}\n");
+    source
+}
+
+/// A function holding a block of twenty-five counted lines inside it: the block opens on
+/// the second line and closes on the twenty-sixth, and the function's own body runs from
+/// the first to the twenty-seventh. Both are over twenty, and the two of them are told
+/// apart by the line each opens on.
+fn a_function_holding_a_block_of_twenty_five_lines() -> String {
+    let mut source = String::from("fn a_function() {\n    loop {\n");
+    for _ in 0..23 {
+        source.push_str(A_LINE_OF_CODE);
+        source.push('\n');
+    }
+    source.push_str("    }\n}\n");
+    source
+}
+
+/// A function of four counted lines in which one of them writes a brace inside a string a
+/// value holds, because that is the case a walk reading text rather than stretches gets
+/// wrong: it ends the body at the brace in the string and counts two lines where there are
+/// four.
+fn a_function_holding_a_brace_in_a_string() -> String {
+    String::from("fn a_function() {\n    let kept = \"{ and }\";\n    let one = 1;\n}\n")
+}
+
+/// How many small methods the `impl` fixture holds, which is what makes its block thirty
+/// lines long: the brace that opens it, two lines for each method, and the brace that
+/// closes it.
+const THE_METHODS_IN_THE_IMPLEMENTATION: usize = 14;
+
+/// An `impl` block of thirty lines holding fourteen methods whose bodies are one line each.
+///
+/// The block is longer than the rule allows and is not a function body, and the fourteen
+/// bodies inside it are shorter than the rule allows. Both halves of that are the same
+/// assertion: the walk finds the methods and does not find the block.
+fn an_implementation_of_thirty_lines() -> String {
+    let mut source = String::from("impl AWorkItem {\n");
+    for _ in 0..THE_METHODS_IN_THE_IMPLEMENTATION {
+        source.push_str("    /// what this method is for\n    fn a_method() -> u8 { 1 }\n");
+    }
+    source.push_str("}\n");
+    source
 }
 
 /// A body of exactly twenty-one counted lines is one too many, and the refusal names it
@@ -559,17 +845,24 @@ fn a_function_of_one_counted_line_is_not_refused() {
 }
 
 /// A `trait` method is declared with a semicolon and no braces at all, so there is no body
-/// to count. A walk that counted the lines after it would be counting the rest of the
-/// file, and the fixture is here to say that nothing is reported for one.
+/// to count. The fixture carries a real function after it, because a walk that ran on past
+/// the semicolon would report that function's body twice and a walk that reported nothing
+/// at all would pass the same assertion.
 #[test]
 fn a_trait_method_declared_without_a_body_has_nothing_to_count() {
     let source = String::from(
         "trait TheClock {\n    fn what_time_is_it(&self) -> u8;\n}\nfn a_function() {\n    let one = 1;\n}\n",
     );
+    let bodies = the_bodies_in(&source);
 
-    assert!(
-        the_lines_in_the_bodies_of(&source).is_empty(),
-        "a declaration with a semicolon and no braces has no body, and only the function after it is one"
+    assert_eq!(
+        bodies.len(),
+        1,
+        "a declaration with a semicolon and no braces has no body, and the function after it has one"
+    );
+    assert_eq!(
+        bodies[0].the_function, "a_function",
+        "the one body found is the function's, and the trait method's is not there"
     );
 }
 
@@ -599,7 +892,11 @@ fn a_brace_written_inside_a_string_is_not_a_brace_of_the_file() {
     let source = a_function_holding_a_brace_in_a_string();
     let bodies = the_bodies_in(&source);
 
-    assert_eq!(bodies.len(), 1, "the braces in the string did not end the body");
+    assert_eq!(
+        bodies.len(),
+        1,
+        "the braces in the string did not end the body"
+    );
     assert_eq!(
         bodies[0].lines_counted, 4,
         "the body is four counted lines, and the string did not close it early"
@@ -636,22 +933,18 @@ fn two_slashes_written_inside_a_string_are_one_line_and_not_two() {
 #[test]
 fn no_body_in_the_workspace_is_longer_than_twenty_lines() {
     let files = every_rust_file_in_the_workspace();
+    let bodies = every_body_in_the_workspace();
+    let refused = the_bodies_too_long_in_the_workspace(&bodies);
+
     assert!(
         !files.is_empty(),
-        "the walk read no file at all, which is a pass this gate has not earned"
+        "the walk read no file at all, a pass not earned"
     );
-    let bodies = every_body_in_the_workspace();
     assert!(
         !bodies.is_empty(),
-        "the walk read {} files and found no body in any of them, which is a pass it has not earned either",
+        "no body in the {} files the walk read",
         files.len()
     );
-    let refused: Vec<ABodyInAFile> = bodies
-        .iter()
-        .filter(|one| one.the_body.lines_counted > THE_MOST_LINES_IN_A_BODY)
-        .cloned()
-        .collect();
-
     assert!(
         refused.is_empty(),
         "{}",
