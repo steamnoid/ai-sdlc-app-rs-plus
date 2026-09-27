@@ -178,11 +178,20 @@ aisdlc-domain  ──►  (nobody)
 aisdlc-run     ──►  domain
 aisdlc-outside ──►  run, domain
 aisdlc-desk    ──►  outside
+aisdlc-gates   ──►  (nobody)     reads the crates; never calls them
 ```
 
 **`aisdlc-domain` has no `[dependencies]` section at all.** Not "few", not "only serde".
 Nothing. This is the one rule the compiler enforces without being asked, and every other
 boundary rests on it.
+
+`aisdlc-gates` is a package of the workspace and **not a part of the system**: its library
+is empty and its whole content is `tests/`. It is the only code here allowed to *read* the
+other crates rather than call them, which is why it cannot sit inside a layer — a gate that
+shares a dependency direction with the thing it checks is not a boundary. It is also the
+reason the workspace is not a virtual manifest: **a virtual workspace has no
+integration-test target**, so without this package `cargo test` is green while running
+nothing.
 
 Ports are traits declared in `aisdlc-run` and implemented in `aisdlc-outside`, so the
 adapters know the ports and the ports know nothing about the adapters. **`aisdlc-desk` is
@@ -311,6 +320,7 @@ crates/
   run/        the use cases, the ports as traits, the router, suspend and resume
   outside/    github, the project on disk, programs, the container, the model, sqlite
   desk/       the composition root: the only place a concrete type is named
+src/lib.rs    an empty library, so that tests/ is a test target at all
 tests/        the gates. One file per rule, and the file name states the rule.
 real/         a real model, a real repository, a real container; ignored by default
 docs/         domain-glossary.md, the source of truth for naming

@@ -2,6 +2,26 @@
 members = ["crates/domain", "crates/run", "crates/outside"]
 resolver = "3"
 
+# The gates are a package of the workspace and are deliberately not a part of the system.
+# They read the other crates instead of calling them, which is the one thing no layer of
+# the system is allowed to do, so they cannot live inside a layer. A virtual workspace has
+# no integration-test target, so without this package `tests/` is a directory cargo never
+# looks at and `cargo test` is green while running nothing.
+[package]
+name = "aisdlc-gates"
+description = "The rules, each one a test that refuses to let its rule be broken"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license-file.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[lib]
+path = "src/lib.rs"
+
 [workspace.package]
 version = "0.1.0"
 edition = "2024"

@@ -515,6 +515,19 @@ captured by anything and outlives the process.
 | the run | `aisdlc-run` | the domain, and its own ports | no organisation, no filesystem, no runtime |
 | the outside | `aisdlc-outside` | everything | implements the ports and nothing else |
 | the desk | `aisdlc-desk` | everything | the only place a concrete type is named |
+| **the gates** | `aisdlc-gates` | **nothing, at all** | **reads the other crates and never calls them** |
+
+**`aisdlc-gates` is a package of the workspace and is not a part of the system.** Its
+library is empty and its whole content is `tests/`. It is the only code here permitted to
+**read** the other crates rather than call them, which is why it cannot live inside a
+layer: a gate sharing a dependency direction with the thing it checks is not a boundary.
+It is the one place a test helper may use a dev-dependency, because test code is allowed a
+crate production code is not, and a helper production could also reach has stopped being
+one.
+
+**A virtual workspace has no integration-test target.** Without this package `tests/` is a
+directory cargo never looks at, and `cargo test` is green while running nothing — which is
+the failure mode every gate in this repository exists to make impossible.
 
 **`aisdlc-domain` has no `[dependencies]` section at all.** Not "few", not "only serde".
 Nothing. This is the one rule that the compiler enforces without being asked, and it is the
