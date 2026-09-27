@@ -46,14 +46,16 @@ gates each carrying a copy is five names waiting to disagree.
 | | |
 |---|---|
 | the workspace and four packages | `aisdlc-domain`, `aisdlc-run`, `aisdlc-outside`, `aisdlc-gates` |
-| `Stage`, `Role`, `WorkItem`, `Approval` | named in the glossary, **not yet built** |
-| two gates | the domain's manifest and every edge in the workspace |
-| the other fifteen gates | not built |
-| the domain, the run, the adapters, the desk | not built |
+| `Stage` and `Role` | built, each a closed set of six and five, and both transcribe the specification's names |
+| `WorkItem`, `Approval`, the transition table | named in the glossary, **not yet built** |
+| ten gates | the manifest, the edges, comments, line length, nesting, names, synonyms, `#[allow]`, the glossary, and one implementation per shared name |
+| eight gates | not built, and each is a wish in `AGENTS.md` until the code it judges exists |
+| the run, the adapters, the desk, the ports | not built |
 
 **A green suite is not a working system.** Nothing here has run against a real model, a
 real repository or a real pull request, and a claim that this ships anything would be a
-claim about a program that does not exist.
+claim about a program that does not exist. The suite is 216 assertions about rules and two
+closed sets; it is the scaffolding, and the scaffolding is the part that is finished.
 
 ## Running it
 

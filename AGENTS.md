@@ -280,28 +280,49 @@ convention.
 **Every rule in this file has a gate. A rule with no gate is not a rule, it is a wish**,
 and a wish is worse than nothing because a reader stops checking.
 
-| Rule | Gate |
+| Rule | Gate | Built |
+|---|---|---|
+| No `unsafe` | `#![forbid(unsafe_code)]` — the compiler | yes |
+| Every public item documented | `#![deny(missing_docs)]` — the compiler | yes |
+| A set of stages is closed and has six | `the_stage_is_a_closed_set_of_six` | yes |
+| A set of roles is closed and has five | `the_role_is_a_closed_set_of_five` | yes |
+| The domain depends on nothing | `the_domain_depends_on_nothing` | yes |
+| Dependencies point inward | `the_dependencies_point_inward` | yes |
+| A crate from outside is welcome or not | `every_third_party_crate_is_on_its_crate_allowlist` | **not built** |
+| No comments | `the_code_carries_no_comments` | yes |
+| A body is at most 20 lines | `a_function_body_is_no_longer_than_twenty_lines` | yes |
+| A body nests two deep at most | `a_body_nests_no_deeper_than_two` | yes |
+| No generic vocabulary | `a_name_is_never_generic_vocabulary` | yes |
+| A synonym is never used | `a_synonym_is_never_used` | yes |
+| No `#[allow]` | `no_allow_silences_a_lint` | yes |
+| A type is a term the glossary blesses | `the_glossary_blesses_every_type_the_domain_defines` | yes |
+| A name the gates share has one implementation | `a_name_the_gates_share_has_one_implementation` | yes |
+| The source is read, not searched | `the_scanner_tells_a_comment_from_a_string` | yes |
+| The documents say what the code does | `the_documentation_says_what_the_code_does` | **not built** |
+| No `dyn` in the core | `the_core_never_names_a_trait_object` | **not built** |
+| Green with no credentials | `no_test_reads_an_environment_variable`, `the_gate_workflow_needs_no_secret` | **not built** |
+| An ignored test says why | `an_ignored_test_says_why_it_is_ignored` | **not built** |
+| No placeholder | `no_placeholder_is_left_in_the_code` | **not built** |
+| A cycle is a RED and a GREEN | `every_change_is_a_red_then_a_green` | **not built** |
+
+**A rule with a gate that is not built is a wish, and it is in this table as a wish.** The
+ones marked not built are the rules a later phase will need, and each arrives with the
+slice that first meets it — a gate written before the code it judges is a gate that cannot
+be seen to fail, which is worth nothing.
+
+**The transition table and the biconditional are compiler-enforced, not read from this
+file.** `legal_transitions_from` is an exhaustive `match` on `Stage`, so a seventh stage
+does not compile until the table is completed. The table below is here for a reader, and
+`the_documentation_says_what_the_code_does` is the gate that will hold it to the code.
+
+| From | To |
 |---|---|
-| No `unsafe` | `#![forbid(unsafe_code)]` — the compiler |
-| Every public item documented | `#![deny(missing_docs)]` — the compiler |
-| The transition table is exhaustive | an exhaustive `match` — the compiler |
-| An inconsistent `WorkItem` cannot be built | private fields and three validating doors — the compiler |
-| The domain depends on nothing | `the_domain_depends_on_nothing` |
-| Dependencies point inward | `the_dependencies_point_inward` |
-| No organisation or runtime in the run | `every_third_party_crate_is_on_its_crate_allowlist` |
-| No comments | `the_code_carries_no_comments` |
-| A body is at most 20 lines | `a_function_body_is_no_longer_than_twenty_lines` |
-| A body nests two deep at most | `a_body_nests_no_deeper_than_two` |
-| No generic vocabulary | `a_name_is_never_generic_vocabulary` |
-| A synonym is never used | `a_synonym_is_never_used` |
-| A type is a term the glossary blesses | `the_glossary_blesses_every_type_the_domain_defines` |
-| The documents say what the code does | `the_documentation_says_what_the_code_does` |
-| No `dyn` in the core | `the_core_never_names_a_trait_object` |
-| Green with no credentials | `no_test_reads_an_environment_variable` and `the_gate_workflow_needs_no_secret` |
-| An ignored test says why | `an_ignored_test_says_why_it_is_ignored` |
-| No placeholder | `no_placeholder_is_left_in_the_code` |
-| No `#[allow]` | `no_allow_silences_a_lint` |
-| A cycle is a RED and a GREEN | `every_change_is_a_red_then_a_green` |
+| `IDLE` | `AWAITING_AGENT_PICKUP` |
+| `AWAITING_AGENT_PICKUP` | `IN_PROGRESS_BY_AGENT` |
+| `IN_PROGRESS_BY_AGENT` | `AWAITING_HUMAN_APPROVAL`, `AWAITING_AGENT_PICKUP` |
+| `AWAITING_HUMAN_APPROVAL` | `AWAITING_AGENT_PICKUP`, `DONE` |
+| `READY` | `AWAITING_AGENT_PICKUP` |
+| `DONE` | — terminal |
 
 **Two things every gate has in common.** It is exercised on input it must catch *and* on
 input it must leave alone, because a guard that has never been seen to fail is not evidence
@@ -321,15 +342,23 @@ written, not before.
 
 ```text
 crates/
-  domain/     WorkItem, Stage, Role, Approval, LEGAL_TRANSITIONS, transition
+  domain/     Stage, Role, WorkItem, Approval, the transition table and the two verbs
+    tests/    the domain's own tests, because a test importing the domain cannot live in
+              the root package and that package depends on nothing on purpose
   run/        the use cases, the ports as traits, the router, suspend and resume
   outside/    github, the project on disk, programs, the container, the model, sqlite
   desk/       the composition root: the only place a concrete type is named
-src/          the scanner the gates share, so that tests/ is a test target at all
+src/          the gates' library: the scanner, and the helpers the gates share
 tests/        the gates. One file per rule, and the file name states the rule.
 real/         a real model, a real repository, a real container; ignored by default
 docs/         domain-glossary.md, the source of truth for naming
 ```
+
+**A gate lives in the package whose rules it judges.** The rules about the gates' own code
+live in `tests/` at the root, which is the `aisdlc-gates` package; the rules about the
+domain live in `crates/domain/tests/`. The alternative — making the root package depend on
+the domain so that one `tests/` directory could hold everything — would have broken the one
+rule every other boundary rests on.
 
 ---
 
