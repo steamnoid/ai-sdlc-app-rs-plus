@@ -1,11 +1,11 @@
 //! The gate for RULE 1.4: a comment is a stretch of its own, and the only ones allowed
 //! are the two forms of documentation.
 //!
-//! `///` above an item and `//!` above a module are what a reader looks at first, and
-//! everything else that begins with two slashes is refused. That includes `TODO`,
-//! `FIXME`, `SAFETY`, a `NOLINT`, a commented-out line and a separator: a placeholder is
-//! an unfinished cycle, and a line of code that is not run is a line the reader has to
-//! decide whether to believe.
+//! `///` above a declaration and `//!` at the top of a file are what a reader looks at
+//! first, and everything else that begins with two slashes is refused. That includes
+//! `TODO`, `FIXME`, `SAFETY`, a `NOLINT`, a commented-out line and a separator: a
+//! placeholder is an unfinished cycle, and a line of code that is not run is a line the
+//! reader has to decide whether to believe.
 //!
 //! **This is not a style preference, it is a forcing function.** Every comment that would
 //! have been written is a place where the code failed to say something in the only
@@ -35,13 +35,17 @@ use std::path::{Path, PathBuf};
 
 use aisdlc_gates::scanning::{AStretchOfTheFile, HowTheFileIsWritten, WhatIsWrittenThere};
 
-/// What a comment above an item begins with, and the only third character this gate
-/// allows. A fourth slash is still this: it is documentation, and its first character after
+/// What a comment above a declaration begins with, and the only third character this gate
+/// allows. A fourth slash is still this: it is documentation, and the first character after
 /// the two is a third one.
-const DOCUMENTATION_OF_AN_ITEM: &str = "///";
+///
+/// It is named after where it stands rather than after what it documents, because the other
+/// of the two stands in a different place — and the two are not the same thing, which is
+/// why there are two prefixes here rather than one checked twice.
+const DOCUMENTATION_ABOVE_A_DECLARATION: &str = "///";
 
-/// What a comment above a module begins with: the two slashes and then an exclamation mark,
-/// which documents the file rather than whatever happens to be written under it.
+/// What the documentation of a module begins with: the two slashes and then an exclamation
+/// mark, which stands at the top of the file rather than above anything written in it.
 const DOCUMENTATION_OF_A_MODULE: &str = "//!";
 
 /// How much of a comment a refusal quotes, in characters. Enough to recognise the comment
@@ -56,7 +60,8 @@ const HOW_MANY_CHARACTERS_A_REFUSAL_QUOTES: usize = 60;
 /// does not allow it** — the rule is a prefix, and a prefix is the whole of the rule
 /// instead of a list of cases that grows one entry per exception somebody finds a use for.
 fn is_documentation(comment: &str) -> bool {
-    comment.starts_with(DOCUMENTATION_OF_AN_ITEM) || comment.starts_with(DOCUMENTATION_OF_A_MODULE)
+    comment.starts_with(DOCUMENTATION_ABOVE_A_DECLARATION)
+        || comment.starts_with(DOCUMENTATION_OF_A_MODULE)
 }
 
 /// Every comment in `source`, in the order the file has them.
@@ -83,7 +88,10 @@ fn the_comments_in(source: &str) -> Vec<AStretchOfTheFile> {
 /// kind of thing here, and the three are the same kind of thing because all three are a
 /// sentence in a file where the reader expected the language.
 fn comments_refused_in(source: &str) -> Vec<AStretchOfTheFile> {
-    Vec::new()
+    the_comments_in(source)
+        .into_iter()
+        .filter(|comment| !is_documentation(comment.text()))
+        .collect()
 }
 
 /// The first sixty characters of a comment, which is as much of it as a refusal quotes.
@@ -436,15 +444,15 @@ fn the_documentation_of_a_module_is_accepted() {
 }
 
 #[test]
-fn the_documentation_of_an_item_is_accepted() {
+fn the_documentation_above_a_declaration_is_accepted() {
     let accepted = the_one_comment_accepted_in(
-        "/// what a reader of the item needs",
+        "/// what a reader of the declaration needs",
         "three slashes document whatever is written under them",
     );
 
     assert_eq!(
         accepted.text(),
-        "/// what a reader of the item needs",
+        "/// what a reader of the declaration needs",
         "the whole fixture is the documentation it wrote"
     );
 }
