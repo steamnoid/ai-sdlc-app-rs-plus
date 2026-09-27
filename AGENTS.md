@@ -347,6 +347,27 @@ repository that needs a key to be tested is one whose tests are not run by every
 
 ---
 
+# Pushing
+
+**Push after every merge, and delete a worker branch once it is merged.**
+
+```bash
+git push origin main
+git push origin --delete agent/<name>
+```
+
+Deleting a merged branch is safe: its commits stay reachable from `main`, so only the name
+goes. Without it the repository accumulates one short-lived branch per gate and stops
+looking like a line of work.
+
+**This is the only rule here with no gate, and that is deliberate rather than an
+oversight.** Whether `main` is pushed is a fact about a remote, and a test cannot see a
+remote. Every other rule in this file has a test that refuses to let it be broken; this one
+has a sentence, and a sentence is worth exactly as much as the discipline of the person
+reading it.
+
+---
+
 # Backlog
 
 One slice, one cycle set, one gate. Never build everything at once.

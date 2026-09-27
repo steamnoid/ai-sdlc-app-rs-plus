@@ -1,0 +1,57 @@
+name: gate
+
+# The default suite reads no environment variable, reaches no network and needs no
+# credential. That is the hygiene rule asserted by this workflow rather than by a claim in
+# AGENTS.md, and it is why this job has no `secrets` of any kind: a test that needed a
+# credential would be a test that does not run for everybody.
+#
+# The e2e tier is deliberately not here. It needs a model and a credential, and a
+# repository that needs a key to be tested is one whose tests are not run by everybody.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gate:
+    name: gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install the toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --component clippy,rustfmt
+          rustup default stable
+
+      - name: Cache the build
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-
+
+      # A stale build runs another checkout's code and passes every test, so the run says
+      # which source it is about to compile before it believes any of it.
+      - name: Say which source is being built
+        run: cargo metadata --format-version 1 --no-deps | head -c 600
+
+      - name: Tests
+        run: cargo test --workspace --no-fail-fast
+
+      - name: Lint
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+      - name: Format
+        run: cargo fmt --all --check
+
+      - name: The documentation must build
+        run: cargo doc --workspace --no-deps
