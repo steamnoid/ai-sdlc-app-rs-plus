@@ -25,6 +25,3 @@
 //! reported as dead the moment the test that does not use it is compiled, and silencing
 //! that is `#[allow(dead_code)]` — which this repository forbids. A public item in a
 //! library is reachable, so nothing has to be silenced and the ban can stay absolute.
-
-pub mod scanning;
-
