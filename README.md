@@ -35,7 +35,9 @@ gates read that file rather than restating it, so they follow the document inste
 drifting from it.
 
 **A gate is a package, not a directory.** `aisdlc-gates` is the only code here permitted to
-*read* the other crates rather than call them, which is why it cannot sit inside a layer.
+*read* the other crates rather than call them, which is why it cannot sit inside a layer. Its
+library holds the code the gates share, because a test double is production code and five
+gates each carrying a copy is five names waiting to disagree.
 
 ## Where it is
 

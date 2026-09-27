@@ -518,12 +518,18 @@ captured by anything and outlives the process.
 | **the gates** | `aisdlc-gates` | **nothing, at all** | **reads the other crates and never calls them** |
 
 **`aisdlc-gates` is a package of the workspace and is not a part of the system.** Its
-library is empty and its whole content is `tests/`. It is the only code here permitted to
+library holds the code the gates share, and the rest is `tests/`. It is the only code here
+permitted to
 **read** the other crates rather than call them, which is why it cannot live inside a
 layer: a gate sharing a dependency direction with the thing it checks is not a boundary.
 It is the one place a test helper may use a dev-dependency, because test code is allowed a
 crate production code is not, and a helper production could also reach has stopped being
 one.
+
+**The shared code is public, and that is not a style choice.** A private helper in a test
+binary is reported dead the moment the test that does not use it is compiled, and silencing
+that is `#[allow(dead_code)]`. Five gates that each carried their own copy would need it
+five times, and a ban on `#[allow]` with five exemptions in it is not a ban.
 
 **A virtual workspace has no integration-test target.** Without this package `tests/` is a
 directory cargo never looks at, and `cargo test` is green while running nothing — which is
@@ -546,6 +552,45 @@ eight lines each and a reader can see the whole error message.
 **A file belongs to exactly one layer, and an LLM is a Layer B fact.** Reading the
 repository, writing files, running tests, keeping state and routing are all deterministic
 and belong outside the reasoning. Nothing in `aisdlc-domain` may reach for a model.
+
+---
+
+## How a file is read by the gates
+
+**A gate cannot use a regex crate.** The gates may have dev-dependencies and this is the
+only thing that may, but a rule enforced by a pattern is a rule nobody can read when it
+stops matching. The source is read the way a person reads it, one character at a time, and
+that walk is this repository's own code.
+
+**`HowTheFileIsWritten`** — a source file, taken apart into the stretches it is made of,
+each one knowing what it is and where it starts. It is a value rather than a service,
+because six gates ask the same two questions of it and the answer must not be six
+answers.
+
+**`AStretchOfTheFile`** — a run of characters that are all the same kind of thing: code, a
+comment, a string, a character, or the space between. It carries the line it starts on,
+because a gate that says "there is a comment somewhere" is a gate nobody can act on.
+
+**The four kinds that are not code, and why each one has to be told apart.**
+
+| What it is | Told from what | What it would be mistaken for otherwise |
+|---|---|---|
+| a `//` comment | two slashes outside everything else | a scheme in a URL inside a string |
+| a `///` or `//!` comment | a third slash, or two then one | the ordinary comment, and then a rule is broken by its own documentation |
+| a string | `"`, `r"`, `b"`, `br"` and every raw-string hash count | code, and the slashes in a URL become a comment |
+| a character | `'x'`, and **not** `'a` | a lifetime, and half a file turns into a runaway character literal |
+
+**A lifetime is not a character literal, and this is the one that bites.** `let binding =
+'a;` is a binding; `'a'` is a character. A scanner that treats the quote as opening a
+character swallows the rest of the file, and the guard that reports "a comment" on a file
+with none is a guard nobody trusts afterwards. **A `'` that is followed by an identifier
+and then a `'` is a character; a `'` followed by anything else, or by an identifier that
+does not close, is a lifetime** — and a raw identifier's `r#'name#` is a third case that
+exists.
+
+**Block comments nest in Rust**, unlike in C. `/* /* */ */` is one comment, and a scanner
+that stops at the first `*/` treats the rest as code — which would let a whole file hide
+behind a comment the gate believed it had read.
 
 ---
 
