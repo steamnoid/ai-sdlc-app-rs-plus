@@ -43,7 +43,18 @@
 use std::fmt::Write as _;
 use std::path::Path;
 
-use aisdlc_gates::scanning::{self, HowTheFileIsWritten, WhatIsWrittenThere};
+use aisdlc_gates::scanning::{self, AStretchOfTheFile, HowTheFileIsWritten, WhatIsWrittenThere};
+
+/// The four ways this repository's code can begin to silence a lint, each written up to
+/// and including the bracket that opens the list of lints: the outer and the inner form
+/// of each of the two attribute names.
+///
+/// The list is the whole rule, and it is four entries rather than a search for the word
+/// `allow`, because a search for that one word would refuse `#[expect]`. It is four rather
+/// than "any attribute but these" because an exception list is a hole the next person
+/// finds a use for.
+const THE_OPENINGS_OF_A_SUPPRESSION: [&str; 4] =
+    ["#[allow(", "#[expect(", "#![allow(", "#![expect("];
 
 /// One attribute that silences a lint: the line it opens on, and the attribute as the file
 /// wrote it.
@@ -61,12 +72,108 @@ struct ASuppression {
 
 /// Every suppression in `source`, in the order the file wrote them.
 ///
-/// It is empty on purpose: a reader that has not been told what a suppression is cannot
-/// be asked to find one, and a reader that finds them all without being told has learned
-/// the rule from the reader rather than from the specification. Every refusal above is
-/// this list, and this list is what has to change.
-fn the_suppressions_in(_source: &str) -> Vec<ASuppression> {
-    Vec::new()
+/// **The rule is one thing written four ways, and writing it as four rules is how it
+/// would be got wrong.** `#[allow(…)]`, `#[expect(…)]` and the inner form of each all
+/// silence a lint, `cargo clippy --workspace --all-targets -- -D warnings` already denies
+/// every warning they could silence, and so none of the four openings is in a file this
+/// repository ships. There is no list of exceptions, because a list of the exceptions is a
+/// rule with holes in it and every hole in it is one somebody will use.
+fn the_suppressions_in(source: &str) -> Vec<ASuppression> {
+    let reading = HowTheFileIsWritten::of(source);
+    let every_stretch = reading.stretches();
+
+    (0..every_stretch.len())
+        .filter_map(|at| the_suppression_opening_at(every_stretch, at))
+        .collect()
+}
+
+/// The suppression this stretch opens, and nothing at all when it opens none.
+///
+/// Only a stretch of code can open one. An `#[allow(…)]` inside a string is a fixture and
+/// an `#[allow(…)]` inside a comment is this repository writing down the rule, and a
+/// reader that could not tell those two from code would refuse this very file — so the
+/// kind is asked before the text is searched, and not after.
+fn the_suppression_opening_at(
+    every_stretch: &[AStretchOfTheFile],
+    at: usize,
+) -> Option<ASuppression> {
+    let stretch = &every_stretch[at];
+    if stretch.kind() != WhatIsWrittenThere::Code {
+        return None;
+    }
+    let where_it_opens = where_a_suppression_opens_in(stretch.text())?;
+
+    Some(ASuppression {
+        the_line_it_starts_on: stretch.line_it_starts_on(),
+        the_attribute_as_written: the_attribute_written_from(every_stretch, at, where_it_opens),
+    })
+}
+
+/// Where in this line of code a suppression opens, counted in bytes from the beginning of
+/// the line, and nothing at all when the line opens none.
+///
+/// The earliest of the four openings is the one reported, because a line holding two
+/// suppressions is two refusals and not one, and reporting only the first would make the
+/// second something a reader believes was not found.
+fn where_a_suppression_opens_in(code: &str) -> Option<usize> {
+    let openings = THE_OPENINGS_OF_A_SUPPRESSION
+        .iter()
+        .filter_map(|opening| code.find(opening));
+
+    openings.min()
+}
+
+/// The attribute as the file wrote it, byte for byte, from where it opens to the bracket
+/// that closes it.
+///
+/// **Every stretch is carried, not only the code, because the refusal has to quote the
+/// attribute as written.** An attribute spread over two lines quotes as two lines, and
+/// the indentation of its second line is written by the file, so a quote rebuilt from the
+/// code alone would drop it and read as a different attribute. The line it opens on is cut
+/// at the opening, so the quote is the attribute and nothing else: a refusal quoting the
+/// whole line would make the reader find the attribute inside the quote.
+///
+/// The loop is the attribute still being open, and it is asked before each stretch rather
+/// than after it, because the space between the closing bracket and the end of its line is
+/// written by the file too and is not part of the attribute. An attribute whose brackets
+/// never close quotes to the end of the file, and that is the right answer rather than a
+/// graceful one: such a file does not compile, and a reader looking at a hundred lines of
+/// quote is being told exactly that.
+fn the_attribute_written_from(
+    every_stretch: &[AStretchOfTheFile],
+    at: usize,
+    where_it_opens: usize,
+) -> String {
+    let mut written = String::from(&every_stretch[at].text()[where_it_opens..]);
+    let mut how_many_brackets_are_open = what_this_does_to_the_open_brackets(&every_stretch[at]);
+
+    for stretch in &every_stretch[at + 1..] {
+        if how_many_brackets_are_open == 0 {
+            break;
+        }
+        written.push_str(stretch.text());
+        how_many_brackets_are_open += what_this_does_to_the_open_brackets(stretch);
+    }
+    written
+}
+
+/// What one stretch does to the number of brackets left open: one more for every `[` and
+/// one fewer for every `]`, and nothing at all when the stretch is not code.
+///
+/// Only code counts, and that is the whole reason this takes a stretch rather than a
+/// line of text. A bracket inside a string is text a value holds and closes nothing, so
+/// `#[expect(dead_code, reason = "]")]` is written, is legal, and counting the string's
+/// bracket would read the attribute as still open and quote the rest of the file with it.
+fn what_this_does_to_the_open_brackets(stretch: &AStretchOfTheFile) -> isize {
+    if stretch.kind() != WhatIsWrittenThere::Code {
+        return 0;
+    }
+    stretch
+        .text()
+        .bytes()
+        .filter(|byte| *byte == b'[' || *byte == b']')
+        .map(|byte| if byte == b'[' { 1 } else { -1 })
+        .sum()
 }
 
 /// How many attributes `source` writes in its own code, counted rather than judged.
@@ -95,8 +202,9 @@ fn how_many_attributes_the_workspace_holds() -> usize {
         .sum()
 }
 
-/// What one file's refusals say: the file, the line, and the attribute, one attribute to a
-/// line.
+/// What one file's refusals say: the file, the line it opens on, and the attribute exactly
+/// as the file wrote it, one refusal to a line apart from the lines the attribute itself
+/// is written over.
 ///
 /// Nothing at all when there is nothing to refuse, and that is the whole report rather
 /// than a line saying everything is fine — the count of what a gate refused is what a
@@ -173,10 +281,7 @@ fn the_reading_saw_one_attribute_and_refused_nothing(source: &str, because: &str
         attributes_saw, 1,
         "{because}, and the reading saw {attributes_saw} attributes in it"
     );
-    assert!(
-        refused.is_empty(),
-        "{because}, and it refused: {refused:?}"
-    );
+    assert!(refused.is_empty(), "{because}, and it refused: {refused:?}");
 }
 
 #[test]
@@ -185,13 +290,11 @@ fn an_allow_of_dead_code_on_a_function_is_refused() {
     let refused = the_one_suppression_refused_in(source, "this is the plain case");
 
     assert_eq!(
-        refused.the_line_it_starts_on,
-        1,
+        refused.the_line_it_starts_on, 1,
         "the attribute is the first line of the file"
     );
     assert_eq!(
-        refused.the_attribute_as_written,
-        "#[allow(dead_code)]",
+        refused.the_attribute_as_written, "#[allow(dead_code)]",
         "and it is quoted whole, exactly as the file wrote it"
     );
 }
@@ -203,8 +306,7 @@ fn an_allow_of_a_clippy_lint_on_a_type_is_refused() {
         the_one_suppression_refused_in(source, "a lint of the pedantic group is the same escape");
 
     assert_eq!(
-        refused.the_attribute_as_written,
-        "#[allow(clippy::too_many_arguments)]",
+        refused.the_attribute_as_written, "#[allow(clippy::too_many_arguments)]",
         "the lint's own path is inside the brackets and is quoted along with them"
     );
 }
@@ -218,13 +320,11 @@ fn an_inner_allow_at_the_top_of_a_file_is_refused() {
     );
 
     assert_eq!(
-        refused.the_line_it_starts_on,
-        1,
+        refused.the_line_it_starts_on, 1,
         "an inner attribute stands at the top of a file and nowhere else in it"
     );
     assert_eq!(
-        refused.the_attribute_as_written,
-        "#![allow(unused_imports)]",
+        refused.the_attribute_as_written, "#![allow(unused_imports)]",
         "the exclamation mark is part of the attribute rather than a decoration on it"
     );
 }
@@ -238,8 +338,7 @@ fn an_allow_of_unsafe_code_is_refused() {
     );
 
     assert_eq!(
-        refused.the_attribute_as_written,
-        "#[allow(unsafe_code)]",
+        refused.the_attribute_as_written, "#[allow(unsafe_code)]",
         "and the rule has no exception, so neither does the reading"
     );
 }
@@ -253,8 +352,7 @@ fn an_expect_of_dead_code_is_refused() {
     );
 
     assert_eq!(
-        refused.the_attribute_as_written,
-        "#[expect(dead_code)]",
+        refused.the_attribute_as_written, "#[expect(dead_code)]",
         "a gate that caught `allow` and missed this would be a gate a reader trusts wrongly"
     );
 }
@@ -268,13 +366,11 @@ fn an_allow_written_over_two_lines_is_refused() {
     );
 
     assert_eq!(
-        refused.the_line_it_starts_on,
-        1,
+        refused.the_line_it_starts_on, 1,
         "and it is the line it opens on that is reported, because that is where it opens"
     );
     assert_eq!(
-        refused.the_attribute_as_written,
-        "#[allow(clippy::pedantic,\n    )]",
+        refused.the_attribute_as_written, "#[allow(clippy::pedantic,\n    )]",
         "and it is quoted whole, with the line it was written over and that line's indentation"
     );
 }
@@ -387,7 +483,8 @@ fn a_serde_is_accepted() {
 
 #[test]
 fn a_comment_naming_the_attribute_is_accepted() {
-    let source = "//! why #[allow(dead_code)] is not written here\n#[derive(Debug)]\nstruct AThing;\n";
+    let source =
+        "//! why #[allow(dead_code)] is not written here\n#[derive(Debug)]\nstruct AThing;\n";
 
     the_reading_saw_one_attribute_and_refused_nothing(
         source,
