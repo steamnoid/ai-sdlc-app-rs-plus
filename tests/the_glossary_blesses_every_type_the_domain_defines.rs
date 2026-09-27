@@ -192,20 +192,93 @@ fn code_spans(text: &str) -> Vec<String> {
 /// reading `a_name_is_never_generic_vocabulary` makes of the same document, and a second
 /// reading would be two answers to one question.
 ///
-/// **The list is far broader than the types the system declares, and a reader should know
-/// that before trusting it.** The document blesses every bolded phrase and every code span,
-/// so it blesses the words written in its own `Not` columns: `Task`, `Ticket`, `Job`,
-/// `Entity`, `Status`, `State`, `move_to` and `advance` are all in this list. The one
-/// prohibition that is removed is the banned section, because it is fenced; the `Not`
-/// columns are in tables and are not. That is a gap in the document rather than in this
-/// reading, it is the gap the glossary's own "How this file is read" table describes, and
-/// it is named here rather than quietly closed by a reading the other gate does not share.
+/// **A cell in a column headed `Not` is a prohibition, and a prohibition is not a name.**
+/// The document says so in its own "How this file is read" table, and the reading decides
+/// by the table's header row. Without that decision this list contained `Task`, `Ticket`,
+/// `Job`, `Entity`, `Status`, `State`, `move_to` and `advance` — the words the glossary
+/// bans — so a synonym and a blessed name were the same set of words, and a synonym gate
+/// reading the same document had nothing left to refuse. A prohibition read as a term is
+/// exactly backwards, and this repository has now made that mistake twice in two shapes.
 fn the_blessed_names() -> Vec<String> {
     let glossary = the_glossary_text();
     let without_the_prohibitions = the_document_with_the_banned_section_removed(&glossary);
-    let mut entries = bolded_entries(&without_the_prohibitions);
-    entries.extend(code_spans(&without_the_prohibitions));
+    let without_the_refusals = the_document_with_the_not_columns_blanked(&without_the_prohibitions);
+    let mut entries = bolded_entries(&without_the_refusals);
+    entries.extend(code_spans(&without_the_refusals));
     entries.iter().map(|entry| normalised(entry)).collect()
+}
+
+/// The document with every table cell in a column headed `Not` emptied.
+///
+/// The decision is by the header row, so it does not care which tables carry the column,
+/// which position it holds, or whether a table has one at all. A table the reading has not
+/// seen a header for is left exactly as it is, because inventing a rule for a shape it has
+/// not met is how a gate starts guessing.
+fn the_document_with_the_not_columns_blanked(document: &str) -> String {
+    let mut out = String::new();
+    let mut not_column: Option<usize> = None;
+    let mut row_in_this_table = 0;
+    for line in document.lines() {
+        out.push_str(&the_line_as_it_should_be_read(
+            line,
+            &mut not_column,
+            &mut row_in_this_table,
+        ));
+        out.push('\n');
+    }
+    out
+}
+
+/// One line, read the way the rest of the reading reads it: a header names the column, a
+/// separator is a separator, and anything after that has the refusal taken out of it.
+fn the_line_as_it_should_be_read(
+    line: &str,
+    not_column: &mut Option<usize>,
+    row_in_this_table: &mut usize,
+) -> String {
+    if !is_a_table_row(line) {
+        *not_column = None;
+        *row_in_this_table = 0;
+        return line.to_string();
+    }
+    if *row_in_this_table == 0 {
+        *not_column = the_column_a_table_refuses_in(line);
+    }
+    let read = if *row_in_this_table < 2 {
+        line.to_string()
+    } else {
+        with_the_refusal_emptied(line, *not_column)
+    };
+    *row_in_this_table += 1;
+    read
+}
+
+/// The position of a column headed `Not`, if the row is a header with one.
+fn the_column_a_table_refuses_in(line: &str) -> Option<usize> {
+    line.split('|')
+        .map(str::trim)
+        .position(|cell| cell.eq_ignore_ascii_case("not"))
+}
+
+/// A row of a table, as opposed to prose that happens to contain a vertical bar.
+fn is_a_table_row(line: &str) -> bool {
+    line.starts_with('|') && line.ends_with('|') && line.len() > 1
+}
+
+/// The row with a refusal taken out of it, and every other cell left exactly as written.
+///
+/// Splitting and joining is the whole implementation, and it keeps the padding of the
+/// surviving cells: a reader comparing a refused cell against a blessed one must not be
+/// able to tell them apart by a space.
+fn with_the_refusal_emptied(line: &str, column: Option<usize>) -> String {
+    let Some(column) = column else {
+        return line.to_string();
+    };
+    let mut cells: Vec<String> = line.split('|').map(str::to_string).collect();
+    if column < cells.len() {
+        cells[column] = String::new();
+    }
+    cells.join("|")
 }
 
 /// The `.rs` files of the system, which is `crates/` and nothing else.
@@ -578,5 +651,60 @@ fn the_glossary_blesses_every_type_the_domain_defines() {
     assert!(
         said.is_empty(),
         "these types are not terms the glossary blesses, by file and by name:\n{said}"
+    );
+}
+
+#[test]
+fn a_word_in_a_not_column_is_a_refusal_and_not_a_blessed_name() {
+    let blessed = the_blessed_names();
+    for refused in [
+        "Task",
+        "Ticket",
+        "Job",
+        "Entity",
+        "Status",
+        "State",
+        "Phase",
+        "Step",
+        "Owner",
+        "Assignee",
+        "Team",
+        "move_to",
+        "set_stage",
+        "advance",
+        "change_state",
+        "handle",
+        "check",
+        "verify",
+        "assert_valid",
+    ] {
+        assert!(
+            !blessed.contains(&normalised(refused)),
+            "{refused} is written in a Not column, which is a prohibition, and a prohibition read as a term is a synonym gate with nothing left to refuse"
+        );
+    }
+}
+
+#[test]
+fn a_word_in_an_ordinary_column_is_still_a_blessed_name() {
+    let blessed = the_blessed_names();
+    for name in ["WorkItem", "Stage", "Role", "Approval", "Repository"] {
+        assert!(
+            blessed.contains(&normalised(name)),
+            "{name} is in the ordinary text of the document and the reader emptied a column it should not have emptied"
+        );
+    }
+}
+
+#[test]
+fn a_prose_mention_of_a_refused_word_is_still_blessed() {
+    let blessed = the_blessed_names();
+    assert!(
+        !blessed.contains(&normalised("WrongWithCase")),
+        "a name that appears nowhere in the document is not in it, and this test is about the reader not inventing one"
+    );
+    assert!(
+        blessed.contains(&normalised("AnArtifactVersion")),
+        "a bolded entry in prose is blessed, because the reader empties cells and not words"
     );
 }
