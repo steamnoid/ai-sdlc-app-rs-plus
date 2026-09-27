@@ -80,8 +80,20 @@ reads them nine reads later reads what the first one read.
 `openai_compatible`, `openai_responses`. A closed set of four. Distinct from
 `AReasoningModel`, which is the thing that reasons; this is the company it works for.
 
-**`EveryStage`**, **`EveryRole`** — all six stages and all five disciplines, so a caller
-crossing one thing with every stage does not write a second list to keep in step.
+**`EVERY_STAGE`**, **`EVERY_ROLE`** — all six stages and all five disciplines, so a caller
+crossing one thing with every stage does not write a second list to keep in step. **Rust
+writes a constant in capitals and a `#[allow(non_upper_case_globals)]` is refused by a gate
+here, so these are the glossary's `EveryStage` and `EveryRole` in the language's own case.**
+The vocabulary guard normalises a name to letters and digits, so the two spellings are one
+name to it and one entry here blesses both.
+
+**A variant is the reading of a name and the capitals are the writing.** `Stage::Ready` is
+`READY`; `Role::Product` is `PO`. The two are one concept with two spellings, joined by one
+`Display` and one `TryFrom`, and the capitals exist in exactly one place. **The variant is
+the discipline rather than the acronym, and that is a decision rather than a coincidence:**
+clippy accepts `PO` and `QA` and refuses `DEV`, so writing two of the five one way on the
+strength of a letter count is a spelling a reader has to look up. All five are written the
+same way because the reader should not have to know which is which.
 
 **`AStageThatNobodyNamed`**, **`ARoleThatNobodyNamed`** — a name that is not one of the
 closed set. They exist because a document names its stages and roles in capitals and the
@@ -127,7 +139,7 @@ same reason the stages are a table.
 | Role | Meaning | Not |
 |---|---|---|
 | `PO` | product, accountable for what should be built | |
-| `DEV` | implementation, accountable for code | |
+| `DEV` | development, accountable for code | |
 | `QA` | quality, accountable for test strategy and verification | |
 | `SEC` | security, accountable for risk | |
 | `ARCH` | architecture, accountable for structure | `Owner`, `Assignee`, `Team` |
