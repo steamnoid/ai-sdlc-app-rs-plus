@@ -5,6 +5,7 @@
 //! is allowed whatever its last word is, which is what lets `WorkItem` exist while
 //! `item` sits on the list.
 
+use std::fmt::Write as _;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -20,7 +21,7 @@ const THE_DECLARATION_KEYWORDS: [&str; 7] =
 fn normalised(text: &str) -> String {
     text.chars()
         .filter(|character| character.is_alphanumeric())
-        .flat_map(|character| character.to_lowercase())
+        .flat_map(char::to_lowercase)
         .collect()
 }
 
@@ -28,7 +29,9 @@ fn normalised(text: &str) -> String {
 /// follows a lowercase one, which is the two breaks `work_item_id` and `SessionManager`
 /// between them both need. `ADataThing` is one spoken word here and not three, so the
 /// noun inside it is out of this guard's reach; that is a property of this rule and it
-/// is written down rather than pretended away.
+/// is written down rather than pretended away. `UseCase` is on the list and is two
+/// spoken words, so it is never the last one of anything and is caught as a family or
+/// not at all, which is the same fact seen from the other side.
 fn words_of(identifier: &str) -> Vec<String> {
     let mut words: Vec<String> = Vec::new();
     let mut current = String::new();
@@ -64,15 +67,40 @@ fn head_noun(identifier: &str) -> String {
     }
 }
 
-/// The judgement. Deliberately permissive while the tests at the foot of this file
-/// demand it be strict: everything a name is made of is read, and none of it is believed
-/// yet, so the first RED is that this lets every one of the fixtures through.
+/// Whether the glossary blesses this whole name, which is the exemption that lets
+/// `WorkItem` exist while `item` sits on the list. It is asked before either of the other
+/// two questions, because a name the document blesses is a name this rule cannot refuse.
+fn the_glossary_blesses(identifier: &str) -> bool {
+    the_blessed_names().contains(&normalised(identifier))
+}
+
+/// Whether the name ends on a noun the list refuses, which is the claim the last word of
+/// an identifier makes about what the thing is.
+fn the_name_ends_on_a_banned_noun(identifier: &str) -> bool {
+    banned_nouns().contains(&head_noun(identifier))
+}
+
+/// Whether the name is built on a family the list refuses. The family is looked for in the
+/// first spoken word and not in any word, so `BaseRepository` is refused and `database`,
+/// which merely holds the letters, is not.
+fn the_name_is_built_on_a_banned_family(identifier: &str) -> bool {
+    words_of(identifier)
+        .first()
+        .is_some_and(|first| banned_families().contains(first))
+}
+
+/// The judgement, in the order the questions are asked: the document's blessing, then the
+/// last word, then the family the name is built on. A name that answers no to all three
+/// is one the glossary allows, and the three questions are the whole rule rather than
+/// three samples of it.
 fn is_this_name_allowed(identifier: &str) -> bool {
-    let _spoken = words_of(identifier);
-    let _noun = head_noun(identifier);
-    let _nouns = banned_nouns();
-    let _families = banned_families();
-    true
+    if the_glossary_blesses(identifier) {
+        return true;
+    }
+    if the_name_ends_on_a_banned_noun(identifier) {
+        return false;
+    }
+    !the_name_is_built_on_a_banned_family(identifier)
 }
 
 /// The glossary as it stands on disk, read on every call so an edit to the list is an
@@ -268,11 +296,15 @@ fn the_blessed_names() -> Vec<String> {
     names.iter().map(|name| normalised(name)).collect()
 }
 
-/// Every Rust file under `crates/`, found by walking down from the root the workspace is
-/// in, so the gate reads the same files every agent of the run reads.
-fn every_rust_file_under_crates() -> Vec<PathBuf> {
+/// Every Rust file this workspace is made of, found by walking down from the root: the
+/// crates, and the gates' own library. The library is in the walk because a gate is code
+/// in this repository too, and a rule applied only to other people's code is a rule about
+/// other people.
+fn every_rust_file_in_the_workspace() -> Vec<PathBuf> {
     let mut found: Vec<PathBuf> = Vec::new();
-    collect_rust_files(&the_path_to("crates"), &mut found);
+    for directory in ["crates", "src"] {
+        collect_rust_files(&the_path_to(directory), &mut found);
+    }
     found
 }
 
@@ -280,9 +312,8 @@ fn every_rust_file_under_crates() -> Vec<PathBuf> {
 /// than fatal, because a gate that stops on an unreadable directory judges nothing at
 /// all and says so by passing.
 fn collect_rust_files(directory: &Path, found: &mut Vec<PathBuf>) {
-    let entries = match fs::read_dir(directory) {
-        Ok(entries) => entries,
-        Err(_) => return,
+    let Ok(entries) = fs::read_dir(directory) else {
+        return;
     };
     for entry in entries.flatten() {
         let path = entry.path();
@@ -376,10 +407,10 @@ struct ANameRefused {
     name: String,
 }
 
-/// The names under `crates/` this gate refuses, each with the file it came from.
-fn names_refused_under_crates() -> Vec<ANameRefused> {
+/// The names in the workspace this gate refuses, each with the file it came from.
+fn names_refused_in_the_workspace() -> Vec<ANameRefused> {
     let mut refused: Vec<ANameRefused> = Vec::new();
-    for path in every_rust_file_under_crates() {
+    for path in every_rust_file_in_the_workspace() {
         refused.extend(the_names_refused_in(&path));
     }
     refused
@@ -403,12 +434,13 @@ fn the_names_refused_in(path: &Path) -> Vec<ANameRefused> {
 /// from a guard that read nothing at all.
 fn what_a_refused_name_says(refused: &[ANameRefused]) -> String {
     if refused.is_empty() {
-        return String::from("every name under crates/ is one the glossary allows");
+        return String::from("every public name in this workspace is one the glossary allows");
     }
-    let mut said = String::new();
-    said.push_str("a name is a claim about what the thing is, and this is not one:\n");
+    let mut said =
+        String::from("a name is a claim about what the thing is, and this is not one:\n");
     for one in refused {
-        said.push_str(&format!("{}: {}\n", one.file.display(), one.name));
+        writeln!(said, "{}: {}", one.file.display(), one.name)
+            .expect("a `String` is written to rather than a file, so this cannot fail");
     }
     said
 }
@@ -647,12 +679,12 @@ fn a_use_declaration_is_left_alone() {
 }
 
 #[test]
-fn no_public_name_under_crates_uses_banned_vocabulary() {
-    let files = every_rust_file_under_crates();
+fn no_public_name_in_the_workspace_uses_banned_vocabulary() {
+    let files = every_rust_file_in_the_workspace();
     assert!(
         !files.is_empty(),
         "the walk read no file at all, which is a pass this gate has not earned"
     );
-    let refused = names_refused_under_crates();
+    let refused = names_refused_in_the_workspace();
     assert!(refused.is_empty(), "{}", what_a_refused_name_says(&refused));
 }
