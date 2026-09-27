@@ -591,3 +591,88 @@ impl<'a> WhereTheReadingHasGotTo<'a> {
         }
     }
 }
+
+/// The root of this checkout, found by walking up from where cargo compiled this file.
+///
+/// `crates` is what is worth walking up to, because it is in the root of the system and
+/// the document of the names is beside it. It is here rather than in a gate because four
+/// gates read the checkout and the copies were already different.
+pub fn the_root_of_the_checkout() -> std::path::PathBuf {
+    let mut here = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    while !here.join("crates").is_dir() {
+        assert!(
+            here.pop(),
+            "no crates/ directory above where this file was compiled"
+        );
+    }
+    here
+}
+
+/// The text of the file at `path`, or a panic naming the file and what the read said.
+///
+/// A file that cannot be read is a failure and not an empty answer. A gate that turns a
+/// missing file into a pass has stopped being a gate, and the quietest version of that is
+/// `unwrap_or_default()`.
+pub fn the_text_at(path: &std::path::Path) -> String {
+    std::fs::read_to_string(path)
+        .unwrap_or_else(|why| panic!("{} must be readable: {why}", path.display()))
+}
+
+/// The text of the glossary, which every gate that names anything reads.
+pub fn the_glossary_text() -> String {
+    the_text_at(
+        &the_root_of_the_checkout()
+            .join("docs")
+            .join("domain-glossary.md"),
+    )
+}
+
+/// Every `.rs` file under each of `roots`, sorted, so a refusal names a path.
+///
+/// A directory that cannot be read is skipped rather than fatal, because a gate that stops
+/// on an unreadable directory judges nothing at all and says so by passing. The files it
+/// did read are the ones it judges, and the count is asserted by the gates themselves.
+pub fn every_rust_file_under(roots: &[&str]) -> Vec<std::path::PathBuf> {
+    let checkout = the_root_of_the_checkout();
+    let mut found = Vec::new();
+    for root in roots {
+        collect_rust_files_under(&checkout.join(root), &mut found);
+    }
+    found.sort();
+    found.dedup();
+    found
+}
+
+/// The three places a `.rs` file of this repository lives.
+///
+/// `tests` is here, which no gate had in common until the comment gate noticed it was the
+/// only one walking it. A gate is code in this repository and the rule applies to it.
+pub const EVERY_PLACE_A_RUST_FILE_IS: [&str; 3] = ["src", "crates", "tests"];
+
+fn collect_rust_files_under(directory: &std::path::Path, found: &mut Vec<std::path::PathBuf>) {
+    let Ok(entries) = std::fs::read_dir(directory) else {
+        return;
+    };
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if path.is_dir() {
+            collect_rust_files_under(&path, found);
+        } else if path.extension().is_some_and(|extension| extension == "rs") {
+            found.push(path);
+        }
+    }
+}
+
+/// Every `.rs` file of the whole repository: `src`, every `crates` and every `tests`.
+pub fn every_rust_file_in_the_workspace() -> Vec<std::path::PathBuf> {
+    every_rust_file_under(&EVERY_PLACE_A_RUST_FILE_IS)
+}
+
+/// Every `.rs` file of the system, which is `crates/` and nothing else.
+///
+/// **`aisdlc-gates` is not walked, and that is a decision rather than an oversight.** It is
+/// a package of the workspace and deliberately not a part of the system, and the rule that
+/// asks for this walk is about the code of the system.
+pub fn every_rust_file_of_the_system() -> Vec<std::path::PathBuf> {
+    every_rust_file_under(&["crates"])
+}
