@@ -3,8 +3,35 @@
 //! `aisdlc-domain` has no dependencies at all — not "few", not "only serde". Nothing. Its
 //! manifest must not carry a `[dependencies]` or a `[dev-dependencies]` section with an
 //! entry in it, and its source must not name an `extern crate`, an `async` block, an
-//! `await` or an `unsafe`, and must not import a filesystem, a process, a clock, a socket
-//! or a thread.
+//! `await` or an `unsafe`, and must not reach for a filesystem, a process, a clock, a
+//! socket or a thread.
+//!
+//! ## Two spellings of one reach
+//!
+//! **The rule is a path segment, not an import line**, and there are two of them because
+//! two spellings reach the same place:
+//!
+//! 1. a stretch of code may not carry `std::fs`, `std::process`, `std::time`, `std::net`
+//!    or `std::thread` **as a path prefix, wherever it appears** — `use std::fs;`,
+//!    `use std::fs as filesystem;` and `std::fs::read_to_string(path)` are one answer to
+//!    one question, and the last of them is the one that has no `use` in it at all;
+//! 2. a `use std::{…}` group may not name `fs`, `process`, `time`, `net` or `thread` in its
+//!    braces, because `use std::{fs, io};` does not contain the text `std::fs` anywhere.
+//!
+//! Both escapes were found by a reader of this file, reported rather than answered, and
+//! refused in the middle of the cycle that found them — widening a check mid-cycle is how a
+//! check becomes a snapshot of the day it was written. They are answered here together, and
+//! the two rules are one list of five modules read two ways rather than two lists somebody
+//! has to keep in step.
+//!
+//! ## The file is taken apart, and not read a line at a time
+//!
+//! A source is read as stretches, by the scanner the gates share, and only the stretches
+//! that are code are asked anything. **A comment is not a line that begins with two
+//! slashes**: `/** … */` is a comment and a `//` inside a string is not one. The old
+//! hand-rolled strip dropped the `//` lines and called the rest code, which is why a doc
+//! comment that *mentions* a forbidden path is now a fixture rather than a hazard: a rule
+//! that refuses the opposite of what a sentence says teaches its reader to ignore it.
 //!
 //! This is the one rule in the repository nothing else can break quietly, so the checker
 //! is exercised on every input it must refuse and on every input it must leave alone.
@@ -12,6 +39,7 @@
 //! works, and only the real files prove the domain obeys it.
 #![deny(missing_docs)]
 
+use aisdlc_gates::scanning::{HowTheFileIsWritten, WhatIsWrittenThere};
 use std::path::{Path, PathBuf};
 
 /// The manifest of the domain crate, reached from the root of the repository rather than
@@ -34,16 +62,16 @@ const THE_SECTIONS_A_MANIFEST_MAY_NOT_HAVE: [&str; 2] = ["[dependencies]", "[dev
 /// it is not memory-unsafe.
 const THE_WORDS_THE_DOMAIN_MAY_NOT_SAY: [&str; 4] = ["extern crate", "async", "await", "unsafe"];
 
-/// The modules that can touch the world, written as the paths an import of them is spelled
-/// with. `std::mem` is deliberately absent: a process's own memory is not the world, and a
-/// domain that can move a value is a domain whose moves a reader has to reason about.
-const THE_MODULES_THAT_TOUCH_THE_WORLD: [&str; 5] = [
-    "std::fs",
-    "std::process",
-    "std::time",
-    "std::net",
-    "std::thread",
-];
+/// The modules that can touch the world, named as the last segment of a path rather than as
+/// the whole of it, so that the path rule and the grouped rule are one list read two ways.
+///
+/// `std::mem` is deliberately absent: a process's own memory is not the world, and a domain
+/// that can move a value is a domain whose moves a reader has to reason about.
+const THE_MODULES_THAT_TOUCH_THE_WORLD: [&str; 5] = ["fs", "process", "time", "net", "thread"];
+
+/// The crate the world is in, and the separator a path in it is joined with, which is the
+/// front of every path a source is refused for and the last word of `use std::{`.
+const THE_CRATE_THE_WORLD_IS_IN_AND_ITS_SEPARATOR: &str = "std::";
 
 const A_MANIFEST_CARRYING_SERDE: &str =
     "[package]\nname = \"aisdlc-domain\"\n\n[dependencies]\nserde = \"1\"\n";
@@ -76,6 +104,50 @@ const A_SOURCE_DECLARING_AN_UNSAFE_FUNCTION: &str = "pub unsafe fn transfer() {}
 const A_SOURCE_NAMING_EXTERN_CRATE: &str = "extern crate serde;\n";
 
 const A_SOURCE_THAT_AWAITS: &str = "fn asked() {\n    let answer = look().await;\n}\n";
+
+/// A source that reads a file with no `use` in it anywhere, so there is no `use` line for a
+/// checker that reads lines to find. The gate reported a clean file on this one.
+const A_SOURCE_REACHING_THE_FILESYSTEM_WITHOUT_IMPORTING_IT: &str =
+    "let text = std::fs::read_to_string(path)?;\n";
+
+/// A source that imports the filesystem among others in one group, so the text `std::fs` is
+/// nowhere in the line. The gate reported a clean file on this one too.
+const A_SOURCE_IMPORTING_THE_FILESYSTEM_IN_A_GROUP: &str = "use std::{fs, io};\n";
+
+/// A source whose group opens with a module that touches nothing, which is what makes the
+/// grouped import a rule rather than one lucky spelling of it.
+const A_SOURCE_NAMING_A_SOCKET_IN_A_GROUP: &str = "use std::{io::Write, net::TcpStream};\n";
+
+/// A group of modules that touch nothing, so the grouped rule is asked about a group it must
+/// leave alone as well as one it must refuse.
+const A_GROUP_OF_MODULES_THAT_TOUCH_NOTHING: &str = "use std::{fmt, mem};\n";
+
+/// A source whose only reach is on the fifth line, under two lines of documentation, so a
+/// refusal has to carry the line the file has rather than the line it had once the
+/// documentation was dropped.
+const A_SOURCE_REACHING_THE_FILESYSTEM_BELOW_ITS_DOCUMENTATION: &str = concat!(
+    "//! This crate has no dependencies at all.\n",
+    "\n",
+    "/// The text of a file, which this crate does not read.\n",
+    "pub fn the_text_of(path: &str) -> String {\n",
+    "    std::fs::read_to_string(path).unwrap_or_default()\n",
+    "}\n"
+);
+
+/// A module whose documentation names the filesystem in order to say it never reaches for
+/// it, which is what documentation is for.
+const A_MODULE_NAMING_THE_FILESYSTEM: &str =
+    "//! This crate never names std::fs, or any other way of reading a file.\n";
+
+/// The same sentence as a block of documentation, which is the form a line that begins with
+/// two slashes cannot drop and a kind of stretch drops without being asked to.
+const A_BLOCK_NAMING_THE_FILESYSTEM: &str =
+    "/** This crate never names std::fs, or any other way of reading a file. */\n";
+
+/// A source that is nothing but an ordinary function, which is what a domain looks like on
+/// the day it is written and what no rule of this gate has anything to say about.
+const A_SOURCE_CARRYING_A_FUNCTION_AND_NO_COMMENT: &str =
+    "pub fn a_work_item_is_new() -> bool {\n    true\n}\n";
 
 const A_SOURCE_IMPORTING_MEMORY: &str = "use std::mem;\n";
 
@@ -188,59 +260,104 @@ fn is_an_entry_of_a_section(line: &str) -> bool {
     !text.is_empty() && !text.starts_with('#')
 }
 
-/// Every reach in a source, found outside the documentation, because documentation is
-/// where a file says what it is not.
+/// Every reach in a source, one refusal per stretch of code that makes one.
+///
+/// The file is taken apart by the scanner the gates share rather than by dropping the lines
+/// that begin with two slashes, because a comment is not a line that begins with two slashes
+/// and a `//` inside a string is not a comment. A stretch that is a comment, a string, a
+/// character or the space between two things says nothing to the compiler and so reaches
+/// for nothing.
+///
+/// **The one hole the scanner leaves open is an unclosed string**, which makes the walk read
+/// the rest of the file as one string and hides every comment after it. For this gate that
+/// is the safe direction: an unclosed string is a compile error, and a file cargo compiled
+/// cannot hold one. It is written down here rather than worked around, because working
+/// around it would be a fourth way of deciding what a comment is.
 fn what_the_source_reaches_for(source: &str) -> Vec<String> {
+    let read = HowTheFileIsWritten::of(source);
     let mut refusals = Vec::new();
-    for (line_number, line) in the_code_of(source) {
-        refusals.extend(what_the_code_reaches_for(line_number, line));
+    for stretch in read.stretches() {
+        if stretch.kind() == WhatIsWrittenThere::Code {
+            refusals.extend(what_this_stretch_reaches_for(
+                stretch.line_it_starts_on(),
+                stretch.text(),
+            ));
+        }
     }
     refusals
 }
 
-/// The code of a source with its documentation gone, each line keeping the number it has in
-/// the file it came from. The numbers are kept because a refusal whose line number is the
-/// number it had after the documentation was dropped points at a line that is not there.
-fn the_code_of(source: &str) -> Vec<(usize, &str)> {
-    source
-        .lines()
-        .enumerate()
-        .filter(|(_, line)| !is_documentation(line))
-        .map(|(line_number, line)| (line_number + 1, line))
-        .collect()
+/// What one stretch of code reaches for, one refusal per rule it breaks, so a line that
+/// breaks two of them says so twice rather than hiding the second.
+fn what_this_stretch_reaches_for(line_number: usize, code: &str) -> Vec<String> {
+    let mut refusals = the_words_it_says(line_number, code);
+    refusals.extend(the_paths_it_reaches_for(line_number, code));
+    refusals.extend(the_modules_a_group_names(line_number, code));
+    refusals
 }
 
-/// Whether a line is documentation, which is the whole of what is stripped before the code
-/// is searched. **Only a line whose first non-space characters are `//` counts**, and that
-/// is sound rather than merely convenient because `the_code_carries_no_comments` forbids
-/// `//` anywhere else in this repository: there is no trailing comment on a line of code
-/// for a search to be fooled by, and that other gate is what makes this one true.
-fn is_documentation(line: &str) -> bool {
-    line.trim_start().starts_with("//")
-}
-
-/// What one line of code reaches for: one refusal per word it says and one per module it
-/// imports, so a line that breaks two rules says so twice rather than hiding the second.
-fn what_the_code_reaches_for(line_number: usize, line: &str) -> Vec<String> {
+/// The promises the domain does not make, said out loud on a line: it names no crate from
+/// outside itself, it is not concurrent, and it is not memory-unsafe.
+fn the_words_it_says(line_number: usize, code: &str) -> Vec<String> {
     let mut refusals = Vec::new();
     for word in THE_WORDS_THE_DOMAIN_MAY_NOT_SAY {
-        if is_a_whole_word_in(line, word) {
+        if is_a_whole_word_in(code, word) {
             refusals.push(format!("line {line_number} says {word}"));
         }
     }
+    refusals
+}
+
+/// The modules of the world this stretch of code reaches for, each found as a **path prefix
+/// wherever the prefix appears** rather than as an import on a `use` line.
+///
+/// **The segment is the rule and not the line**, and it is not a refinement of the line: a
+/// qualified reach — `std::fs::read_to_string(path)` — carries no `use` at all, and a
+/// grouped one — `use std::{fs, io};` — does not contain the text `std::fs`, so a checker
+/// reading the line rather than the segment reported a clean file on both of them.
+///
+/// **This is the second time this checker has been asked to widen for the same reason.** The
+/// first report was the qualified reach and the second was the group, and both were refused
+/// rather than answered, because a check widened in the middle of a cycle is a check that
+/// had been a snapshot. They are answered here together, by asking one question of one
+/// list: is this path written here, and is this name one of the five in a group?
+fn the_paths_it_reaches_for(line_number: usize, code: &str) -> Vec<String> {
+    let mut refusals = Vec::new();
     for module in THE_MODULES_THAT_TOUCH_THE_WORLD {
-        if the_line_imports(line, module) {
-            refusals.push(format!("line {line_number} imports {module}"));
+        let path = the_path_of(module);
+        if is_a_whole_word_in(code, &path) {
+            refusals.push(format!("line {line_number} reaches for {path}"));
         }
     }
     refusals
 }
 
-/// Whether a word stands on a line whole rather than inside a longer name, so that a name
-/// carrying one of these words as part of itself is not counted as a use of it.
-fn is_a_whole_word_in(line: &str, word: &str) -> bool {
-    for (at, _) in line.match_indices(word) {
-        if stands_on_its_own(line, at, word) {
+/// The modules of the world this stretch of code names among others in the braces of a group,
+/// which is the second spelling the first rule cannot see: `use std::{fs, io};` puts `fs`
+/// beside `io` and never beside the crate it comes from.
+fn the_modules_a_group_names(line_number: usize, code: &str) -> Vec<String> {
+    let mut refusals = Vec::new();
+    for at in where_each_group_opens(code) {
+        refusals.extend(what_the_braces_refuse(line_number, &code[at + 1..]));
+    }
+    refusals
+}
+
+/// The path a module of the world is spelled with, built from the one crate the world is in
+/// so that the path rule and the grouped rule cannot disagree about which crate is meant.
+fn the_path_of(module: &str) -> String {
+    format!("{THE_CRATE_THE_WORLD_IS_IN_AND_ITS_SEPARATOR}{module}")
+}
+
+/// Whether a word stands in a stretch whole rather than inside a longer name, so that a name
+/// carrying one of them as part of itself is not counted as a use of it.
+///
+/// A path is a whole thing too, which is what the first rule leans on: `std::fs` in
+/// `mystd::fs` is not the filesystem, and `std::fs_extra` is not it either. The words and the
+/// paths are asked the same question, so there is one answer to it.
+fn is_a_whole_word_in(text: &str, word: &str) -> bool {
+    for (at, _) in text.match_indices(word) {
+        if stands_on_its_own(text, at, word) {
             return true;
         }
     }
@@ -249,47 +366,104 @@ fn is_a_whole_word_in(line: &str, word: &str) -> bool {
 
 /// Whether the word beginning at `at` is bounded by something that is not part of a name.
 /// A dot does not bound it, because `.await` is the same reach written differently.
-fn stands_on_its_own(line: &str, at: usize, word: &str) -> bool {
-    let follows_a_name = at > 0 && is_a_letter_or_digit(line.as_bytes()[at - 1]);
+fn stands_on_its_own(text: &str, at: usize, word: &str) -> bool {
+    let follows_a_name = text[..at]
+        .chars()
+        .next_back()
+        .is_some_and(is_part_of_a_name);
     let end = at + word.len();
-    let followed_by_a_name = end < line.len() && is_a_letter_or_digit(line.as_bytes()[end]);
+    let followed_by_a_name = text[end..].chars().next().is_some_and(is_part_of_a_name);
     !follows_a_name && !followed_by_a_name
 }
 
 /// What counts as part of a name. Underscore included, because a name is its letters and
 /// its underscores, and a search that stopped at a letter would be evaded by one.
-fn is_a_letter_or_digit(byte: u8) -> bool {
-    byte.is_ascii_alphanumeric() || byte == b'_'
+fn is_part_of_a_name(character: char) -> bool {
+    character.is_alphanumeric() || character == '_'
 }
 
-/// Whether a line imports a module, which it does by writing `use` and then the module's
-/// path. A `use` anywhere on the line counts rather than only at its start, because
-/// `pub use std::fs;` imports the filesystem as plainly as `use std::fs;` does.
-fn the_line_imports(line: &str, module: &str) -> bool {
-    let words: Vec<&str> = line.split_whitespace().collect();
-    for (at, word) in words.iter().enumerate() {
-        let after_the_use = words.get(at + 1);
-        if *word == "use" && after_the_use.is_some_and(|next| names_the_module(next, module)) {
-            return true;
+/// Where each group of the whole of the world opens, as the offset of its brace, because a
+/// group is written in more than one way and `use std::{`, `use  std::{` and `pub use
+/// std::{` are all one group.
+fn where_each_group_opens(code: &str) -> Vec<usize> {
+    code.match_indices('{')
+        .map(|(at, _brace)| at)
+        .filter(|at| opens_a_group_of_the_whole_of_the_world(&code[..*at]))
+        .collect()
+}
+
+/// Whether the code before a brace opens a group of the whole of the world, which is spelled
+/// with an import of the crate the world is in, then its separator, then the brace. The two
+/// words are read backwards because that is the order they are read in by a reader, who
+/// looks at the brace first and works out what opened it.
+fn opens_a_group_of_the_whole_of_the_world(before_the_brace: &str) -> bool {
+    let mut backwards = before_the_brace.split_whitespace().rev();
+    let names_the_whole = backwards
+        .next()
+        .is_some_and(|word| word == THE_CRATE_THE_WORLD_IS_IN_AND_ITS_SEPARATOR);
+    names_the_whole && backwards.next() == Some("use")
+}
+
+/// What the braces of one group refuse, one refusal per module of the world it names, and
+/// nothing at all for a group naming only modules that touch none.
+fn what_the_braces_refuse(line_number: usize, the_braces: &str) -> Vec<String> {
+    let mut refusals = Vec::new();
+    for name in the_names_in_the_braces(the_braces) {
+        if is_a_module_that_touches_the_world(&name) {
+            let path = the_path_of(&name);
+            refusals.push(format!("line {line_number} imports {path} in a group"));
         }
     }
-    false
+    refusals
 }
 
-/// Whether a word written after a `use` is that module's path and not the beginning of a
-/// longer one, so that `std::fs` is the filesystem while `std::fs_extra` is not.
-fn names_the_module(word: &str, module: &str) -> bool {
-    if !word.starts_with(module) {
-        return false;
+/// The names a group's braces hold, one per entry, each the leading run of a name in that
+/// entry: `fs` in `fs` and `fs` in `fs as filesystem` and `net` in `net::TcpStream`.
+///
+/// A nested group is not walked, and a name inside one is read as an entry of its own. That
+/// over-refuses rather than under-refuses, and the only thing it over-refuses is a nested
+/// group that is not valid Rust, which a crate cargo compiled cannot hold.
+fn the_names_in_the_braces(after_the_brace: &str) -> Vec<String> {
+    let mut names = Vec::new();
+    let mut entry = String::new();
+    for character in after_the_brace.chars() {
+        if character == '}' {
+            break;
+        }
+        if character == ',' {
+            names.push(the_leading_name(&entry));
+            entry.clear();
+        } else {
+            entry.push(character);
+        }
     }
-    let what_follows = &word[module.len()..];
-    let goes_on_or_stops = what_follows.is_empty() || what_follows.starts_with("::");
-    let ends_the_path = what_follows.starts_with(';') || what_follows.starts_with(" as ");
-    goes_on_or_stops || ends_the_path
+    names.push(the_leading_name(&entry));
+    names
+}
+
+/// The name an entry of a group begins with, which is the module it brings in: the run of
+/// name-parts at the front of the entry, and nothing after the first of them.
+fn the_leading_name(entry: &str) -> String {
+    entry
+        .trim_start()
+        .chars()
+        .take_while(|character| is_part_of_a_name(*character))
+        .collect()
+}
+
+/// Whether a name in a group's braces is one of the modules that touch the world, read from
+/// the same five names the path rule is read from so the two rules cannot drift apart.
+fn is_a_module_that_touches_the_world(name: &str) -> bool {
+    THE_MODULES_THAT_TOUCH_THE_WORLD.contains(&name)
 }
 
 /// The text of a file, refusing to go on with a file it could not read, because a gate
 /// that checks nothing is a gate that passed.
+///
+/// **This file reaches for the filesystem where the domain may not**, and says so plainly
+/// rather than hiding behind an import: the gate is the thing that reads the disk, and a
+/// reader who found `std::fs` here and no explanation would be right to wonder which of the
+/// two rules it had broken.
 fn the_text_of(path: &Path) -> String {
     let name = path.display();
     std::fs::read_to_string(path)
@@ -410,6 +584,69 @@ fn a_source_importing_a_thread_is_refused() {
 }
 
 #[test]
+fn a_source_reaching_the_filesystem_without_importing_it_is_refused() {
+    let refusals = what_is_wrong_with("", A_SOURCE_REACHING_THE_FILESYSTEM_WITHOUT_IMPORTING_IT);
+    assert!(
+        !refusals.is_empty(),
+        "a qualified reach for the filesystem, which imports nothing, was accepted: {refusals:?}"
+    );
+}
+
+#[test]
+fn a_source_importing_the_filesystem_in_a_group_is_refused() {
+    let refusals = what_is_wrong_with("", A_SOURCE_IMPORTING_THE_FILESYSTEM_IN_A_GROUP);
+    assert!(
+        !refusals.is_empty(),
+        "a grouped import of the filesystem was accepted: {refusals:?}"
+    );
+}
+
+#[test]
+fn a_source_naming_a_socket_in_a_group_is_refused() {
+    let refusals = what_is_wrong_with("", A_SOURCE_NAMING_A_SOCKET_IN_A_GROUP);
+    assert!(
+        !refusals.is_empty(),
+        "a socket named among other modules in a group was accepted: {refusals:?}"
+    );
+}
+
+#[test]
+fn a_group_of_modules_that_touch_nothing_is_accepted() {
+    let refusals = what_is_wrong_with("", A_GROUP_OF_MODULES_THAT_TOUCH_NOTHING);
+    assert!(
+        refusals.is_empty(),
+        "a group of modules that touch nothing is not a reach: {refusals:?}"
+    );
+}
+
+#[test]
+fn a_module_naming_the_filesystem_is_accepted() {
+    let refusals = what_is_wrong_with("", A_MODULE_NAMING_THE_FILESYSTEM);
+    assert!(
+        refusals.is_empty(),
+        "documentation saying the opposite is not a reach: {refusals:?}"
+    );
+}
+
+#[test]
+fn a_block_naming_the_filesystem_is_accepted() {
+    let refusals = what_is_wrong_with("", A_BLOCK_NAMING_THE_FILESYSTEM);
+    assert!(
+        refusals.is_empty(),
+        "a block of documentation is a comment however it begins: {refusals:?}"
+    );
+}
+
+#[test]
+fn a_source_carrying_a_function_and_no_comment_is_accepted() {
+    let refusals = what_is_wrong_with("", A_SOURCE_CARRYING_A_FUNCTION_AND_NO_COMMENT);
+    assert!(
+        refusals.is_empty(),
+        "an ordinary function is what the domain is made of: {refusals:?}"
+    );
+}
+
+#[test]
 fn a_source_declaring_an_async_function_is_refused() {
     let refusals = what_is_wrong_with("", A_SOURCE_DECLARING_AN_ASYNC_FUNCTION);
     assert!(!refusals.is_empty(), "an async function was accepted");
@@ -474,6 +711,17 @@ fn a_refusal_in_a_source_names_the_line_it_was_found_on() {
         .expect("the import of the filesystem was not refused at all");
     let unnamed = format!("a refusal that names no line is a refusal nobody can act on: {refusal}");
     assert!(refusal.contains("line 1"), "{unnamed}");
+}
+
+#[test]
+fn a_refusal_below_a_doc_comment_names_the_line_it_is_written_on() {
+    let refusals = what_is_wrong_with("", A_SOURCE_REACHING_THE_FILESYSTEM_BELOW_ITS_DOCUMENTATION);
+    let refusal = refusals
+        .first()
+        .expect("the reach on the fifth line was not refused at all");
+    let unnamed =
+        format!("a refusal that names the wrong line names a line that is not there: {refusal}");
+    assert!(refusal.contains("line 5"), "{unnamed}");
 }
 
 #[test]
