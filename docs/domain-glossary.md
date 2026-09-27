@@ -18,11 +18,27 @@ nobody looked at twice.
 
 ## How this file is read
 
-| Section | What it does |
+| Where a name is written | What it does |
 |---|---|
-| **Bolded terms** and **code spans** | blessed names — every type the domain defines must be one of them |
-| **`Not` columns** | synonyms that are refused — read by `a_synonym_is_never_used` |
-| **`## Banned vocabulary`** | the list itself, excluded from the blessed names, because a prohibition read as a term is backwards |
+| a **bolded** entry | a blessed name — every type the domain defines must be one of them |
+| a **code span** in ordinary prose | a blessed name, for the same reason |
+| a code span in a table column headed **`Not`** | **refused, and not blessed.** Read by `a_synonym_is_never_used`. |
+| anything under **`## Banned vocabulary`** | **refused, and not blessed** |
+
+**Two exclusions, and neither is optional.** A prohibition read as a term is exactly
+backwards, and this file has now made that mistake twice in two different shapes.
+
+The first was the banned section: it explained its own rule in backticks, the explanation
+blessed the example, and the guard passed the very name it existed to catch. A guard whose
+documentation can disable it is one careless edit away from being off, so the whole section
+is removed before the reading begins.
+
+The second was every `Not` column, and it was found by a worker rather than by a failing
+test: `Task`, `Ticket`, `Job`, `Entity`, `Status`, `State`, `Phase`, `Step`, `Owner`,
+`Assignee`, `Team`, `move_to`, `set_stage`, `advance`, `change_state`, `handle`, `check`,
+`verify` and `assert_valid` were all in the blessed set, because they are written in code
+spans inside a table. The reader decides by the **table's header row**: a cell in a column
+headed `Not` is not a name, whatever else the column is.
 
 ---
 
@@ -566,6 +582,12 @@ that walk is this repository's own code.
 each one knowing what it is and where it starts. It is a value rather than a service,
 because six gates ask the same two questions of it and the answer must not be six
 answers.
+
+**`WhatIsWrittenThere`** — the five kinds a stretch can be: `Code`, `AComment`, `AString`,
+`ACharacter`, `TheSpaceBetween`. **A closed set**, because the gates' whole reliability
+rests on the claim that a span of characters in a `.rs` file is one of five things and
+nothing else. A sixth kind would be a change to what a gate is allowed to assume, so it is
+a change here and nowhere else.
 
 **`AStretchOfTheFile`** — a run of characters that are all the same kind of thing: code, a
 comment, a string, a character, or the space between. It carries the line it starts on,
