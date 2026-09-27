@@ -7,9 +7,9 @@
 //! for it. A table copied out of today's manifests would break that day instead, and a gate
 //! that has to be repaired before it will accept a change stops anybody from making one.
 //!
-//! Nothing here is trusted. Every `crates/*/Cargo.toml` is read from the disk, and the parse
-//! is asked what it found before a single edge is judged, because a guard that read nothing
-//! and agreed with everything would be green and would be a lie.
+//! Nothing here is trusted. Every `Cargo.toml` under `crates/` is read from the disk, and
+//! the parse is asked what it found before a single edge is judged, because a guard that
+//! read nothing and agreed with everything would be green and would be a lie.
 //!
 //! ## What this gate does not see
 //!
@@ -50,8 +50,33 @@ fn what_points_the_wrong_way(
     declared: &WhatEachCrateDeclares,
     allowed: &WhatEachCrateMayName,
 ) -> Vec<String> {
-    let _every_crate_was_read_and_nothing_was_judged = (declared, allowed);
-    vec![]
+    let mut pointing_outward = vec![];
+    for (crate_name, its_allowed) in allowed {
+        let Some(its_own) = declared.get(crate_name) else {
+            continue;
+        };
+        pointing_outward.extend(the_edges_that_leave(crate_name, its_own, its_allowed));
+    }
+    pointing_outward
+}
+
+/// The edges one crate's own dependencies include that it is not allowed to name.
+///
+/// A crate nobody has is not a crate that depends on anything, so a crate the rule names
+/// and the disk does not have contributes no edges and no verdict; the walk that calls this
+/// skips it before it gets here. A third-party crate is judged exactly as a workspace crate
+/// is, because an allowlist of welcome third-party crates is a separate gate rather than a
+/// hole in this one.
+fn the_edges_that_leave(
+    crate_name: &str,
+    its_own: &BTreeSet<String>,
+    its_allowed: &BTreeSet<String>,
+) -> Vec<String> {
+    its_own
+        .iter()
+        .filter(|dependency| !its_allowed.contains(*dependency))
+        .map(|dependency| format!("{crate_name} names {dependency}"))
+        .collect()
 }
 
 /// Every crate directory in `crates/`, read from the disk rather than from a list written
@@ -93,9 +118,10 @@ fn the_dependencies_every_crate_declares() -> WhatEachCrateDeclares {
 fn the_root_of_the_checkout() -> PathBuf {
     let mut here = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     while !here.join("crates").is_dir() {
-        if !here.pop() {
-            panic!("no crates/ directory above the directory this file was compiled in");
-        }
+        assert!(
+            here.pop(),
+            "no crates/ directory above where this file was compiled"
+        );
     }
     here
 }
@@ -164,9 +190,7 @@ fn the_dependency_on_a_line(line: &str) -> Option<String> {
     if trimmed.starts_with('#') {
         return None;
     }
-    let Some((name, _)) = trimmed.split_once('=') else {
-        return None;
-    };
+    let (name, _) = trimmed.split_once('=')?;
     let name = name.trim();
     if name.is_empty() {
         return None;
@@ -239,7 +263,10 @@ fn the_dependencies_point_inward() {
 fn the_manifests_on_disk_were_read_and_not_assumed() {
     let declared = the_dependencies_every_crate_declares();
     for crate_name in ["aisdlc-domain", "aisdlc-run", "aisdlc-outside"] {
-        assert!(declared.contains_key(crate_name), "{crate_name} is not there");
+        assert!(
+            declared.contains_key(crate_name),
+            "{crate_name} is not there"
+        );
     }
     assert!(
         declared["aisdlc-run"].contains("aisdlc-domain"),
