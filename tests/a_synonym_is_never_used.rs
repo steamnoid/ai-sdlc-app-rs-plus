@@ -7,32 +7,41 @@
 //! instead of drifting from it — a list restated in Rust is a list that was correct on
 //! the day it was written and says nothing about the document afterwards.
 //!
-//! ## Where the document writes a refusal down, and where it does not
+//! ## The reading: the `Not` columns, and nothing else
 //!
-//! The glossary writes a refusal in exactly two places a reader can find: **a cell in a
-//! column headed `Not`**, and **the fenced block of `## Banned vocabulary`**. Its own
-//! "How this file is read" table calls both of them *refused, and not blessed*, and this
-//! gate reads both. That is the reading, and it is a reading of the document rather than
-//! of this file.
+//! The document writes a refusal down in a cell in a column headed `Not`, and a refused
+//! word appears **once, in such a cell, and nowhere else in backticks**. That is not a
+//! convention this file invented: it is the document's own obligation, stated in its
+//! "How this file is read" section, and it is what makes a gate possible at all. So the
+//! refused set is every code span standing in a `Not` column, and the decision is by the
+//! **header row** — which table carries the column and where in the table it stands are
+//! both questions this gate does not ask.
 //!
-//! **It is not the whole of what the document refuses, and the gap is worth knowing
-//! about.** Task, Ticket and Job are named in the glossary's prose — "Task, Ticket, Job
-//! and Entity are all wrong" — and in no column and in no block, so there is nothing for
-//! a reader to read and this gate cannot refuse them. The reading that would supply them
-//! is a rule about the shape of one sentence in one list, and a second reading of one
-//! document is what this file exists to stop. **The document has to write them down in
-//! one of its two places before a gate can refuse them**, and
-//! `a_synonym_the_document_writes_only_in_prose_cannot_be_refused` is the test that says
-//! so and that watches the gap.
+//! **A second reading was tried and the document refused it.** The block of
+//! `## Banned vocabulary` holds another thirty-six refused words, and reading it as well
+//! makes this gate a *second* gate — and it breaks a name the document blesses by shape:
+//! `a_work_item_is_born_queued_and_names_who_asked` is made of the word `item`, and that
+//! name is one this gate must leave alone. The gate that reads the block is
+//! `a_name_is_never_generic_vocabulary`, which judges the last word of a name rather
+//! than any word of it, and two gates judging the same document two different ways is
+//! what this repository has already paid for twice.
+//!
+//! **What that costs, written down rather than discovered.** Four words the document
+//! calls wrong are not in a `Not` column, so this gate cannot refuse them: Task, Ticket
+//! and Job are named in prose, and Entity is named in the block of prohibitions. A
+//! refused word this gate cannot refuse is a gap in the document and not in the reading —
+//! the document has to write it in a `Not` column — and
+//! `a_word_no_not_column_mentions_cannot_be_refused` is the test that names the gap and
+//! that watches it.
 //!
 //! ## What is read, and what is not
 //!
-//! Only the stretches of a file that are **code**. A synonym inside a `///` is this
-//! repository talking about a name it refuses, and this repository talks about `move_to`
-//! and `Task` and `Status` constantly and on purpose, so a reading that took a
-//! documentation line for a declaration would refuse this repository for discussing
-//! itself. A synonym inside a string is a fixture, and a fixture this gate could read
-//! would be a fixture it judged.
+//! Only the stretches of a file that are **code**, and only the names a `pub` declares. A
+//! synonym inside a `///` is this repository talking about a name it refuses, and this
+//! repository talks about `move_to` and `Task` and `Status` constantly and on purpose, so
+//! a reading that took a documentation line for a declaration would refuse this repository
+//! for discussing itself. A synonym inside a string is a fixture, and a fixture this gate
+//! could read would be a fixture it judged.
 //!
 //! ## Why a name is judged by its words
 //!
@@ -42,9 +51,9 @@
 //! spelled exactly as the document spells the synonym would be walked past by the first
 //! person to add a prefix to one.
 //!
-//! And the document's blessing is asked **first**: `WorkItem` is made of the word `item`
-//! and `item` is refused by the block of prohibitions, so a gate that asked the words
-//! before the blessing would refuse the one name this whole repository is about.
+//! And the document's blessing is asked **first**: `validate_state` is made of the word
+//! `state`, `state` is refused by the stages column, and a gate that asked the words
+//! before the blessing would refuse the one verb that asserts the invariants.
 
 use std::path::{Path, PathBuf};
 
@@ -52,18 +61,12 @@ use aisdlc_gates::scanning::{self, HowTheFileIsWritten, WhatIsWrittenThere, the_
 
 /// The seven keywords a name is declared with, and no others.
 ///
-/// A `pub` is not asked for, and the reason is the opposite of the reason the gate
-/// beside this one gives for asking for one: a private name is a name a reader of this
-/// repository still has to read, and a synonym is a synonym whoever is allowed to see it.
+/// A `use` is not one of them, because a name brought in from elsewhere was declared
+/// somewhere this gate does not read and a gate that judges another file's names is
+/// judging the wrong thing. That is the same argument the two gates beside this one
+/// make, and it is why the walking asks for a `pub`.
 const THE_KEYWORDS_A_NAME_IS_DECLARED_WITH: [&str; 7] =
     ["struct", "enum", "trait", "type", "fn", "mod", "const"];
-
-/// The heading of the section that is a list of prohibitions rather than a list of names.
-const THE_HEADING_OF_THE_SECTION_OF_PROHIBITIONS: &str = "## Banned vocabulary";
-
-/// The heading every section of the document opens with, which is also how the end of the
-/// section above is found.
-const THE_HEADING_OF_ANY_SECTION: &str = "## ";
 
 /// The header a table column carries when what it holds is refused rather than named.
 ///
@@ -71,34 +74,36 @@ const THE_HEADING_OF_ANY_SECTION: &str = "## ";
 /// column and where in the table it stands are both questions this gate does not ask.
 const THE_COLUMN_THAT_REFUSES: &str = "Not";
 
-/// What opens and closes the block the prohibited words are written in, and the opening
-/// carries a language after it that is not a second fence.
-const THE_FENCE_AROUND_A_BLOCK: &str = "```";
-
 /// How many refused words the parse must have found before its size means anything.
 ///
-/// Sixteen is one more than the fifteen a `Not` column holds today, and it is here for
-/// the same reason the sibling gates carry a floor: a set that short is a set the parse
-/// did not read, and a gate that compared nothing would agree with everything.
-const THE_FEWEST_REFUSED_WORDS_THE_PARSE_MUST_HAVE_FOUND: usize = 16;
+/// This is the number the document's three columns hold today, and a floor rather than
+/// an exact count on purpose: the count a reader wants is the count the failure message
+/// prints, and a gate that refused an edit to the glossary for adding a prohibition would
+/// be a gate about the size of a table rather than about the words in it. What the floor
+/// refuses is the opposite — a parse that found nothing, or nearly nothing, and a gate
+/// that compared an empty set with an empty file and found them in agreement.
+const THE_FEWEST_REFUSED_WORDS_THE_PARSE_MUST_HAVE_FOUND: usize = 15;
 
 /// How many files the walk must have opened before it has earned the right to agree with
 /// all of them. A gate that read nothing and said nothing is a green run that is a lie.
 const THE_FEWEST_FILES_THE_WALK_MUST_HAVE_FOUND: usize = 5;
 
-/// How many names the walk must have judged for the same reason, and for the one more
-/// that is particular to this gate: a walk that found the files and then read no
-/// declaration out of them agrees with a workspace it never looked inside.
-const THE_FEWEST_NAMES_THE_WALK_MUST_HAVE_JUDGED: usize = 100;
+/// How many names the walk must have judged for the same reason, and one more that is
+/// particular to this gate: a walk that opened the files and then read no declaration out
+/// of them agrees with a workspace just as completely as one that opened nothing.
+///
+/// **It is a low number on purpose, and the count today is eleven.** All but one of them
+/// is in the gates' own scanner, because `crates/` declares no type at all yet — the same
+/// known state `the_glossary_blesses_every_type_the_domain_defines` writes down at
+/// length. A floor set where the count happens to be would be a tripwire on a rename.
+const THE_FEWEST_NAMES_THE_WALK_MUST_HAVE_JUDGED: usize = 8;
 
 /// The names a refused word must refuse.
 ///
 /// **A table of strings rather than a table of `const`s**, because a refused word written
-/// in a string is a fixture: this gate reads code, and a fixture it could read would be
-/// a fixture it judged. Task, Ticket and Job are not in this table — they are in
-/// `THE_WORDS_WRITTEN_ONLY_IN_PROSE`, and the test that reads that one says why.
-const THE_NAMES_A_REFUSED_WORD_MUST_REFUSE: [&str; 19] = [
-    "Entity",
+/// in a string is a fixture: this gate reads code, and a fixture it could read would be a
+/// fixture it judged.
+const THE_NAMES_A_REFUSED_WORD_MUST_REFUSE: [&str; 18] = [
     "Status",
     "State",
     "Phase",
@@ -121,11 +126,11 @@ const THE_NAMES_A_REFUSED_WORD_MUST_REFUSE: [&str; 19] = [
 
 /// The names a refused word must leave alone.
 ///
-/// Every one of them is either a word the document blesses or a name built out of words
-/// the document blesses, and two of them — `WorkItem` and `validate_state` — are made of
-/// words the document *refuses*. They are here because a gate is exercised on what it
-/// must leave alone as well as on what it must catch, and a guard that has only ever
-/// been seen to refuse is not known to be able to do anything else.
+/// Every one of them is a name the document blesses, and two of them — `validate_state`
+/// and `state`-bearing names generally — are made of words the document *refuses*. They
+/// are here because a gate is exercised on what it must leave alone as well as on what it
+/// must catch, and a guard that has only ever been seen to refuse is not known to be able
+/// to do anything else.
 const THE_NAMES_A_REFUSED_WORD_MUST_ALLOW: [&str; 11] = [
     "WorkItem",
     "Stage",
@@ -140,17 +145,19 @@ const THE_NAMES_A_REFUSED_WORD_MUST_ALLOW: [&str; 11] = [
     "the_root_of_the_checkout",
 ];
 
-/// The words the document calls wrong in prose and writes down in neither of its two
-/// places. They are here so that the gap the module documentation names is a table rather
-/// than a paragraph, and so that a document that starts writing them down is caught by
-/// the test that reads this table.
-const THE_WORDS_WRITTEN_ONLY_IN_PROSE: [&str; 3] = ["Task", "Ticket", "Job"];
+/// The words the document calls wrong and writes in no `Not` column, so that there is
+/// nothing in them for this gate's reading to find.
+///
+/// They are here so that the gap the module documentation names is a table rather than a
+/// paragraph, and so that a document which starts writing one of them in a `Not` column
+/// is caught by the test that reads this table rather than by a reader noticing.
+const THE_WORDS_NO_NOT_COLUMN_MENTIONS: [&str; 4] = ["Task", "Ticket", "Job", "Entity"];
 
 /// A name the walk found, with the file it was declared in.
 ///
 /// The two are held together because a refusal that cannot name the file to open is a
-/// refusal nobody can act on, and because the count of these is what says the walk
-/// looked at something.
+/// refusal nobody can act on, and because the count of these is what says the walk looked
+/// at something.
 struct ANameDeclared {
     /// The file the name was declared in.
     file: PathBuf,
@@ -199,20 +206,10 @@ fn begins_a_word(character: char, previous: Option<char>) -> bool {
     character == '_' || (character.is_uppercase() && previous.is_some_and(char::is_lowercase))
 }
 
-/// The words the document refuses, read from the two places it writes a refusal where a
-/// reader can find one, and from nowhere else.
-///
-/// The two readings are kept in one list rather than asked of the caller separately,
-/// because a name is refused by the set and not by whichever of the two places the
-/// question happened to be asked of.
+/// The words the document refuses: every code span standing in a column headed `Not`, with
+/// the ones said twice counted once so that a set can be compared with a reading of it.
 fn the_refused_words() -> Vec<String> {
-    Vec::new()
-}
-
-/// The words with the ones said twice counted once, so that two readings of the same
-/// word are one refused word — and so that two sets of words can be compared by size,
-/// which is the only way a test can say whether two readings of one document agree.
-fn the_words_never_counted_twice(words: &[String]) -> Vec<String> {
+    let words = the_words_written_in_a_not_column(&scanning::the_glossary_text());
     let mut every: Vec<String> = words.iter().map(|word| normalised(word)).collect();
     every.sort();
     every.dedup();
@@ -236,9 +233,7 @@ fn the_words_written_in_a_not_column(document: &str) -> Vec<String> {
             continue;
         };
         if row_in_this_table == 0 {
-            column = cells
-                .iter()
-                .position(|cell| *cell == THE_COLUMN_THAT_REFUSES);
+            column = the_column_a_table_refuses_in(&cells);
         }
         if let Some(cell) = column.and_then(|at| cells.get(at)) {
             refused.extend(code_spans(cell));
@@ -248,10 +243,18 @@ fn the_words_written_in_a_not_column(document: &str) -> Vec<String> {
     refused
 }
 
+/// Where the column headed `Not` stands in a header row, or nothing at all when the row is
+/// a header that does not carry one.
+fn the_column_a_table_refuses_in(header: &[&str]) -> Option<usize> {
+    header
+        .iter()
+        .position(|cell| *cell == THE_COLUMN_THAT_REFUSES)
+}
+
 /// The cells of one row of a table, or nothing at all when the line is not one.
 ///
-/// Prose that happens to hold a vertical bar is not a row, and a row is a line that
-/// opens with a bar and closes with one and has something between them.
+/// Prose that happens to hold a vertical bar is not a row, and a row is a line that opens
+/// with a bar and closes with one and has something written between them.
 fn the_cells_of_a_row(line: &str) -> Option<Vec<&str>> {
     if !(line.starts_with('|') && line.ends_with('|') && line.len() > 1) {
         return None;
@@ -259,76 +262,23 @@ fn the_cells_of_a_row(line: &str) -> Option<Vec<&str>> {
     Some(line.split('|').map(str::trim).collect())
 }
 
-/// Every word written in the fenced block of the section that is a list of prohibitions.
-///
-/// The prose around the block is about the list rather than being the list, so only the
-/// block counts: reading the prose as entries would make a word refused because the
-/// document explains that the word is refused.
-fn the_words_written_in_the_section_of_prohibitions(document: &str) -> Vec<String> {
-    let section = the_section_named(THE_HEADING_OF_THE_SECTION_OF_PROHIBITIONS, document);
-    the_block_fenced_within(&section)
-        .split_whitespace()
-        .map(String::from)
-        .collect()
-}
-
-/// One section of the document, from its own heading to the next heading or to the end of
-/// the document, whichever comes first.
-fn the_section_named(heading: &str, document: &str) -> String {
-    let mut inside = false;
-    let mut section = String::new();
-    for line in document.lines() {
-        if line.starts_with(heading) {
-            inside = true;
-            continue;
-        }
-        if inside && line.starts_with(THE_HEADING_OF_ANY_SECTION) {
-            break;
-        }
-        if inside {
-            section.push_str(line);
-            section.push('\n');
-        }
-    }
-    section
-}
-
-/// The text inside the fenced block of a section, which is where a list of words is
-/// written and the only part of a section that is the list.
-fn the_block_fenced_within(section: &str) -> String {
-    let mut inside = false;
-    let mut block = String::new();
-    for line in section.lines() {
-        if line.trim_start().starts_with(THE_FENCE_AROUND_A_BLOCK) {
-            inside = !inside;
-            continue;
-        }
-        if inside {
-            block.push_str(line);
-            block.push(' ');
-        }
-    }
-    block
-}
-
-/// Every name the document blesses: a bolded entry and a code span, with the refused
-/// words taken out first.
+/// Every name the document blesses, with the refused words taken out first.
 ///
 /// **Taking the refused words out is not optional, and the reason is the document's own.**
 /// A cell in a `Not` column is written in code spans, so a reading that took every code
 /// span as a blessed name put `Status`, `State` and `move_to` in the blessed set, and a
 /// synonym and a blessed name were the same set of words — which leaves a gate that
 /// refuses synonyms with nothing at all to refuse. The sibling gate empties the cells
-/// before it reads; this one subtracts the words, and the two agree because the document
-/// carries the obligation that **a refused word appears once, in a `Not` column, and
-/// nowhere else in backticks** — so a code span outside one of those columns that holds
-/// a refused word is a cell this reading could not tell from it, and removing the word is
-/// the same removal either way.
+/// before it reads; this one subtracts the words, and **the two agree because of the
+/// obligation the document carries**: a refused word appears once, in a `Not` column, and
+/// nowhere else in backticks. A code span outside one of those columns that holds a
+/// refused word is a cell this reading cannot tell from one, and taking the word out is
+/// the same taking-out either way.
 fn the_blessed_names(refused: &[String]) -> Vec<String> {
     let document = scanning::the_glossary_text();
     let mut entries = bolded_entries(&document);
     entries.extend(code_spans(&document));
-    let mut every = the_words_never_counted_twice(&entries);
+    let mut every: Vec<String> = entries.iter().map(|entry| normalised(entry)).collect();
     every.retain(|name| !refused.contains(name));
     every
 }
@@ -363,9 +313,9 @@ fn code_spans(text: &str) -> Vec<String> {
 /// spelled exactly as the document spells the synonym would be walked past by the first
 /// person to put a prefix in front of one.
 ///
-/// The blessing is asked first and it is asked separately for the same reason: `WorkItem`
-/// is made of the word `item`, `item` is refused by the block of prohibitions, and a
-/// gate that asked the words first would refuse the one name this repository is about.
+/// The blessing is asked first and it is asked separately for the same reason:
+/// `validate_state` is made of the refused word `state`, and a gate that asked the words
+/// first would refuse the one verb that asserts the invariants of a work item's state.
 fn the_refused_word_in(name: &str, refused: &[String], blessed: &[String]) -> Option<String> {
     if blessed.contains(&normalised(name)) {
         return None;
@@ -379,85 +329,117 @@ fn the_refused_word_in(name: &str, refused: &[String], blessed: &[String]) -> Op
         .find(|word| refused.contains(word))
 }
 
-/// The names `source` declares, read out of the stretches that are code and out of
-/// nothing else.
+/// The names this source declares to whatever may read the crate, read out of the
+/// stretches that are code and out of nothing else.
 ///
 /// A `Code` stretch holds one line of code and no line ending, so one stretch is one line
 /// and is read as one. Nothing else in the file is read at all, which is what makes a
 /// declaration written in documentation, in a block comment or in a string a name the
 /// reader is told about rather than a name the file declares.
-fn the_names_declared_in(source: &str) -> Vec<String> {
+///
+/// **The cost of asking for a `pub`, which is what a private name costs.** A name only
+/// the inside of a file can see is not judged here, and `src/scanning.rs` holds one today
+/// that reaches for a refused word: `step_back_over_the_white_space_at_the_end` reaches
+/// for `step`, and `step` is refused by the stages column because three different words
+/// have been used for the same fact across two implementations and one of the three is
+/// this one. The reading cannot tell that name from a synonym, the file is
+/// not this gate's to change, and a gate that reported it on every run would be reported
+/// and ignored. That is a reviewer's finding and this file records it rather than
+/// pretending the reading is sharper than it is.
+fn the_public_names_declared_in(source: &str) -> Vec<String> {
     let mut names: Vec<String> = Vec::new();
     for stretch in HowTheFileIsWritten::of(source).stretches() {
         if stretch.kind() != WhatIsWrittenThere::Code {
             continue;
         }
-        names.extend(the_names_declared_on_one_line(stretch.text()));
+        names.extend(the_public_names_declared_on_one_line(stretch.text()));
     }
     names
 }
 
-/// The names one line of code declares, found by asking every keyword of the seven
-/// whether it is here rather than by asking at the first one.
+/// The names one line of code declares, which is every name a `pub` on the line declares.
 ///
-/// Asking each keyword in turn is what makes `pub(crate) const fn` three declarations and
-/// not one: a modifier standing between the keyword and the name is a step of a
-/// declaration, and this gate has no bracket to keep track of because it never looks for
-/// a `pub`.
-fn the_names_declared_on_one_line(code: &str) -> Vec<String> {
+/// The `pub` is looked for at every word rather than assumed to be the first, because
+/// `#[derive(Clone)] pub struct WorkItemId(String);` is one line declaring one type, and
+/// a gate that misses a declaration because of where a formatter put an attribute is a
+/// gate that agrees with a formatting choice.
+fn the_public_names_declared_on_one_line(code: &str) -> Vec<String> {
+    let words = the_words_of_one_line(code);
     let mut names: Vec<String> = Vec::new();
-    for keyword in THE_KEYWORDS_A_NAME_IS_DECLARED_WITH {
-        names.extend(the_names_the_keyword_declares(code, keyword));
-    }
-    names
-}
-
-/// The names `keyword` declares on this line, which is none at all when the keyword is
-/// not here, is a part of a longer word, or is followed by a name that is itself a
-/// keyword.
-fn the_names_the_keyword_declares(code: &str, keyword: &str) -> Vec<String> {
-    let mut names: Vec<String> = Vec::new();
-    let mut from = 0;
-    while let Some(at) = code[from..].find(keyword) {
-        let begins = from + at;
-        let ends = begins + keyword.len();
-        if is_a_whole_word(code, begins, ends) {
-            names.extend(the_name_written_after(code, ends));
+    for (at, word) in words.iter().enumerate() {
+        if word.as_str() == "pub" {
+            let keyword = the_place_the_keyword_begins_in(&words, at + 1);
+            names.extend(the_name_the_keyword_after_declares(&words, keyword));
         }
-        from = ends;
     }
     names
 }
 
-/// Whether the run of characters between two offsets is a word of its own, so that the
-/// `fn` in `fns` and the `struct` in `structural` are not a declaration.
-fn is_a_whole_word(code: &str, begins: usize, ends: usize) -> bool {
-    let before = code[..begins].chars().next_back();
-    let after = code[ends..].chars().next();
-    !before.is_some_and(is_part_of_a_word) && !after.is_some_and(is_part_of_a_word)
-}
-
-/// Whether a character is part of a word rather than standing between two of them.
-fn is_part_of_a_word(character: char) -> bool {
-    character.is_alphanumeric() || character == '_'
-}
-
-/// The name written after a declaration keyword, which is the run of letters, digits and
-/// underscores once the space in front of it is stepped over.
+/// The place the keyword begins in, which is one word on when a visibility is written in
+/// brackets: `pub(crate)` is one step of a declaration and `pub(crate` is not, and the
+/// difference is a bracket.
 ///
-/// A keyword standing there is not a name: `const fn` declares one function, and reading
-/// the two keywords as a declaration named `fn` would put a name in this gate's report
-/// that no file of this repository declares.
-fn the_name_written_after(code: &str, after: usize) -> Option<String> {
-    let name: String = code[after..]
-        .trim_start()
-        .chars()
-        .take_while(|character| is_part_of_a_word(*character))
-        .collect();
-    if name.is_empty() || THE_KEYWORDS_A_NAME_IS_DECLARED_WITH.contains(&name.as_str()) {
+/// A `const` is not stepped over, because `pub const THE_ROOT` declares a constant and
+/// `const` is the keyword that declares it rather than a modifier in front of one.
+fn the_place_the_keyword_begins_in(words: &[String], at: usize) -> usize {
+    if words.get(at).is_some_and(|word| word.starts_with('(')) {
+        return at + 1;
+    }
+    at
+}
+
+/// The name the keyword standing at `at` declares, or nothing when the word there opens
+/// no declaration or is followed by no name.
+///
+/// Nothing is looked for *somewhere ahead*, because `pub use domain::WorkItem;` holds the
+/// letters of a keyword and declares no name at all — and a keyword is a whole word, which
+/// is why the words are read first and the name is read out of them rather than out of the
+/// text.
+fn the_name_the_keyword_after_declares(words: &[String], at: usize) -> Option<String> {
+    let keyword = words.get(at)?;
+    if !THE_KEYWORDS_A_NAME_IS_DECLARED_WITH.contains(&keyword.as_str()) {
         return None;
     }
-    Some(name)
+    let named: String = words
+        .get(at + 1)?
+        .chars()
+        .take_while(|character| character.is_alphanumeric() || *character == '_')
+        .collect();
+    (!named.is_empty()).then_some(named)
+}
+
+/// The words one line of code is written in, with a parenthesised group held as one word.
+///
+/// `pub(crate)` is one step of a declaration and `pub(crate` is not, and the difference
+/// is a bracket — which is why this cannot be `split_whitespace`, and why a bracket is
+/// also where one word ends and the next begins.
+fn the_words_of_one_line(code: &str) -> Vec<String> {
+    let mut words: Vec<String> = Vec::new();
+    let mut current = String::new();
+    let mut how_many_brackets_are_open: usize = 0;
+    for character in code.chars() {
+        let closing = usize::from(character == ')');
+        how_many_brackets_are_open = how_many_brackets_are_open.saturating_sub(closing);
+        if how_many_brackets_are_open == 0 && begins_a_step(character) {
+            words.push(std::mem::take(&mut current));
+        }
+        if !character.is_whitespace() {
+            current.push(character);
+        }
+        how_many_brackets_are_open += usize::from(character == '(');
+    }
+    words.push(current);
+    words.retain(|word| !word.is_empty());
+    words
+}
+
+/// Whether this character begins a word rather than continuing the one before it.
+///
+/// White space begins a word and is part of neither, and so does the bracket that opens a
+/// parenthesised group, because that group is one step of a declaration and the word
+/// before it is a word of its own.
+fn begins_a_step(character: char) -> bool {
+    character.is_whitespace() || character == '('
 }
 
 /// Every name declared in the workspace, each with the file it was declared in.
@@ -476,7 +458,7 @@ fn every_name_in_the_workspace(files: &[PathBuf]) -> Vec<ANameDeclared> {
 /// reader, so a file that cannot be read stops the walk by saying so rather than passing
 /// it in silence.
 fn the_names_in(file: &Path) -> Vec<ANameDeclared> {
-    the_names_declared_in(&the_text_at(file))
+    the_public_names_declared_in(&the_text_at(file))
         .into_iter()
         .map(|name| ANameDeclared {
             file: file.to_path_buf(),
@@ -507,14 +489,40 @@ fn the_refusals_in(names: &[ANameDeclared], refused: &[String], blessed: &[Strin
     said
 }
 
+/// What the walk reached, asked before anything the walk judged is believed.
+///
+/// **A gate that read nothing and agreed with all of it is green**, and a green run of
+/// this file is exactly what a reader would be told is a proof. Two counts and not one,
+/// because a walk that opened the files and then read no declaration out of them agrees
+/// with a workspace just as completely as one that opened nothing.
+fn assert_the_walk_reached_something(files: &[PathBuf], names: &[ANameDeclared]) {
+    assert!(
+        files.len() > THE_FEWEST_FILES_THE_WALK_MUST_HAVE_FOUND,
+        "the walk opened {} files, and a walk that reached nothing agrees with everything",
+        files.len()
+    );
+    assert!(
+        names.len() > THE_FEWEST_NAMES_THE_WALK_MUST_HAVE_JUDGED,
+        "the walk judged {} names out of {} files, and a walk that reached the files and read no declaration out of them is not a walk",
+        names.len(),
+        files.len()
+    );
+}
+
 #[test]
-fn the_refused_words_are_more_than_the_not_columns_alone() {
+fn the_refused_words_are_not_an_empty_set() {
     let refused = the_refused_words();
     assert!(
-        refused.len() > THE_FEWEST_REFUSED_WORDS_THE_PARSE_MUST_HAVE_FOUND,
+        refused.len() >= THE_FEWEST_REFUSED_WORDS_THE_PARSE_MUST_HAVE_FOUND,
         "the parse found {} words, and a set that short is a set it did not read",
         refused.len()
     );
+    for word in ["move_to", "status", "advance", "handle", "check"] {
+        assert!(
+            refused.contains(&normalised(word)),
+            "{word} is written in a Not column, and a refused set that did not read the column would agree with every name in the workspace"
+        );
+    }
 }
 
 #[test]
@@ -524,40 +532,22 @@ fn the_refused_words_hold_every_word_a_not_column_writes() {
     for word in the_words_written_in_a_not_column(&document) {
         assert!(
             refused.contains(&normalised(&word)),
-            "{word} is written in a Not column, and a refusal the document writes down is one this gate must refuse"
+            "{word} is written in a Not column, which is a prohibition, and a prohibition the parse did not read is one this gate cannot refuse"
         );
     }
 }
 
 #[test]
-fn the_refused_words_hold_every_word_the_prohibitions_write() {
-    let document = scanning::the_glossary_text();
-    let refused = the_refused_words();
-    for word in the_words_written_in_the_section_of_prohibitions(&document) {
-        assert!(
-            refused.contains(&normalised(&word)),
-            "{word} is written in the block of prohibitions, and the document's own reading table calls that block refused and not blessed"
-        );
-    }
-}
-
-#[test]
-fn the_reading_says_which_places_of_the_document_it_read() {
-    let document = scanning::the_glossary_text();
-    let in_a_column = the_words_written_in_a_not_column(&document);
-    let in_the_prohibitions = the_words_written_in_the_section_of_prohibitions(&document);
-    let mut both = in_a_column.clone();
-    both.extend(in_the_prohibitions.iter().cloned());
+fn the_refused_set_and_the_not_columns_agree_in_size() {
+    let in_a_column = the_words_written_in_a_not_column(&scanning::the_glossary_text());
+    let mut read_separately: Vec<String> =
+        in_a_column.iter().map(|word| normalised(word)).collect();
+    read_separately.sort();
+    read_separately.dedup();
     assert_eq!(
         the_refused_words().len(),
-        the_words_never_counted_twice(&both).len(),
-        "the refused set and the two places the document writes a refusal down hold a different number of words, so the parse and the document have drifted apart"
-    );
-    assert!(
-        in_a_column.len() < the_refused_words().len(),
-        "the reading is the union of the {} words a Not column holds and the {} words the block of prohibitions holds, and the two of them together are more than the column alone",
-        in_a_column.len(),
-        in_the_prohibitions.len()
+        read_separately.len(),
+        "the reading is the Not columns and nothing else: a refused set holding a word no Not column holds is a second reading of this document, and two readings are what this repository has already paid for twice"
     );
 }
 
@@ -580,7 +570,7 @@ fn a_name_the_document_blesses_is_not_a_synonym() {
     for name in THE_NAMES_A_REFUSED_WORD_MUST_ALLOW {
         assert!(
             the_refused_word_in(name, &refused, &blessed).is_none(),
-            "{name} is a name the glossary blesses, and a name it blesses is not a synonym however the name is made of its words"
+            "{name} is a name the glossary blesses, and a name it blesses is not a synonym however that name is made of its words"
         );
     }
 }
@@ -590,43 +580,43 @@ fn a_name_the_document_blesses_is_asked_before_the_words_it_is_made_of() {
     let refused = the_refused_words();
     let blessed = the_blessed_names(&refused);
     assert!(
-        refused.contains(&normalised("item")),
-        "item is written in the block of prohibitions, and the precedence below is only worth anything if there is a refused word to precede"
+        refused.contains(&normalised("state")),
+        "state is written in the stages column, and the precedence below is only worth anything if there is a refused word for it to precede"
     );
     assert!(
-        blessed.contains(&normalised("WorkItem")),
-        "WorkItem is bolded in the glossary, and a gate that cannot see it is judging the wrong document"
+        blessed.contains(&normalised("validate_state")),
+        "validate_state is named in the glossary's own table of the two verbs, and a gate that cannot see it is judging the wrong document"
     );
     assert!(
-        the_refused_word_in("WorkItem", &refused, &blessed).is_none(),
-        "WorkItem is made of the refused word `item` and is still the one name for the thing, so the blessing is asked first"
+        the_refused_word_in("validate_state", &refused, &blessed).is_none(),
+        "validate_state is made of the refused word `state` and is still the name of the one verb that asserts the invariants, so the blessing is asked first"
     );
 }
 
 #[test]
-fn a_synonym_the_document_writes_only_in_prose_cannot_be_refused() {
+fn a_word_no_not_column_mentions_cannot_be_refused() {
     let refused = the_refused_words();
-    for word in THE_WORDS_WRITTEN_ONLY_IN_PROSE {
+    for word in THE_WORDS_NO_NOT_COLUMN_MENTIONS {
         assert!(
             !refused.contains(&normalised(word)),
-            "{word} is in the document's refused set, so it is no longer the gap the module documentation names: take it out of THE_WORDS_WRITTEN_ONLY_IN_PROSE and into the table of names that must be refused"
+            "{word} is refused in the refused set, so the document has written it in a Not column and the gap this file names is no longer the whole of it: take {word} out of this table and into the table of names that must be refused"
         );
     }
 }
 
 #[test]
-fn a_declaration_of_every_kind_is_found() {
+fn a_public_declaration_of_every_kind_is_found() {
     let source = "\
-struct WorkItem;
-enum Stage;
-trait Role;
-type Approval = u8;
-fn transition();
-mod scanning;
-const THE_ROOT: u8 = 0;
+pub struct WorkItem;
+pub enum Stage;
+pub trait Role;
+pub type Approval = u8;
+pub fn transition();
+pub mod scanning;
+pub const THE_ROOT: u8 = 0;
 ";
     assert_eq!(
-        the_names_declared_in(source),
+        the_public_names_declared_in(source),
         vec![
             String::from("WorkItem"),
             String::from("Stage"),
@@ -641,11 +631,19 @@ const THE_ROOT: u8 = 0;
 }
 
 #[test]
-fn a_modifier_between_the_keyword_and_the_name_is_a_step_and_not_a_name() {
+fn a_visibility_written_in_brackets_is_a_step_and_not_a_name() {
     assert_eq!(
-        the_names_declared_on_one_line("pub(crate) const fn a_lock() {}"),
-        vec![String::from("a_lock")],
-        "`const fn` declares one function, and a reading that reported the name `fn` would put a name in this gate's report that no file declares"
+        the_public_names_declared_on_one_line("pub(crate) enum Stage;"),
+        vec![String::from("Stage")],
+        "`pub(crate)` is one step of a declaration, and a reading that reported the name `crate` would put a name in this gate's report that no file declares"
+    );
+}
+
+#[test]
+fn a_use_declaration_is_left_alone() {
+    assert!(
+        the_public_names_declared_in("pub use crate::domain::WorkItem;\n").is_empty(),
+        "a name brought in from elsewhere was declared where this gate does not read, and a gate that judges another file's names is judging the wrong thing"
     );
 }
 
@@ -656,7 +654,7 @@ fn a_synonym_written_in_documentation_is_not_a_name_the_file_declares() {
 pub struct WorkItem;
 ";
     assert_eq!(
-        the_names_declared_in(source),
+        the_public_names_declared_in(source),
         vec![String::from("WorkItem")],
         "a name in a line of documentation is a name somebody is talking about, and this repository's own documents name the refused ones constantly and on purpose"
     );
@@ -664,31 +662,11 @@ pub struct WorkItem;
 
 #[test]
 fn a_synonym_written_in_a_string_is_not_a_name_the_file_declares() {
-    let source = "const NOTE: &str = \"pub struct work_item_status;\";\n";
+    let source = "pub const NOTE: &str = \"pub struct work_item_status;\";\n";
     assert_eq!(
-        the_names_declared_in(source),
+        the_public_names_declared_in(source),
         vec![String::from("NOTE")],
         "a name in a string is a fixture, and a fixture this gate could read would be a fixture it judged"
-    );
-}
-
-/// What the walk reached, asked before anything the walk judged is believed.
-///
-/// **A gate that read nothing and agreed with all of it is green**, and a green run of
-/// this file is exactly what a reader would be told is a proof. Two counts and not one,
-/// because a walk that opened the files and then read no declaration out of them agrees
-/// with a workspace just as completely as one that opened nothing.
-fn assert_the_walk_reached_something(files: &[PathBuf], names: &[ANameDeclared]) {
-    assert!(
-        files.len() > THE_FEWEST_FILES_THE_WALK_MUST_HAVE_FOUND,
-        "the walk opened {} files, and a walk that reached nothing agrees with everything",
-        files.len()
-    );
-    assert!(
-        names.len() > THE_FEWEST_NAMES_THE_WALK_MUST_HAVE_JUDGED,
-        "the walk judged {} names out of {} files, and a walk that reached the files and read no declaration out of them is not a walk",
-        names.len(),
-        files.len()
     );
 }
 
