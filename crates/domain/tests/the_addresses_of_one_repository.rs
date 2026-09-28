@@ -49,8 +49,10 @@ fn the_address_written_to_is_a_different_place_again() {
 
 #[test]
 fn the_read_address_carries_the_ref_it_was_given() {
-    let at_a_pull_request = the_read_address_of(&the_addressed(), "refs/pull/42/head", "README.md");
-    let at_the_default = the_read_address_of(&the_addressed(), "main", "README.md");
+    let at_a_pull_request = the_read_address_of(&the_addressed(), "refs/pull/42/head", "README.md")
+        .expect("a ref and a path that can go in an address");
+    let at_the_default =
+        the_read_address_of(&the_addressed(), "main", "README.md").expect("so can these");
 
     assert_eq!(
         at_a_pull_request,

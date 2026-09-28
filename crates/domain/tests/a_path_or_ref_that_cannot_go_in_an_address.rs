@@ -11,7 +11,7 @@
 
 use aisdlc_domain::repository::Repository;
 use aisdlc_domain::the_addresses::{
-    AStringThatCannotGoInAnAddress, a_string_that_can_go_in, the_address_of, the_read_address_of,
+    AStringThatCannotGoInAnAddress, a_string_that_can_go_in, the_read_address_of,
 };
 
 fn the_addressed() -> Repository {

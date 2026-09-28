@@ -393,11 +393,19 @@ lives and may be pushed to, `origin_of_the_code` is where the code was written a
 only be read. `git clone` sets `origin` and nothing else, so without the second a reader
 running `git remote -v` months later cannot tell a fork from a mystery.
 
-**A path and a ref are escaped, or they are not — and this one is an obligation with no code
-behind it yet.** The addresses above do not escape either, and the type that would refuse was
-written and then deleted rather than left standing with nothing calling it. **Four addresses
-exist, none of them escapes, and a repository whose name holds `?` or `#` produces an address
-that fetches something else.** A `path` holding `?` or `#` changes
+**A path and a ref are escaped, or they are not.** A path holding `?` or `#` changes which ref
+is fetched, so the address would name a different thing than the one it was built from — and the
+address is what `git` is handed. **The boundary in `a_path_in_the_project` is about project paths
+and does not apply to repository paths**, so `://` is not the only thing to refuse: a rule drawn at
+a scheme lets every one of these through, because none of them carries one.
+
+**`AStringThatCannotGoInAnAddress`** — a string that would change what an address fetches. The
+refusal names **which of the two things was being built**, because a path and a ref are refused
+alike, and **quotes the character back**, so a caller can match against what it built.
+
+**`AStringThatCanGoInAnAddress`** — a string that can go in, and says so. It is a type and not a
+`String` **because a plain `String` in the signature is the thing that has to be checked**, and a
+check that the caller may skip is a check that will be skipped. A `path` holding `?` or `#` changes
 which ref is fetched. This is recorded here as an obligation, not as a gap that is
 acceptable: the boundary in `a_path_in_the_project` is about *project* paths and does not
 apply to *repository* paths, and `://` is not the only thing to refuse.

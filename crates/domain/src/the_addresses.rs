@@ -129,8 +129,13 @@ pub fn a_string_that_can_go_in(
     a_string: &str,
     what_was_being_built: &str,
 ) -> Result<AStringThatCanGoInAnAddress, AStringThatCannotGoInAnAddress> {
-    let _what_made_it_impossible = String::new();
-    let _what_was_being_built = what_was_being_built;
+    if let Some(what_made_it_impossible) = the_character_that_changes_the_fetch(a_string) {
+        return Err(AStringThatCannotGoInAnAddress::because(
+            what_was_being_built,
+            a_string,
+            &what_made_it_impossible,
+        ));
+    }
     Ok(AStringThatCanGoInAnAddress(a_string.to_string()))
 }
 
@@ -143,4 +148,17 @@ impl AStringThatCanGoInAnAddress {
     pub fn as_str(&self) -> &str {
         &self.0
     }
+}
+
+/// The character in a string that would change what an address fetches, if there is one.
+///
+/// **Two characters and not a scheme.** `://` is the obvious thing to refuse and none of these
+/// strings carries one, so a rule drawn there lets all of them through.
+fn the_character_that_changes_the_fetch(a_string: &str) -> Option<String> {
+    for what_changes_it in ["?", "#"] {
+        if a_string.contains(what_changes_it) {
+            return Some(what_changes_it.to_string());
+        }
+    }
+    None
 }
