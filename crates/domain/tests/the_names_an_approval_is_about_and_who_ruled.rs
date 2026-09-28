@@ -128,12 +128,10 @@ fn one_blank_produces_two_refusals_a_reader_can_tell_apart() {
     );
     assert!(
         about_an_artifact.to_string().contains("artifact"),
-        "and the artifact refusal names the artifact: {}",
-        about_an_artifact
+        "and the artifact refusal names the artifact: {about_an_artifact}"
     );
     assert!(
         about_a_decider.to_string().contains("decided"),
-        "and the decider refusal names the decision: {}",
-        about_a_decider
+        "and the decider refusal names the decision: {about_a_decider}"
     );
 }
