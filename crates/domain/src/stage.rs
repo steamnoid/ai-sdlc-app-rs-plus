@@ -36,6 +36,22 @@ pub enum Stage {
     Done,
 }
 
+impl Stage {
+    /// Whether an agent must be holding a work item that stands at this stage.
+    ///
+    /// **The question the specification's stage table already asks in a column**, asked of
+    /// the stage itself so that a caller does not keep a second list of the answer. It is a
+    /// question and not a lookup into a pair of tables, because the answer belongs to the
+    /// stage: two of the six are stages an agent may hold and four are stages nobody may.
+    ///
+    /// The refusal that a work item is standing at a stage needing an agent and holding
+    /// nobody is what this answer is for, and it is why the question is a method on `Stage`
+    /// rather than a free function a caller could be handed the wrong stage for.
+    pub fn an_agent_must_be_holding_it(self) -> bool {
+        matches!(self, Stage::AwaitingAgentPickup | Stage::InProgressByAgent)
+    }
+}
+
 /// Every stage, in the order the specification lists them.
 ///
 /// **Rust writes a constant in capitals**, and a `#[allow(non_upper_case_globals)]` is
