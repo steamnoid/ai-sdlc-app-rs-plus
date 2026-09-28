@@ -10,8 +10,9 @@
 //! `std::fs` in its documentation — the walk that would refuse that is the walk this gate
 //! exists to make impossible.
 
+use aisdlc_gates::a_stretch_of_the_file::WhatIsWrittenThere;
 use aisdlc_gates::reading_the_checkout;
-use aisdlc_gates::scanning::{HowTheFileIsWritten, WhatIsWrittenThere};
+use aisdlc_gates::scanning::HowTheFileIsWritten;
 
 /// The manifest of the domain, and the directory its source lives in.
 const THE_DOMAIN: &str = "crates/domain";

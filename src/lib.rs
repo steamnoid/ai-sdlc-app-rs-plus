@@ -23,5 +23,6 @@
 //! and the only ways to stop that are `#[allow(dead_code)]`, which a gate in this repository
 //! refuses, or a copy.
 
+pub mod a_stretch_of_the_file;
 pub mod reading_the_checkout;
 pub mod scanning;

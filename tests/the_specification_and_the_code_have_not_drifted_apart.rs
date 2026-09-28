@@ -14,8 +14,9 @@
 //! a table it had never opened, which is the exact failure a gate exists to prevent. A
 //! second file with the same reader in it would be that same defect once more.
 
+use aisdlc_gates::a_stretch_of_the_file::WhatIsWrittenThere;
 use aisdlc_gates::reading_the_checkout;
-use aisdlc_gates::scanning::{HowTheFileIsWritten, WhatIsWrittenThere};
+use aisdlc_gates::scanning::HowTheFileIsWritten;
 
 const THE_GLOSSARY: &str = "docs/domain-glossary.md";
 const THE_HEADING_THE_STAGES_ARE_UNDER: &str = "## The stages";

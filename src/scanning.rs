@@ -10,76 +10,7 @@
 //! not use it is compiled, and the only ways to stop that are `#[allow(dead_code)]`, which a
 //! gate in this repository refuses, or a copy.
 
-use std::fmt;
-
-/// The five kinds a stretch of a `.rs` file can be.
-///
-/// **A closed set**, because every gate rests on the claim that a span of characters in a
-/// source file is one of these five things and nothing else. A sixth would be a change to
-/// what a gate may assume, so it is a change here and nowhere else.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum WhatIsWrittenThere {
-    /// An instruction the compiler reads.
-    Code,
-    /// Something a person wrote for a person to read, `///` and `//!` included.
-    AComment,
-    /// A quoted run of characters, of any of its six spellings.
-    AString,
-    /// A quote, one character or one escape, and a quote.
-    ACharacter,
-    /// The space between, which includes the line ending.
-    TheSpaceBetween,
-}
-
-impl fmt::Display for WhatIsWrittenThere {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let written = match self {
-            WhatIsWrittenThere::Code => "code",
-            WhatIsWrittenThere::AComment => "a comment",
-            WhatIsWrittenThere::AString => "a string",
-            WhatIsWrittenThere::ACharacter => "a character",
-            WhatIsWrittenThere::TheSpaceBetween => "the space between",
-        };
-        write!(formatter, "{written}")
-    }
-}
-
-/// A run of characters in a source file that are all the same kind of thing.
-///
-/// It carries the line it starts on, because a gate that says "there is a comment somewhere"
-/// is a gate nobody can act on.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct AStretchOfTheFile {
-    kind: WhatIsWrittenThere,
-    text: String,
-    line_it_starts_on: usize,
-}
-
-impl AStretchOfTheFile {
-    /// What this stretch is.
-    pub fn kind(&self) -> WhatIsWrittenThere {
-        self.kind
-    }
-
-    /// The characters, exactly as the file wrote them.
-    pub fn text(&self) -> &str {
-        &self.text
-    }
-
-    /// The line the stretch starts on, counted from one.
-    pub fn line_it_starts_on(&self) -> usize {
-        self.line_it_starts_on
-    }
-
-    /// Whether this stretch is documentation — `///` or `//!` — rather than a comment.
-    ///
-    /// **False for anything that is not a comment at all**, so a caller can ask every
-    /// stretch and only the comments can answer yes.
-    pub fn it_documents_something(&self) -> bool {
-        let _the_stretch_was_not_read = self;
-        false
-    }
-}
+use crate::a_stretch_of_the_file::{AStretchOfTheFile, WhatIsWrittenThere};
 
 /// A source file, taken apart into the stretches it is made of, in the order it has them.
 ///

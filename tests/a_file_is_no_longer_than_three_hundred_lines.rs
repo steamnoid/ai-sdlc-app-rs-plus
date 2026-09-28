@@ -15,8 +15,9 @@
 //! gate over three hundred lines would be the only file in the repository nobody had
 //! checked — so its own count is one of the counts it reports on.
 
+use aisdlc_gates::a_stretch_of_the_file::WhatIsWrittenThere;
 use aisdlc_gates::reading_the_checkout;
-use aisdlc_gates::scanning::{HowTheFileIsWritten, WhatIsWrittenThere};
+use aisdlc_gates::scanning::HowTheFileIsWritten;
 
 /// The most lines of code a file may spend.
 const THE_MOST_A_FILE_MAY_SPEND: usize = 300;

@@ -9,7 +9,8 @@
 //! not use it is compiled, and the only ways to stop that are `#[allow(dead_code)]`, which a
 //! gate in this repository refuses, or a copy.
 
-use aisdlc_gates::scanning::{AStretchOfTheFile, HowTheFileIsWritten, WhatIsWrittenThere};
+use aisdlc_gates::a_stretch_of_the_file::{AStretchOfTheFile, WhatIsWrittenThere};
+use aisdlc_gates::scanning::HowTheFileIsWritten;
 
 /// A source with a scheme in a string and a comment beside it.
 ///
@@ -292,70 +293,85 @@ fn a_file_that_cannot_be_read_is_a_failure_and_not_an_empty_one() {
     );
 }
 
-/// The two kinds of thing a person writes for a person to read, told apart.
+/// The two kinds of thing a person writes for a person to read, told apart line by line.
 ///
-/// **This repository allows `///` and `//!` and refuses `//`.** They are the same three
-/// characters at the start, and a walk that reported one thing for all of them could not
-/// judge a file against that rule — it would have to re-read the text to find out, which is
-/// the boundary it exists to hold.
+/// **This repository allows `///` and `//!` and refuses `//`.** They are the same characters
+/// at the start, and a walk that reported one thing for all of them could not judge a file
+/// against that rule — it would have to re-read the text to find out, which is the boundary
+/// it exists to hold.
+///
+/// **Per line and not per stretch**, because a stretch is a *run* of comment lines and the
+/// question is still per line. Three `//!` lines are one stretch; a `//!` line followed by a
+/// `//` line is a different stretch. Either way a rule that called a whole run documentation
+/// would pass a file with a stray `//` in it.
 #[test]
-fn a_stretch_says_whether_it_documents_or_merely_comments() {
-    let the_code = "//! about the crate\\n// a thought\\n/// about the thing\\n/* a block */\\n";
+fn a_stretch_says_which_of_its_lines_only_comment() {
+    let the_code = "//! about the crate\n// a thought\n/// about the thing\n/* a block */\n";
 
-    let found: Vec<(usize, bool)> = HowTheFileIsWritten::of(the_code)
+    let only_commenting: Vec<Vec<usize>> = HowTheFileIsWritten::of(the_code)
         .stretches()
         .iter()
-        .filter(|it| it.kind() == WhatIsWrittenThere::AComment)
-        .map(|it| (it.line_it_starts_on(), it.it_documents_something()))
+        .map(AStretchOfTheFile::the_lines_that_only_comment)
+        .filter(|it| !it.is_empty())
+        .collect();
+
+    assert_eq!(
+        only_commenting,
+        vec![vec![2], vec![4]],
+        "the walk gives a run of `//!` its own stretch and a run of `//` another, so these are line 2 and line 4 — the two this repository refuses, with 1 and 3 documenting"
+    );
+}
+
+#[test]
+fn a_stretch_that_is_not_a_comment_has_no_lines_that_only_comment() {
+    let the_code = "let the_answer = 42; // and a thought\n";
+
+    let found: Vec<Vec<usize>> = HowTheFileIsWritten::of(the_code)
+        .stretches()
+        .iter()
+        .map(AStretchOfTheFile::the_lines_that_only_comment)
+        .filter(|it| !it.is_empty())
         .collect();
 
     assert_eq!(
         found,
-        vec![(1, true), (2, false), (3, true), (4, false)],
-        "documentation is a comment that says why, and a comment that says nothing about the code is the one this repository refuses"
+        vec![vec![1]],
+        "the one line with a comment on it is the one to refuse, and the code on it is not"
     );
 }
 
 #[test]
-fn a_stretch_that_is_not_a_comment_documents_nothing() {
-    let the_code = "let the_answer = 42;";
+fn a_run_of_documentation_documents_every_line_of_it() {
+    let the_code = "//! one\n//! two\n//! three\n";
 
-    for stretch in HowTheFileIsWritten::of(the_code).stretches() {
-        assert!(
-            !stretch.it_documents_something(),
-            "a stretch of code is not documentation: {:?}",
-            stretch.text()
-        );
-    }
-}
-
-#[test]
-fn a_comment_closing_on_a_later_line_still_documents() {
-    let the_code = "//! one\\n//! two\\n//! three\\n";
-
-    let every_one_documents: Vec<bool> = HowTheFileIsWritten::of(the_code)
+    let found: Vec<Vec<usize>> = HowTheFileIsWritten::of(the_code)
         .stretches()
         .iter()
-        .filter(|it| it.kind() == WhatIsWrittenThere::AComment)
-        .map(|it| it.it_documents_something())
+        .map(AStretchOfTheFile::the_lines_that_only_comment)
+        .filter(|it| !it.is_empty())
         .collect();
 
     assert_eq!(
-        every_one_documents,
-        vec![true],
-        "the walk reads a run of `//!` as one comment, and one comment about the crate is documentation"
+        found,
+        Vec::<Vec<usize>>::new(),
+        "three lines about the crate and none of them is a comment"
     );
 }
 
 #[test]
-fn a_slash_inside_a_string_is_not_a_comment_and_documents_nothing() {
-    let the_code = "let the_path = \"src/lib.rs // not a comment\";";
+fn a_slash_inside_a_string_is_not_a_comment_and_is_never_refused() {
+    let the_code = "let the_path = \"src/lib.rs // not a comment\";\n";
 
-    for stretch in HowTheFileIsWritten::of(the_code).stretches() {
-        let is_a_comment = stretch.kind() == WhatIsWrittenThere::AComment;
-        assert!(
-            !(is_a_comment && stretch.it_documents_something()),
-            "a path inside a string is a string, and this repository does not refuse strings"
-        );
-    }
+    let found: Vec<Vec<usize>> = HowTheFileIsWritten::of(the_code)
+        .stretches()
+        .iter()
+        .map(AStretchOfTheFile::the_lines_that_only_comment)
+        .filter(|it| !it.is_empty())
+        .collect();
+
+    assert_eq!(
+        found,
+        Vec::<Vec<usize>>::new(),
+        "a path inside a string is a string, and this repository does not refuse strings"
+    );
 }
