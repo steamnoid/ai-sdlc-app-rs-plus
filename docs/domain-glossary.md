@@ -89,6 +89,18 @@ This line previously said that an `aisdlc-` identifier meant a policy, which con
 the gate rule that refuses every one of them. Both were in this repository: the sentence here
 and the check in `docs` and, in the earlier implementation, in the gate itself.
 
+**The prefix is matched exactly, and the exactness is a decision rather than an oversight.**
+`AISDLC-PO` and `"  aisdlc-dev-impl"` are **not** agents, because the namespace is spelled in
+lower case and a name is compared as it was written. This is the same rule that keeps
+`AgentIdentifier` from refusing `NONE` when it refuses `none`, and it is stated here for the
+same reason: **a rule nobody has stated is a rule nobody may rely on, and the next person
+to read a failing test would "fix" it by adding `to_lowercase()`.**
+
+**It is a rule about names, not a control against an adversary.** Somebody who meant to
+evade it could write `aisdlc_` or choose another prefix, so tightening the match would buy
+nothing and would cost a legitimate name. What this refuses is a **model** that answers with
+an identifier it invented, which is the threat this system actually has.
+
 **`AgentIdentifier`** — an agent, named. Absence is `None` and never a string that says
 "absent": `"none"`, `""` and `"   "` are all refused, because the state machine decides
 whether an agent is present by asking whether there is one.

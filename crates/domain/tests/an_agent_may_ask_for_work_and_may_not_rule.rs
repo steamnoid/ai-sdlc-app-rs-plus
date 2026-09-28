@@ -191,3 +191,31 @@ fn a_ruling_carries_the_who_verbatim_and_never_a_replacement() {
         "the ruling keeps the decider exactly as it was given, and a record naming a person for a policy's decision would be a forged audit trail"
     );
 }
+
+/// The two shapes that resemble an agent and are not one, held in place on purpose.
+///
+/// **These pass on the code and that is the assertion.** Each is a name a reader might
+/// expect to be refused, and a test that says so stops the next person from "fixing" the
+/// match with `to_lowercase()` or a `trim()` — which is the same rule that keeps
+/// `AgentIdentifier` from refusing `NONE` when it refuses `none`, and the same reason: a
+/// rule about names is not a control against an adversary, and somebody meaning to evade
+/// one would write `aisdlc_` anyway.
+#[test]
+fn the_prefix_is_matched_exactly_and_the_shapes_that_only_resemble_an_agent_are_not_one() {
+    for resembles_but_is_not in ["AISDLC-PO", "  aisdlc-dev-impl", "aisdlc_", "notaisdlc-po"] {
+        let who = WhoDecided::try_from(resembles_but_is_not).expect("a name is not blank");
+
+        let result = ApprovalDecision::the_ruling_about(
+            a_work_item(),
+            the_report(),
+            the_first_version(),
+            true,
+            who,
+        );
+
+        assert!(
+            result.is_ok(),
+            "{resembles_but_is_not:?} is not spelled the way the namespace is spelled, and the namespace is lower case: the rule is about the name as written and not about an adversary who would write aisDLC_ anyway"
+        );
+    }
+}
