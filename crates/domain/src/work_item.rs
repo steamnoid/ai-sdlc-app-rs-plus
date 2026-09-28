@@ -126,3 +126,54 @@ impl WorkItem {
         Ok(answered)
     }
 }
+
+/// The one way a work item enters the lifecycle.
+///
+/// **It adds no third verb and it takes no stage.** The entry state is `READY` and `READY`
+/// is not the caller's to choose, so commissioning cannot be refused — there is no shape of
+/// this call that produces a work item standing somewhere it should not be. A birth that
+/// could be refused would be a birth whose failure a caller could retry into a different
+/// stage, and that is a queue somebody can write to.
+///
+/// **Nothing in the transition table targets `READY`**, so no later move can put a work item
+/// back into the entry state, and the work item a run finds at `READY` is one somebody
+/// asked for rather than one the framework queued for itself.
+pub fn a_work_item_commissioned_for_an_agent(
+    work_item_id: WorkItemId,
+    who_commissioned: WhoCommissioned,
+    the_repository: Repository,
+    the_role: Role,
+    requested: Option<CommissionedRequest>,
+) -> WorkItem {
+    WorkItem {
+        work_item_id,
+        who_commissioned,
+        repository: the_repository,
+        role: the_role,
+        stage: Stage::Ready,
+        agent: None,
+        the_request: requested,
+    }
+}
+
+impl WorkItem {
+    /// Where it stands, and only `transition` may change the answer.
+    pub fn the_stage_it_stands_at(&self) -> Stage {
+        self.stage
+    }
+
+    /// The agent holding it, or nobody.
+    pub fn the_agent_holding_it(&self) -> Option<AgentIdentifier> {
+        self.agent.clone()
+    }
+
+    /// What was asked for, once somebody has said it.
+    pub fn the_request_it_answers(&self) -> Option<CommissionedRequest> {
+        self.the_request.clone()
+    }
+
+    /// Whoever asked for it, verbatim.
+    pub fn who_asked(&self) -> WhoCommissioned {
+        self.who_commissioned.clone()
+    }
+}
