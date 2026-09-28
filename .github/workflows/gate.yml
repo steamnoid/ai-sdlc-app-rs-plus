@@ -36,6 +36,11 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-
 
+      # This job hands no stored credential to any step, and the gate below says so in a
+      # sentence rather than in a setting. `secrets.` is the rule and the dot is part of it,
+      # so that a sentence saying the job needs none is not itself a violation of the rule it
+      # is recording.
+      #
       # One command, so that this job and a person cannot disagree about what the gate is.
       - name: The gate
         run: ./scripts/gate
