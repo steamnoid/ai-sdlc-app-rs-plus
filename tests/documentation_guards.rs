@@ -328,6 +328,51 @@ mod the_glossary_blesses_every_type_the_domain_defines {
         );
     }
 
+    /// Every crate of the workspace, and the gate's job is not done while one of them is unguarded.
+    ///
+    /// **Two assertions, and the first is what stops the second from passing for free.** A gate
+    /// that scanned no crate at all would report nothing unblessed and look perfect; so this
+    /// first says how many crates were actually read, and the run crate held a type the glossary
+    /// had never heard of while the gate was reading the domain and congratulating itself.
+    #[test]
+    fn the_glossary_guards_every_crate_and_not_only_the_domain() {
+        let blessed = the_blessed_names(&the_glossary_text());
+        let the_root = reading_the_checkout::the_root_of_the_checkout();
+        let every_crate =
+            aisdlc_gates::reading_the_checkout::the_crates_under(&the_root.join("crates"));
+
+        let mut crates_that_were_read = Vec::new();
+        let mut names_nobody_chose = Vec::new();
+        for a_crate in &every_crate {
+            let the_source = a_crate.join("src");
+            if !the_source.is_dir() {
+                continue;
+            }
+            let the_files = aisdlc_gates::reading_the_code::the_rust_files_under(&the_source);
+            if the_files.is_empty() {
+                continue;
+            }
+            crates_that_were_read.push(a_crate.display().to_string());
+            for a_file in the_files {
+                names_nobody_chose.extend(what_is_wrong_with(
+                    &a_file.display().to_string(),
+                    &reading_the_checkout::the_text_at(&a_file),
+                ));
+            }
+        }
+
+        assert_eq!(
+            crates_that_were_read.len(),
+            every_crate.len(),
+            "**because a crate nobody reads is a crate whose names nobody chose** — the glossary guards one crate today and the workspace has {}, and a crate added tomorrow would be born unguarded: {crates_that_were_read:?}",
+            every_crate.len()
+        );
+        assert!(
+            names_nobody_chose.is_empty(),
+            "a type the glossary never heard of is a name nobody chose: {names_nobody_chose:?}"
+        );
+    }
+
     #[test]
     fn a_type_the_glossary_blesses_is_accepted() {
         let the_code = "pub struct WorkItem {\n    one: u8,\n}\npub enum Stage {\n    Idle,\n}\n";

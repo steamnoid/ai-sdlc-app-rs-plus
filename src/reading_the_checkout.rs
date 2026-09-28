@@ -31,3 +31,22 @@ pub fn the_text_at(path: &std::path::Path) -> String {
     std::fs::read_to_string(path)
         .unwrap_or_else(|why| panic!("{} must be readable: {why}", path.display()))
 }
+
+/// Every crate under `a_directory`, which is a directory holding a `src` of its own.
+///
+/// **A crate and not a folder.** A directory with no `src` is not a crate, and a rule that read
+/// one anyway would count a directory nobody compiles as a directory whose names it holds.
+pub fn the_crates_under(a_directory: &std::path::Path) -> Vec<std::path::PathBuf> {
+    let mut the_crates = Vec::new();
+    let Ok(what_is_in_it) = std::fs::read_dir(a_directory) else {
+        return the_crates;
+    };
+    for what_is_there in what_is_in_it.flatten() {
+        let a_path = what_is_there.path();
+        if a_path.join("src").is_dir() {
+            the_crates.push(a_path);
+        }
+    }
+    the_crates.sort();
+    the_crates
+}
