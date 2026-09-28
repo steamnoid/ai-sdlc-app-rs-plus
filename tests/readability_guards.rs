@@ -1384,7 +1384,7 @@ mod no_placeholder_is_left_in_the_code {
         let messages = the_panic_messages_in(the_code);
         let mut found = Vec::new();
         for (the_line, one_line) in the_lines_of_code(the_code) {
-            found.extend(the_refusal_of(
+            found.extend(the_refusal_of_a_line_leaving_something_unfinished(
                 &one_line,
                 a_file_name,
                 the_line,
@@ -1396,7 +1396,7 @@ mod no_placeholder_is_left_in_the_code {
     }
 
     /// The refusal for one line, if it leaves something unfinished behind.
-    fn the_refusal_of(
+    fn the_refusal_of_a_line_leaving_something_unfinished(
         one_line: &str,
         a_file_name: &str,
         the_line: usize,
@@ -1615,7 +1615,7 @@ mod a_name_is_never_generic_vocabulary {
     /// Every refusal in one file, given its name and its text.
     fn what_is_wrong_with(a_file_name: &str, the_code: &str) -> Vec<String> {
         let mut found = Vec::new();
-        for one_name in the_names_the_code_introduces(the_code) {
+        for one_name in the_names_the_synonyms_are_looked_for_in(the_code) {
             if let Some(word) = the_banned_word_one_name_ends_on(&one_name) {
                 found.push(format!(
                     "{a_file_name} names {one_name}, which ends on a banned word: {word}"
@@ -1687,7 +1687,7 @@ mod a_name_is_never_generic_vocabulary {
     /// also the type every fallible function in Rust returns; a rule that judged uses would
     /// refuse the whole crate on its first line. A name a *use* does not introduce is somebody
     /// else's name, and this repository does not get to have opinions about `std`.
-    fn the_names_the_code_introduces(the_code: &str) -> Vec<String> {
+    fn the_names_the_synonyms_are_looked_for_in(the_code: &str) -> Vec<String> {
         let mut found = Vec::new();
         for (_, one_line) in the_lines_of_code(the_code) {
             found.extend(the_names_after_each_keyword(&one_line));
@@ -1827,14 +1827,22 @@ mod a_synonym_is_never_used {
     fn what_is_wrong_with(a_file_name: &str, the_code: &str) -> Vec<String> {
         let the_glossary = the_glossary_text();
         let mut found = Vec::new();
-        for one_name in the_names_the_code_introduces(the_code) {
-            found.extend(the_refusal_of(&one_name, &the_glossary, a_file_name));
+        for one_name in the_names_the_vocabulary_is_looked_for_in(the_code) {
+            found.extend(the_refusal_of_a_name_the_glossary_refuses(
+                &one_name,
+                &the_glossary,
+                a_file_name,
+            ));
         }
         found
     }
 
     /// The refusal for one name, if the glossary refuses it.
-    fn the_refusal_of(one_name: &str, the_glossary: &str, a_file_name: &str) -> Vec<String> {
+    fn the_refusal_of_a_name_the_glossary_refuses(
+        one_name: &str,
+        the_glossary: &str,
+        a_file_name: &str,
+    ) -> Vec<String> {
         if the_blessed_names(the_glossary).contains(&it_as_letters(one_name)) {
             return Vec::new();
         }
@@ -1868,7 +1876,7 @@ mod a_synonym_is_never_used {
         ["struct", "enum", "trait", "type", "fn", "mod"];
 
     /// Every name the code introduces, and nothing it merely uses.
-    fn the_names_the_code_introduces(the_code: &str) -> Vec<String> {
+    fn the_names_the_vocabulary_is_looked_for_in(the_code: &str) -> Vec<String> {
         let mut found = Vec::new();
         for (_, one_line) in the_lines_of_code(the_code) {
             found.extend(the_names_immediately_after(&one_line));
@@ -2295,24 +2303,7 @@ mod the_domain_depends_on_nothing {
     /// Every `.rs` file of the domain, in the order a reader would meet them.
     fn every_rust_file_under_the_domain() -> Vec<std::path::PathBuf> {
         let the_root = the_path_under_the_checkout(ITS_SOURCE);
-        let mut found = Vec::new();
-        collect_rust_files_under(&the_root, &mut found);
-        found.sort();
-        found
-    }
-
-    fn collect_rust_files_under(directory: &std::path::Path, found: &mut Vec<std::path::PathBuf>) {
-        let Ok(entries) = std::fs::read_dir(directory) else {
-            return;
-        };
-        for entry in entries.flatten() {
-            let path = entry.path();
-            if path.is_dir() {
-                collect_rust_files_under(&path, found);
-            } else if path.extension().is_some_and(|one| one == "rs") {
-                found.push(path);
-            }
-        }
+        aisdlc_gates::reading_the_code::the_rust_files_under(&the_root)
     }
 
     /// A path inside this checkout, from where cargo compiled this file.
@@ -2325,5 +2316,210 @@ mod the_domain_depends_on_nothing {
             );
         }
         here.join(wanted)
+    }
+}
+
+mod a_name_the_gates_share_has_one_implementation {
+    //! A name the gates share has one implementation.
+    //!
+    //! **A name that means two things is a name nobody can change**, because every caller is
+    //! holding the other meaning and the compiler cannot tell two readings of a word apart.
+    //! This repository had seven functions called `the_lines_of_code` in the seven files that
+    //! read the source, and **five returned `(usize, String)` while two returned `String`** — so
+    //! the same call gave a different answer depending on which file asked, and nothing said so
+    //! until the copies were made to agree with each other.
+    //!
+    //! **Duplication that has not diverged is a cost. Duplication that has is a defect**, and
+    //! the distance between the two is one line added in one place.
+
+    use std::collections::BTreeMap;
+    use std::path::PathBuf;
+
+    use aisdlc_gates::reading_the_checkout;
+    use aisdlc_gates::reading_the_code::{every_source_file, the_lines_of_code};
+
+    /// The refusal for one name, or nothing when the gates agree about what it means.
+    fn what_is_wrong_with(one_name: &str, the_copies: &[String]) -> Option<String> {
+        if the_copies.len() < 2 {
+            return None;
+        }
+        let the_first = &the_copies[0];
+        if the_copies.iter().all(|it| it == the_first) {
+            return Some(format!(
+                "{one_name} is written in {} places, and all of them are the same",
+                the_copies.len()
+            ));
+        }
+        Some(format!("{one_name} means two different things"))
+    }
+
+    #[test]
+    fn a_name_written_twice_differently_is_refused() {
+        let the_copies = vec![
+            "a_file.rs line 1".to_string(),
+            "a_file.rs line 9".to_string(),
+        ];
+
+        assert_eq!(
+            what_is_wrong_with("the_lines_of_code", &the_copies),
+            Some("the_lines_of_code means two different things".to_string()),
+            "which is the worse of the two findings, and it is the one this repository had"
+        );
+    }
+
+    #[test]
+    fn a_name_written_once_is_accepted() {
+        assert_eq!(
+            what_is_wrong_with("the_lines_of_code", &["a_file.rs line 1".to_string()]),
+            None,
+            "one writer, one meaning, nothing to refuse"
+        );
+    }
+
+    /// Every `fn` in one file, as `(its name, the line it was written on)`.
+    ///
+    /// **A signature is one line and its name is the whole word before the bracket.** A reader
+    /// that took the first space-separated word found `a_name` in a function called
+    /// `a_name_ends_on`. A reader that then required the word to end in a comma found nothing
+    /// at all — not one signature in this repository ends in a comma, a name is followed by its
+    /// bracket — and the rule passed on the seven copies it was written to find.
+    fn the_definitions_in(the_code: &str) -> Vec<(String, usize)> {
+        let mut found = Vec::new();
+        for (a_line, one_line) in the_lines_of_code(the_code) {
+            let Some(the_name) = the_name_declared_on(&one_line) else {
+                continue;
+            };
+            found.push((the_name, a_line));
+        }
+        found
+    }
+
+    /// The name a line declares a function under, or nothing if it declares no function.
+    ///
+    /// **Through the scanner**, so a `fn` inside a string is a fixture and not a definition —
+    /// a gate that cannot tell a definition from a quotation is a gate that counts the word.
+    fn the_name_declared_on(one_line: &str) -> Option<String> {
+        let after_fn = one_line.trim().strip_prefix("fn ")?;
+        if !after_fn.contains('(') {
+            return None;
+        }
+        let the_name = after_fn.split('(').next()?;
+        let is_a_whole_word = the_name
+            .chars()
+            .all(|one| one.is_ascii_lowercase() || one == '_');
+        if is_a_whole_word && !the_name.is_empty() {
+            return Some(the_name.to_string());
+        }
+        None
+    }
+
+    /// Every name the gates wrote more than once, and why it is refused.
+    fn the_names_written_more_than_once() -> Vec<String> {
+        let mut where_each_name_lives: BTreeMap<String, Vec<String>> = BTreeMap::new();
+        for a_file in the_files_the_gates_are_written_in() {
+            let the_text = reading_the_checkout::the_text_at(&a_file);
+            for (the_name, the_line) in the_definitions_in(&the_text) {
+                let the_copies = where_each_name_lives.entry(the_name.clone()).or_default();
+                the_copies.push(format!("{} line {the_line}", a_file.display()));
+            }
+        }
+        where_each_name_lives
+            .into_iter()
+            .filter(|(a_name, the_copies)| {
+                the_copies.len() > 1 && !a_test_may_write_this_for_itself(a_name)
+            })
+            .filter_map(|(a_name, the_copies)| what_is_wrong_with(&a_name, &the_copies))
+            .collect()
+    }
+
+    /// The files the gates are written in, and not the whole checkout.
+    ///
+    /// **The domain writes `fmt` and `try_from` and a rule about the gates must not refuse
+    /// them.** A first version read every `.rs` in the checkout and reported fourteen names,
+    /// five of them the domain's own, and a rule that measures the wrong thing is worse than no
+    /// rule at all, because it is believed.
+    fn the_files_the_gates_are_written_in() -> Vec<PathBuf> {
+        let the_root = reading_the_checkout::the_root_of_the_checkout();
+        let mut found = vec![
+            the_root.join("tests").join("readability_guards.rs"),
+            the_root.join("tests").join("documentation_guards.rs"),
+        ];
+        found.extend(
+            every_source_file()
+                .into_iter()
+                .filter(|a_file| a_file.starts_with(the_root.join("src"))),
+        );
+        found
+    }
+
+    /// Whether a name is one each gate may write for itself, because it judges its own rule.
+    fn a_test_may_write_this_for_itself(one_name: &str) -> bool {
+        THE_NAMES_EACH_GATE_MAY_WRITE_FOR_ITSELF.contains(&one_name)
+    }
+
+    /// The names each gate may write for itself, and the list is a cost written down rather
+    /// than hidden: a gate needing one more adds a line and a reviewer reads the diff.
+    ///
+    /// **`new` and `of_one_line` are methods on two different walks**, and a method on a type
+    /// shares its name with a method on another type the way two structs share a field name —
+    /// the same name about two different things, and a rule about functions that did not say so
+    /// would send a reader hunting for a shared implementation nobody meant to write.
+    const THE_NAMES_EACH_GATE_MAY_WRITE_FOR_ITSELF: [&str; 4] = [
+        "what_is_wrong_with",
+        "the_explanation",
+        "new",
+        "of_one_line",
+    ];
+
+    #[test]
+    fn no_name_in_the_gates_is_written_twice() {
+        let refusals = the_names_written_more_than_once();
+
+        assert!(
+            refusals.is_empty(),
+            "a name the gates share has one implementation, and these do not: {refusals:?}"
+        );
+    }
+
+    #[test]
+    fn a_reader_told_of_one_function_twice_finds_both() {
+        let a_file_writing_one_function_twice = "fn a_reader() {}\nfn a_reader() {}\n";
+
+        let found = the_definitions_in(a_file_writing_one_function_twice);
+
+        assert_eq!(
+            found,
+            vec![("a_reader".to_string(), 1), ("a_reader".to_string(), 2)],
+            "the rule reads files it has never seen, so it is shown a certain one first: one function written twice, with the line of each, rather than a checkout it has to guess its way through"
+        );
+    }
+
+    #[test]
+    fn a_reader_told_of_a_function_named_in_a_string_finds_nothing() {
+        let a_file_naming_a_function_in_a_string = "let the_fixture = \"fn quoted()\";\n";
+
+        let found = the_definitions_in(a_file_naming_a_function_in_a_string);
+
+        assert!(
+            found.is_empty(),
+            "a quotation is a value and a value holding the word is a fixture, and a reader that cannot tell the two apart is a reader counting the word `fn`"
+        );
+    }
+
+    #[test]
+    fn a_name_written_twice_the_same_way_is_refused() {
+        let the_copies = vec![
+            "a_file.rs line 1".to_string(),
+            "a_file.rs line 1".to_string(),
+        ];
+
+        assert_eq!(
+            what_is_wrong_with("the_lines_of_code", &the_copies),
+            Some(
+                "the_lines_of_code is written in 2 places, and all of them are the same"
+                    .to_string()
+            ),
+            "and it is refused with the count, because 'also duplicated somewhere' is not a place a reader can act on"
+        );
     }
 }

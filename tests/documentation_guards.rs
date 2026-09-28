@@ -308,24 +308,7 @@ mod the_glossary_blesses_every_type_the_domain_defines {
     /// Every `.rs` file of the domain, in the order a reader would meet them.
     fn every_domain_file() -> Vec<std::path::PathBuf> {
         let the_root = reading_the_checkout::the_root_of_the_checkout();
-        let mut found = Vec::new();
-        collect_rust_files_under(&the_root.join(THE_DOMAIN), &mut found);
-        found.sort();
-        found
-    }
-
-    fn collect_rust_files_under(directory: &std::path::Path, found: &mut Vec<std::path::PathBuf>) {
-        let Ok(entries) = std::fs::read_dir(directory) else {
-            return;
-        };
-        for entry in entries.flatten() {
-            let path = entry.path();
-            if path.is_dir() {
-                collect_rust_files_under(&path, found);
-            } else if path.extension().is_some_and(|it| it == "rs") {
-                found.push(path);
-            }
-        }
+        aisdlc_gates::reading_the_code::the_rust_files_under(&the_root.join(THE_DOMAIN))
     }
 
     #[test]
