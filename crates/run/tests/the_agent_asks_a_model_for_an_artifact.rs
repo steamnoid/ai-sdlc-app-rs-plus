@@ -53,6 +53,16 @@ impl aisdlc_run::AReasoningModel for AModelThatAnswers {
     }
 }
 
+fn a_work_item_answering_no_request() -> WorkItem {
+    a_work_item_commissioned_for_an_agent(
+        WorkItemId::try_from("WELLBEINGT-5").expect("a name is not blank"),
+        WhoCommissioned::try_from("paligakrzychu").expect("a name is not blank"),
+        Repository::try_from("steamnoid/ai-sdlc-app-rs-plus").expect("two halves"),
+        Role::Product,
+        None,
+    )
+}
+
 fn the_agent_who_will_do_it() -> AgentIdentifier {
     AgentIdentifier::try_from("aisdlc-po-analyze").expect("a name is not blank")
 }
@@ -90,6 +100,27 @@ fn a_work_item_somebody_is_working_on() -> WorkItem {
 }
 
 #[test]
+fn a_work_item_answering_no_request_cannot_be_asked_a_model() {
+    let mut the_model = AModelThatAnswers::answering("anything");
+    let a_work_item_with_no_request = a_work_item_answering_no_request();
+
+    let refusal = aisdlc_run::the_agent_asks_for_its_artifact(
+        &mut the_model,
+        &a_work_item_with_no_request,
+        &the_artifact_being_asked_for(),
+    );
+
+    assert!(
+        refusal.is_err(),
+        "**a model asked about nothing answers about its own interests**, so the run refuses before the call rather than after it"
+    );
+    assert!(
+        the_model.the_questions_it_was_asked.is_empty(),
+        "and nothing was sent: a refusal that still spends a model call is a refusal that paid for it"
+    );
+}
+
+#[test]
 fn an_agent_asking_a_model_asks_for_the_artifact_its_work_item_needs() {
     let mut the_model = AModelThatAnswers::answering("this repository is a wellbeing tracker");
     let the_work_item = a_work_item_this_agent_is_working_on();
@@ -98,7 +129,8 @@ fn an_agent_asking_a_model_asks_for_the_artifact_its_work_item_needs() {
         &mut the_model,
         &the_work_item,
         &the_artifact_being_asked_for(),
-    );
+    )
+    .expect("a commissioned work item answers a request");
 
     assert_eq!(
         the_model.what_it_was_asked_for,
@@ -123,7 +155,8 @@ fn what_a_model_says_comes_back_as_an_answer_and_not_as_an_artifact() {
         &mut the_model,
         &the_work_item,
         &the_artifact_being_asked_for(),
-    );
+    )
+    .expect("a commissioned work item answers a request");
 
     assert_eq!(
         the_answer.what_the_model_said(),
@@ -146,7 +179,8 @@ fn the_answer_carries_the_request_it_was_given() {
         &mut the_model,
         &the_work_item,
         &the_artifact_being_asked_for(),
-    );
+    )
+    .expect("a commissioned work item answers a request");
 
     let the_request = the_work_item
         .the_request_it_answers()
