@@ -19,10 +19,23 @@ use aisdlc_domain::state_machine::{StateMachineError, transition};
 use aisdlc_domain::work_item::WorkItem;
 
 /// Takes a work item off the queue and puts it in front of an agent.
+///
+/// **The move is the one the table allows and not a write to the stage.** `transition` is the
+/// only door to a work item's state, so this calls it rather than assigning the stage; a
+/// framework that wrote the stage itself would be a second door, and the second door is what
+/// the biconditional between an agent and a stage exists to prevent.
+///
+/// **The agent is the caller's to name, and the stage requires one.** `AWAITING_AGENT_PICKUP`
+/// is one of the two stages an agent must be holding, so the agent goes in with the move and
+/// `transition` checks the biconditional itself. Nothing here decides which agent will do a
+/// piece of work — that is the dispatcher's question and not this one's.
 pub fn the_framework_picks_the_work_up(
     a_work_item: WorkItem,
-    _the_agent_who_will_do_it: AgentIdentifier,
+    the_agent_who_will_do_it: AgentIdentifier,
 ) -> Result<WorkItem, StateMachineError> {
-    let _the_stage_it_must_reach = Stage::AwaitingAgentPickup;
-    Ok(a_work_item)
+    transition(
+        a_work_item,
+        Stage::AwaitingAgentPickup,
+        Some(the_agent_who_will_do_it),
+    )
 }
