@@ -381,24 +381,65 @@ repository that needs a key to be tested is one whose tests are not run by every
 
 ---
 
-# Pushing
+# How a change reaches main
 
-**Push after every merge, and delete a worker branch once it is merged.**
+**`main` is protected, and nothing reaches it except a pull request whose `gate` is green.**
+The protection also covers administrators, which is the whole point: the hand that merges
+is the hand that skipped the gate three times, and a guard that does not apply to the guard
+is not a guard.
 
 ```bash
-git push origin main
-git push origin --delete agent/<name>
+git worktree add ../wt-<name> -b <scope>/<name> main
+# ... the work, in its own worktree, on its own branch ...
+git push -u origin <scope>/<name>
+gh pr create --fill
+gh pr merge --squash --delete-branch     # only once the gate is green
 ```
 
-Deleting a merged branch is safe: its commits stay reachable from `main`, so only the name
-goes. Without it the repository accumulates one short-lived branch per gate and stops
-looking like a line of work.
+A worker branch is deleted after its merge. Its commits stay reachable from `main`, so only
+the name goes, and without that the repository accumulates one short-lived branch per gate
+and stops looking like a line of work.
 
-**This is the only rule here with no gate, and that is deliberate rather than an
-oversight.** Whether `main` is pushed is a fact about a remote, and a test cannot see a
-remote. Every other rule in this file has a test that refuses to let it be broken; this one
-has a sentence, and a sentence is worth exactly as much as the discipline of the person
-reading it.
+**Squash, always.** One commit per cycle is a lie about a cycle that is two commits, and a
+linear history with a squashed message keeps the pair readable: the RED and the GREEN
+belong together in the record, which is what a squash of the two says better than two lines
+in a log.
+
+**`required_approving_review_count` is zero, on purpose, and it is a decision somebody
+should know about.** A human review requirement would have been safer, and it would also
+have meant that twelve hours of delegated work sat on branches that could not land, which
+parks changes rather than policing them. The gate is the authority here: it cannot be
+bypassed, it runs on every pull request, and it is the thing that refused the three merges
+that were wrong. Raising the count to one is one command and turns this from a
+gate-policed repository into a team one.
+
+---
+
+# Recorded departures
+
+**This repository is no longer synchronised with the implementation it was read from, and
+that is a decision rather than a drift.** There is no `SOURCES.lock` here and there is no
+test that re-hashes a file in a sibling checkout.
+
+The reasons, in the order they mattered:
+
+1. **The specification is this repository's own.** The stages, the roles, the transition
+   table and the approval record were carried across, but the *implementation* was written
+   from scratch in a language with a different compiler, a different naming convention and a
+   different type system. A pin would have recorded which commit a rule was read from, and
+   then every rule would have had two homes: the glossary and the file it came from. The
+   glossary is the one home.
+2. **The two diverged seven times in the first day**, and every divergence was settled by
+   moving a rule *into* this repository and writing down why. A pin would have made each of
+   those look like a missed update rather than a decision.
+3. **The rules here are not a translation of the rules there.** A domain with no
+   dependencies, a port per boundary and twenty gates is a different architecture, not the
+   same one in another language. Carrying a hash of a file that argued for the opposite would
+   be worse than carrying nothing.
+
+The cost, written down because this repository writes costs down: a reader who wants to know
+where a rule came from has to read the glossary's reasoning rather than diff two files. That
+is one file instead of two, and the one file is the one a rule has to survive in.
 
 ---
 
