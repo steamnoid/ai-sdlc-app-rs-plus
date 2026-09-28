@@ -465,8 +465,9 @@ mod the_documentation_says_what_the_code_does {
     //! described.** This file is the difference, and it is the smallest one in the repository:
     //! three columns, a file name, and a phrase.
 
+    use aisdlc_gates::reading_the_code::{every_source_file, the_lines_of_code};
+
     use aisdlc_gates::reading_the_checkout;
-    use aisdlc_gates::reading_the_code::every_source_file;
 
     /// What a row of the gate table promises, as `(the gate it names, the phrase in its last cell)`.
     ///
@@ -538,6 +539,104 @@ mod the_documentation_says_what_the_code_does {
         the_path.is_file()
     }
 
+    /// The rules the glossary's table names, as `(the rule, the file holding it, the phrase)`.
+    ///
+    /// **The end of the table is found after the header and not before it.** A reader that
+    /// broke on "a line that is not a table row" stopped in the glossary's first line — which
+    /// is not a table row — found no rules at all, and reported **sixteen modules that no row
+    /// names** on a table that names all sixteen. **A reader that refuses to look is not a
+    /// reader that found nothing**, and the two are indistinguishable in the output.
+    fn the_rules_the_glossary_lists(the_glossary: &str) -> Vec<(String, String, String)> {
+        let mut found = Vec::new();
+        let mut inside = false;
+        for one_line in the_glossary.lines() {
+            if one_line.starts_with("| Rule | Held in |") {
+                inside = true;
+                continue;
+            }
+            if !inside {
+                continue;
+            }
+            if !one_line.starts_with('|') {
+                break;
+            }
+            found.extend(the_rule_row_in(one_line));
+        }
+        found
+    }
+
+    /// One row of the rules table, as `(the rule, the file holding it, the phrase)`, or
+    /// nothing when the row names no rule — the header, the separator and the two the
+    /// compiler holds rather than a test.
+    fn the_rule_row_in(one_line: &str) -> Option<(String, String, String)> {
+        let cells: Vec<&str> = one_line.split('|').collect();
+        let the_rule = cells.get(1).map_or("", |one| one.trim().trim_matches('`'));
+        if !the_rule.starts_with(|c: char| c.is_ascii_lowercase()) {
+            return None;
+        }
+        let held_in = cells.get(2).map_or("—", |one| one.trim().trim_matches('`'));
+        let the_phrase = cells.get(3).map_or("", |one| one.trim());
+        Some((
+            the_rule.to_string(),
+            held_in.to_string(),
+            the_phrase.to_string(),
+        ))
+    }
+
+    /// The modules the gate files hold, as `(the module, the file holding it)`.
+    fn the_rules_held_in_the_checkout() -> Vec<(String, String)> {
+        let mut found = Vec::new();
+        for a_file in every_source_file() {
+            if !a_file.to_string_lossy().contains("/tests/") {
+                continue;
+            }
+            let the_text = reading_the_checkout::the_text_at(&a_file);
+            let Some(the_name) = a_file.file_name().and_then(|it| it.to_str()) else {
+                continue;
+            };
+            for (_, one_line) in the_lines_of_code(&the_text) {
+                let held = the_module_declared_on(&one_line);
+                found.extend(held.into_iter().map(|a| (a, the_name.to_string())));
+            }
+        }
+        found
+    }
+
+    /// The module a line declares, or nothing if it declares no module.
+    fn the_module_declared_on(one_line: &str) -> Option<String> {
+        let after_mod = one_line.trim().strip_prefix("mod ")?;
+        let the_name = after_mod.split(char::is_whitespace).next()?;
+        let is_a_whole_word = the_name
+            .chars()
+            .all(|one| one.is_ascii_lowercase() || one == '_');
+        if is_a_whole_word && !the_name.is_empty() {
+            return Some(the_name.to_string());
+        }
+        None
+    }
+
+    /// The refusal for one rule named in the table, if nothing holds it.
+    ///
+    /// **The other direction, and the one that catches a lost rule.** A table checked only for
+    /// what it claims is a table a rule can be deleted from without anybody noticing, and this
+    /// repository deleted three: rewriting it to two rows dropped the only record that
+    /// `the_core_never_names_a_trait_object` and two others were ever wanted. **A rule nobody
+    /// wrote down is a rule nobody is looking for**, and the code is where a written-down rule
+    /// lives.
+    fn what_is_wrong_with_a_rule_nothing_holds(
+        one_rule: &str,
+        where_it_is_held: &[String],
+        the_phrase: &str,
+    ) -> Option<String> {
+        if !where_it_is_held.is_empty() {
+            return None;
+        }
+        if the_phrase.contains("not built") {
+            return None;
+        }
+        Some(format!("{one_rule} is named and nothing holds it"))
+    }
+
     /// The refusal for one row, if the row is not true.
     fn what_is_wrong_with(the_gate: &str, the_phrase: &str) -> Option<String> {
         if !the_gate_exists(the_gate) {
@@ -575,6 +674,80 @@ mod the_documentation_says_what_the_code_does {
         );
     }
 
+    /// The refusal for every rule the table names and nothing holds, and for every module a
+    /// file holds and no row names.
+    ///
+    /// **Both directions**, because either one alone is a table that can be edited into
+    /// whatever the editor meant at the time — and that is how three rules were lost here.
+    fn what_is_wrong_with_the_rules() -> Vec<String> {
+        let the_glossary = aisdlc_gates::reading_the_glossary::the_glossary_text();
+        let held_in_the_checkout = the_rules_held_in_the_checkout();
+        let mut found = the_rules_nothing_holds(&the_glossary, &held_in_the_checkout);
+        found.extend(the_modules_no_row_names(
+            &the_glossary,
+            &held_in_the_checkout,
+        ));
+        found
+    }
+
+    /// A refusal for every rule the table names that the file it names does not hold.
+    fn the_rules_nothing_holds(
+        the_glossary: &str,
+        held_in_the_checkout: &[(String, String)],
+    ) -> Vec<String> {
+        let mut found = Vec::new();
+        for (the_rule, held_in, the_phrase) in the_rules_the_glossary_lists(the_glossary) {
+            let where_it_is_held = the_files_holding(&the_rule, &held_in, held_in_the_checkout);
+            let why =
+                what_is_wrong_with_a_rule_nothing_holds(&the_rule, &where_it_is_held, &the_phrase);
+            found.extend(why);
+        }
+        found
+    }
+
+    /// The files holding a rule, as their names, and empty when the named file holds nothing.
+    fn the_files_holding(
+        a_rule: &str,
+        the_file_it_should_be_in: &str,
+        held_in_the_checkout: &[(String, String)],
+    ) -> Vec<String> {
+        held_in_the_checkout
+            .iter()
+            .filter(|(a_name, a_file)| a_name == a_rule && a_file == the_file_it_should_be_in)
+            .map(|(_, a_file)| a_file.clone())
+            .collect()
+    }
+
+    /// A refusal for every `mod` a gate file holds that the table does not name.
+    fn the_modules_no_row_names(
+        the_glossary: &str,
+        held_in_the_checkout: &[(String, String)],
+    ) -> Vec<String> {
+        let named: Vec<String> = the_rules_the_glossary_lists(the_glossary)
+            .into_iter()
+            .map(|(the_rule, _, _)| the_rule)
+            .collect();
+        let mut found = Vec::new();
+        for (a_rule, a_file) in held_in_the_checkout {
+            found.extend(what_is_wrong_with_a_module_no_row_names(
+                a_rule, a_file, &named,
+            ));
+        }
+        found
+    }
+
+    /// The refusal for one module a file holds and no row names.
+    fn what_is_wrong_with_a_module_no_row_names(
+        a_rule: &str,
+        a_file: &str,
+        the_named: &[String],
+    ) -> Option<String> {
+        if the_named.contains(&a_rule.to_string()) {
+            return None;
+        }
+        Some(format!("{a_file} holds {a_rule} and no row names it"))
+    }
+
     /// The refusal for the whole table: a name that is not true, and a file that is not named.
     fn what_is_wrong_somewhere() -> Vec<String> {
         let the_document = reading_the_checkout::the_text_at(
@@ -587,6 +760,7 @@ mod the_documentation_says_what_the_code_does {
             }
         }
         found.extend(the_files_the_table_does_not_name(&the_document));
+        found.extend(what_is_wrong_with_the_rules());
         found
     }
 
@@ -616,6 +790,45 @@ mod the_documentation_says_what_the_code_does {
             }
         }
         found
+    }
+
+    #[test]
+    fn a_rule_nothing_holds_and_the_table_does_not_say_is_refused() {
+        assert_eq!(
+            what_is_wrong_with_a_rule_nothing_holds(
+                "the_core_never_names_a_trait_object",
+                &[],
+                "with the core"
+            ),
+            Some("the_core_never_names_a_trait_object is named and nothing holds it".to_string()),
+            "and it names the rule, because the three this repository lost were lost in exactly this way"
+        );
+    }
+
+    #[test]
+    fn a_rule_nothing_holds_that_the_table_says_so_is_accepted() {
+        assert_eq!(
+            what_is_wrong_with_a_rule_nothing_holds(
+                "the_core_never_names_a_trait_object",
+                &[],
+                "not built yet — with the core"
+            ),
+            None,
+            "a debt written down is a debt somebody can pick up, and refusing it would be refusing the only record of it"
+        );
+    }
+
+    #[test]
+    fn a_rule_something_holds_is_accepted() {
+        assert_eq!(
+            what_is_wrong_with_a_rule_nothing_holds(
+                "the_code_carries_no_comments",
+                &["readability_guards.rs".to_string()],
+                "with the scanner"
+            ),
+            None,
+            "a rule with a file holding it is a rule that is measured rather than described"
+        );
     }
 
     #[test]
