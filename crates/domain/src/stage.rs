@@ -63,8 +63,15 @@ pub struct AStageThatNobodyNamed(pub String);
 impl fmt::Display for Stage {
     /// Write the stage the way the specification writes it, in capitals.
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let _the_stage_was_not_asked_about = self;
-        formatter.write_str("IDLE")
+        let the_name = match self {
+            Stage::Idle => "IDLE",
+            Stage::AwaitingAgentPickup => "AWAITING_AGENT_PICKUP",
+            Stage::InProgressByAgent => "IN_PROGRESS_BY_AGENT",
+            Stage::AwaitingHumanApproval => "AWAITING_HUMAN_APPROVAL",
+            Stage::Ready => "READY",
+            Stage::Done => "DONE",
+        };
+        formatter.write_str(the_name)
     }
 }
 
@@ -73,8 +80,12 @@ impl TryFrom<&str> for Stage {
 
     /// Read a stage the way the specification writes it, in capitals.
     fn try_from(name: &str) -> Result<Self, Self::Error> {
-        let _the_name_nobody_read = name;
-        Ok(Stage::Idle)
+        for stage in EVERY_STAGE {
+            if stage.to_string() == name {
+                return Ok(stage);
+            }
+        }
+        Err(AStageThatNobodyNamed(name.to_string()))
     }
 }
 
