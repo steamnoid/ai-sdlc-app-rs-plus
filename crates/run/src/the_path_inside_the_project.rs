@@ -38,7 +38,7 @@ impl APathOutsideTheProject {
         &self.written
     }
 
-    /// Why this path does not land inside the project.
+    /// Why this path does not land inside the project, naming where it resolved to.
     pub fn why_not(&self) -> &str {
         &self.why_not
     }
@@ -70,5 +70,34 @@ pub fn the_path_inside_the_project(
     the_project: &Path,
     a_path: &APathInTheProject,
 ) -> Result<ThePathInsideTheProject, APathOutsideTheProject> {
-    Ok(ThePathInsideTheProject(the_project.join(a_path.as_str())))
+    let resolved_project = the_resolved_root(the_project);
+    let resolved = the_resolved_path(&resolved_project, a_path);
+    let Some(resolved) = resolved else {
+        return Err(APathOutsideTheProject::because(
+            a_path.as_str(),
+            "nothing to resolve, so the path names nowhere and is inside nothing",
+        ));
+    };
+    if !resolved.starts_with(&resolved_project) {
+        return Err(APathOutsideTheProject::because(
+            a_path.as_str(),
+            &format!(
+                "it resolves to {}, which is outside the project",
+                resolved.display()
+            ),
+        ));
+    }
+    Ok(ThePathInsideTheProject(resolved))
+}
+
+/// The project's own resolved location, so both sides of the comparison are resolved.
+fn the_resolved_root(the_project: &Path) -> PathBuf {
+    the_project
+        .canonicalize()
+        .unwrap_or_else(|_| the_project.to_path_buf())
+}
+
+/// Where a path lands once the disk has had its say about it.
+fn the_resolved_path(the_project: &Path, a_path: &APathInTheProject) -> Option<PathBuf> {
+    the_project.join(a_path.as_str()).canonicalize().ok()
 }

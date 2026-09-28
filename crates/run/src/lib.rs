@@ -21,7 +21,7 @@ pub fn the_project_this_run_is_in() -> std::path::PathBuf {
     std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .parent()
         .and_then(|the_workspace| the_workspace.parent())
-        .map(|the_root| the_root.to_path_buf())
+        .map(std::path::Path::to_path_buf)
         .expect("a crate is inside a workspace")
 }
 
