@@ -15,6 +15,9 @@
 
 pub mod a_path_in_the_project;
 pub mod the_path_inside_the_project;
+pub mod the_project_on_disk;
+
+pub use the_path_inside_the_project::ThePathInsideTheProject;
 
 /// The workspace this crate is in, which is the project the paths are read against.
 pub fn the_project_this_run_is_in() -> std::path::PathBuf {
@@ -24,6 +27,8 @@ pub fn the_project_this_run_is_in() -> std::path::PathBuf {
         .map(std::path::Path::to_path_buf)
         .expect("a crate is inside a workspace")
 }
+
+use crate::the_project_on_disk::{AFileTheProjectDoesNotHave, TheProjectOnDisk};
 
 use aisdlc_domain::agent_identifier::AgentIdentifier;
 use aisdlc_domain::approval::{AnArtifactVersion, Approval, ApprovalDecision, WhichArtifact};
@@ -307,4 +312,20 @@ pub fn the_run_closes_the_work_item(
     _the_record_of_a_ruling: &Approval,
 ) -> Result<WorkItem, StateMachineError> {
     transition(a_work_item, Stage::Done, None)
+}
+
+/// What the agent found in the project, asked before it asks about any of it.
+pub fn the_agent_asks_what_is_in_the_project(
+    the_project: &mut impl TheProjectOnDisk,
+) -> Vec<String> {
+    the_project.what_is_in_it()
+}
+
+/// What the agent read out of the project.
+pub fn the_agent_reads(
+    the_project: &mut impl TheProjectOnDisk,
+    a_path: &ThePathInsideTheProject,
+) -> Result<String, AFileTheProjectDoesNotHave> {
+    let the_text = the_project.the_text_of(a_path);
+    the_text.ok_or_else(|| AFileTheProjectDoesNotHave::because(a_path))
 }
