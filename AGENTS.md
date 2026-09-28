@@ -66,6 +66,23 @@ sweeps the *next* cycle's files into this one.
   raises, because one that decided by itself would let a test pass with nothing having been
   decided.
 
+## 0.3a A gate and the breaches it finds are two pull requests
+
+**Every gate in this repository found real breaches in code written hours earlier**, and one
+found seven in a single run. Six for six is not a coincidence and it is not the gate's fault
+either: the code was written to satisfy the previous rule and nothing had yet asked about the
+next one. A rule nobody has run finds nothing.
+
+**So the gate lands alone, and the breaches it reports land in the next pull request.** Both
+pass their own `gate` check, because the second one's work is what makes the first one's test
+green — and the reader of the first one sees a gate added and nothing else, which is the diff
+that says what it says. A pull request that adds a gate *and* rewrites five files cannot be
+read as either thing.
+
+The cost is stated because it is real: for a day, `main` is a repository whose gate does not
+hold. That is the honest state and it is visible in the check that failed, which is worth
+more than a green tick that arrived in a diff nobody could read.
+
 ## 0.4 The hygiene check that matters most
 
 `cargo test` must stay green with **no network, no API key, no Docker, no model.** If it
