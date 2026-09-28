@@ -21,9 +21,61 @@ const THE_DEEPEST_A_STATEMENT_MAY_SIT: usize = 2;
 
 /// Every refusal in one file, given its name and its text.
 fn what_is_wrong_with(a_name: &str, the_code: &str) -> Vec<String> {
-    let _the_name_nobody_read = a_name;
-    let _the_code_nobody_read = the_code;
-    Vec::new()
+    let mut found = Vec::new();
+    for (the_line, sits) in the_statements_and_how_deep_they_sit(the_code) {
+        if sits <= THE_DEEPEST_A_STATEMENT_MAY_SIT {
+            continue;
+        }
+        found.push(format!(
+            "{a_name} line {the_line} sits {sits} deep in a body and the deepest is {THE_DEEPEST_A_STATEMENT_MAY_SIT}"
+        ));
+    }
+    found
+}
+
+/// Every statement inside a function body and the number of levels it sits at.
+fn the_statements_and_how_deep_they_sit(the_code: &str) -> Vec<(usize, usize)> {
+    let mut found = Vec::new();
+    let mut a_reading = AReading::new();
+    for (the_line, one_line) in the_lines_of_code(the_code) {
+        found.extend(a_reading.of_one_line(the_line, &one_line));
+    }
+    found
+}
+
+/// How deep inside a body the walk is, and where a function began.
+struct AReading {
+    inside_a_function: bool,
+    how_deep: usize,
+}
+
+impl AReading {
+    /// A reading that is not inside any function.
+    fn new() -> Self {
+        AReading {
+            inside_a_function: false,
+            how_deep: 0,
+        }
+    }
+
+    /// The statements on this line, and how deep each one sits.
+    /// **The line that opens a body is not itself a statement in it**, so its own brace does
+    /// not count and it is not reported: `if three {` sits at level two and is a level two
+    /// statement, and the first one that is too deep is the one under it.
+    fn of_one_line(&mut self, the_line: usize, one_line: &str) -> Vec<(usize, usize)> {
+        if one_line.contains("fn ") {
+            self.inside_a_function = true;
+            self.how_deep = 0;
+            return Vec::new();
+        }
+        let mut found = Vec::new();
+        if self.inside_a_function && one_line.trim() != "}" {
+            found.push((the_line, self.how_deep));
+        }
+        self.how_deep = self.how_deep.saturating_add(one_line.matches('{').count());
+        self.how_deep = self.how_deep.saturating_sub(one_line.matches('}').count());
+        found
+    }
 }
 
 /// Every `.rs` file in this checkout, skipping what a build leaves behind.
@@ -57,19 +109,26 @@ fn collect_from(directory: &std::path::Path, found: &mut Vec<std::path::PathBuf>
 
 /// Every line of the code that carries code on it, as `(the line it is on, the line)`.
 fn the_lines_of_code(the_code: &str) -> Vec<(usize, String)> {
-    let mut found = Vec::new();
+    let mut found: Vec<(usize, String)> = Vec::new();
     for stretch in HowTheFileIsWritten::of(the_code).stretches() {
         if stretch.kind() != WhatIsWrittenThere::Code {
             continue;
         }
         for (offset, one_line) in stretch.text().split('\n').enumerate() {
-            if one_line.trim().is_empty() {
+            let the_line = stretch.line_it_starts_on() + offset;
+            let continues_the_last = found
+                .last()
+                .is_some_and(|(it_is_on, _)| *it_is_on == the_line);
+            if continues_the_last {
+                if let Some(last) = found.last_mut() {
+                    last.1.push_str(one_line);
+                }
                 continue;
             }
-            let the_line = stretch.line_it_starts_on() + offset;
             found.push((the_line, one_line.to_string()));
         }
     }
+    found.retain(|(_, one_line)| !one_line.trim().is_empty());
     found
 }
 

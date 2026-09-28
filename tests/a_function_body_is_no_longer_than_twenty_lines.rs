@@ -112,19 +112,26 @@ impl AReading {
 
 /// Every line of the code that carries code on it, as `(the line it is on, the line)`.
 fn the_lines_of_code(the_code: &str) -> Vec<(usize, String)> {
-    let mut found = Vec::new();
+    let mut found: Vec<(usize, String)> = Vec::new();
     for stretch in HowTheFileIsWritten::of(the_code).stretches() {
         if stretch.kind() != WhatIsWrittenThere::Code {
             continue;
         }
         for (offset, one_line) in stretch.text().split('\n').enumerate() {
-            if one_line.trim().is_empty() {
+            let the_line = stretch.line_it_starts_on() + offset;
+            let continues_the_last = found
+                .last()
+                .is_some_and(|(it_is_on, _)| *it_is_on == the_line);
+            if continues_the_last {
+                if let Some(last) = found.last_mut() {
+                    last.1.push_str(one_line);
+                }
                 continue;
             }
-            let the_line = stretch.line_it_starts_on() + offset;
             found.push((the_line, one_line.to_string()));
         }
     }
+    found.retain(|(_, one_line)| !one_line.trim().is_empty());
     found
 }
 
