@@ -19,6 +19,8 @@
 //! because a manifest is text and text is edited.
 
 pub mod agent_identifier;
+pub mod commissioned_request;
+pub mod repository;
 pub mod role;
 pub mod stage;
 pub mod work_item_id;
