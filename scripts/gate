@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# The gate. One command, four checks, and the first refusal is the answer.
+#
+# This exists because the gate used to be four commands, and on three separate occasions two
+# of the four were run and the result was reported as a pass. A gate that can be run
+# partially is not a gate, so there is one thing to run and its exit code is the verdict.
+#
+# The order is not the order AGENTS.md lists them in, because `fmt` failing is known in under
+# a second and there is no reason to spend forty seconds on the tests to find out about a
+# space. The two that are slow are last, and the one that is instant and catches a whole
+# class of mistakes by itself is first.
+
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+the_checks_that_hold_the_code=(
+  "cargo fmt --all --check"
+  "cargo clippy --workspace --all-targets -- -D warnings"
+  "cargo test --workspace --no-fail-fast"
+  "cargo doc --workspace --no-deps"
+)
+
+for one_check in "${the_checks_that_hold_the_code[@]}"; do
+  echo "the gate: $one_check"
+  if ! $one_check; then
+    echo "the gate: $one_check refused, and the work is not done"
+    exit 1
+  fi
+done
+
+echo "the gate: all four checks hold, and the work is done"
