@@ -19,8 +19,9 @@ pub fn where_the_clone_of_a_work_item_lands(
     what_is_addressed: &Repository,
     a_work_item: &WorkItemId,
 ) -> PathBuf {
-    let _the_projects_root = the_projects_root;
-    let _what_is_addressed = what_is_addressed;
-    let _a_work_item = a_work_item;
-    PathBuf::new()
+    the_projects_root
+        .join(&what_is_addressed.owner)
+        .join(&what_is_addressed.name)
+        .join(a_work_item.0.as_str())
+        .join("repository")
 }
