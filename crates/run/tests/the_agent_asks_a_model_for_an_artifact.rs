@@ -16,6 +16,7 @@ use aisdlc_domain::approval::WhichArtifact;
 use aisdlc_domain::commissioned_request::CommissionedRequest;
 use aisdlc_domain::repository::Repository;
 use aisdlc_domain::role::Role;
+use aisdlc_domain::which_organisation_reasons::WhichOrganisationReasons;
 use aisdlc_domain::who_commissioned::WhoCommissioned;
 use aisdlc_domain::work_item::{WorkItem, a_work_item_commissioned_for_an_agent};
 use aisdlc_domain::work_item_id::WorkItemId;
@@ -44,6 +45,7 @@ impl aisdlc_run::AReasoningModel for AModelThatAnswers {
     fn what_it_says_when_asked_for(
         &mut self,
         which_artifact: &WhichArtifact,
+        _which_organisation: WhichOrganisationReasons,
         the_question: &str,
     ) -> String {
         self.what_it_was_asked_for.push(which_artifact.clone());
@@ -79,6 +81,10 @@ fn a_work_item_this_agent_is_working_on() -> WorkItem {
     .expect("an agent may start work it has been handed")
 }
 
+fn the_organisation_that_answers() -> WhichOrganisationReasons {
+    WhichOrganisationReasons::Ollama
+}
+
 fn the_artifact_being_asked_for() -> WhichArtifact {
     WhichArtifact::try_from("DiscoveryReport").expect("an artifact has a name")
 }
@@ -108,6 +114,7 @@ fn a_work_item_answering_no_request_cannot_be_asked_a_model() {
         &mut the_model,
         &a_work_item_with_no_request,
         &the_artifact_being_asked_for(),
+        the_organisation_that_answers(),
     );
 
     assert!(
@@ -129,6 +136,7 @@ fn an_agent_asking_a_model_asks_for_the_artifact_its_work_item_needs() {
         &mut the_model,
         &the_work_item,
         &the_artifact_being_asked_for(),
+        the_organisation_that_answers(),
     )
     .expect("a commissioned work item answers a request");
 
@@ -155,6 +163,7 @@ fn what_a_model_says_comes_back_as_an_answer_and_not_as_an_artifact() {
         &mut the_model,
         &the_work_item,
         &the_artifact_being_asked_for(),
+        the_organisation_that_answers(),
     )
     .expect("a commissioned work item answers a request");
 
@@ -171,7 +180,7 @@ fn what_a_model_says_comes_back_as_an_answer_and_not_as_an_artifact() {
 }
 
 #[test]
-fn the_answer_carries_the_request_it_was_given() {
+fn the_answer_says_which_organisation_answered() {
     let mut the_model = AModelThatAnswers::answering("whatever");
     let the_work_item = a_work_item_this_agent_is_working_on();
 
@@ -179,6 +188,27 @@ fn the_answer_carries_the_request_it_was_given() {
         &mut the_model,
         &the_work_item,
         &the_artifact_being_asked_for(),
+        the_organisation_that_answers(),
+    )
+    .expect("a commissioned work item answers a request");
+
+    assert_eq!(
+        the_answer.who_reasoned(),
+        WhichOrganisationReasons::Ollama,
+        "**a run that asks a model and cannot say who answered has an answer nobody can hold anybody to** — and the port shipped without this, so the answer carried words and no company"
+    );
+}
+
+#[test]
+fn the_request_carries_which_organisation_was_asked() {
+    let mut the_model = AModelThatAnswers::answering("whatever");
+    let the_work_item = a_work_item_this_agent_is_working_on();
+
+    let the_answer = aisdlc_run::the_agent_asks_for_its_artifact(
+        &mut the_model,
+        &the_work_item,
+        &the_artifact_being_asked_for(),
+        the_organisation_that_answers(),
     )
     .expect("a commissioned work item answers a request");
 

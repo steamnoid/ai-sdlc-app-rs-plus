@@ -128,6 +128,13 @@ This is the one place in the domain where a `str` was nearly right, and it is st
 `openai_compatible`, `openai_responses`. A closed set of four. Distinct from
 `AReasoningModel`, which is the thing that reasons; this is the company it works for.
 
+**`AnOrganisationThatDoesNotReason`** — a name that is not one of the four, so it is not an
+organisation that reasons. **The refusal names what was asked for and what there is**, because
+a refusal that only says "no" leaves the reader to guess which name was wrong when there are
+exactly four right ones. A blank is refused here too, and it is not a blank name for one of the
+four — it is nothing at all, and a run must not record who reasoned about a piece of work using
+an answer to a question nobody asked.
+
 **`EVERY_STAGE`**, **`EVERY_ROLE`** — all six stages and all five disciplines, so a caller
 crossing one thing with every stage does not write a second list to keep in step. **Rust
 writes a constant in capitals and a `#[allow(non_upper_case_globals)]` is refused by a gate

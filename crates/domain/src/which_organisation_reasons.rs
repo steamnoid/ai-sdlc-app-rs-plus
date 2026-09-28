@@ -25,9 +25,9 @@ pub enum WhichOrganisationReasons {
     Openai,
     /// A model running on the machine.
     Ollama,
-    /// A gateway speaking OpenAI's own protocol.
+    /// A gateway speaking `OpenAI`'s own protocol.
     OpenaiCompatible,
-    /// OpenAI's own responses protocol.
+    /// `OpenAI`'s own responses protocol.
     OpenaiResponses,
 }
 
