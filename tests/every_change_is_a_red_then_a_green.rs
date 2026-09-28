@@ -1293,3 +1293,56 @@ fn every_change_is_a_red_then_a_green() {
         how_this_history_was_read()
     );
 }
+
+
+/// A repair that says what was already failing, in words, and carries no marker.
+///
+/// **This is the body of a real commit in this repository's history** — `fix(ci): the
+/// checkout was shallow` — and the first version of this gate refused it, because it looked
+/// for one word and the sentence recording the failure says "is red in CI" without writing
+/// the word the marker is. The rule was wrong and the commit was right, and the difference
+/// between those two sentences is the whole of what this gate was measuring.
+const THE_BODY_OF_A_REPAIR_THAT_SAYS_WHAT_WAS_FAILING: &str = "\
+`every_change_is_a_red_then_a_green` is red in CI, and the reason is in the workflow
+rather than in the gate: actions/checkout fetches one commit by default, so the history
+the gate reads is a single entry and all five of its reading assertions fail.
+
+A shallow checkout does not make the gate strict. It makes the gate unable to run while
+appearing to have passed, which is the one failure this repository's whole first rule
+exists to prevent.";
+
+#[test]
+fn a_repair_that_says_what_was_failing_is_accepted() {
+    let a_repair = a_commit_named(
+        "the_first",
+        "fix(ci): the checkout was shallow, and a gate that cannot see the history is a green tick",
+        THE_BODY_OF_A_REPAIR_THAT_SAYS_WHAT_WAS_FAILING,
+        "",
+    );
+
+    let refused = what_the_history_would_have_to_answer_for(&[a_repair], THE_GATE_BEGAN);
+
+    assert_eq!(
+        refused.len(),
+        0,
+        "a repair that records what was already failing has done what the marker is for, and refusing it for the spelling of one word is a gate grading prose: {refused:?}"
+    );
+}
+
+#[test]
+fn a_repair_that_says_nothing_about_what_was_failing_is_still_refused() {
+    let a_repair = a_commit_named(
+        "the_first",
+        "fix(ci): a shorter subject that says nothing at all",
+        "a gate is a gate.",
+        "",
+    );
+
+    let refused = what_the_history_would_have_to_answer_for(&[a_repair], THE_GATE_BEGAN);
+
+    assert_eq!(
+        refused.len(),
+        1,
+        "the rule was widened and not removed: a repair that records nothing is still a repair nobody watched being wrong: {refused:?}"
+    );
+}
