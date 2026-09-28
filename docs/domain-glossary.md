@@ -475,6 +475,25 @@ answered *a directory was expected* and *a file was expected* with the same word
 boundary `TheProjectOnDisk` is confined to. Derived rather than chosen, so two runs of the
 same work item find the same place and a resumed run does not re-clone underneath itself.
 
+**`TheProjectAsItIsOnDisk`** — what a project really holds, read by walking the filesystem, and
+the one implementation of `TheProjectOnDisk`. **A name and not `AProjectOnDisk`**, which would
+say the port rather than the thing answering it, and a port and its implementation sharing a
+name is how a reader comes to depend on the port's promises from the implementation's code.
+
+**`AFileTheProjectDoesNotHave`** — the refusal when a path inside the project names nothing.
+**One refusal and not an empty answer**, because "I found nothing" and "here is what I found"
+are the same value to a caller that treats absence as a listing, and only one of them is an
+error.
+
+**`AnUnanswerableRequest`** — a work item whose request a model cannot be asked about, naming the
+artifact and the reason. **The refusal is a value and not an empty answer**, and it is built
+before the call: **a refusal that has already spent a call has paid for it.**
+
+**`NotStandingAtTheGate`** — a work item put to somebody who is not there, naming the stage it is
+standing at. **`DONE` is the case that matters**: a finished work item has nothing left to
+approve, and the record would be evidence that a human ruled on work that was already over.
+
+
 ---
 
 ## Cloning a repository

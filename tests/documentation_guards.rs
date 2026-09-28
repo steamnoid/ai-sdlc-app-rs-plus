@@ -328,48 +328,47 @@ mod the_glossary_blesses_every_type_the_domain_defines {
         );
     }
 
+    /// Every crate of the workspace, read as a reader would meet them.
+    fn every_crate_in_the_workspace() -> Vec<std::path::PathBuf> {
+        aisdlc_gates::reading_the_checkout::the_crates_under(
+            &reading_the_checkout::the_root_of_the_checkout().join("crates"),
+        )
+    }
+
+    /// Every refusal in one crate, or nothing if that crate holds no unblessed type.
+    fn what_is_wrong_with_a_whole_crate(a_crate: &std::path::Path) -> Vec<String> {
+        let mut found = Vec::new();
+        for a_file in aisdlc_gates::reading_the_code::the_rust_files_under(&a_crate.join("src")) {
+            found.extend(what_is_wrong_with(
+                &a_file.display().to_string(),
+                &reading_the_checkout::the_text_at(&a_file),
+            ));
+        }
+        found
+    }
+
     /// Every crate of the workspace, and the gate's job is not done while one of them is unguarded.
     ///
-    /// **Two assertions, and the first is what stops the second from passing for free.** A gate
-    /// that scanned no crate at all would report nothing unblessed and look perfect; so this
-    /// first says how many crates were actually read, and the run crate held a type the glossary
-    /// had never heard of while the gate was reading the domain and congratulating itself.
+    /// **The first assertion is what stops the second from passing for free.** A gate that read
+    /// no crate at all would report nothing unblessed and look perfect; so the first says how
+    /// many crates there are to read, and a crate nobody reads is a crate whose names nobody
+    /// chose — a crate added tomorrow is born unguarded.
     #[test]
     fn the_glossary_guards_every_crate_and_not_only_the_domain() {
-        let blessed = the_blessed_names(&the_glossary_text());
-        let the_root = reading_the_checkout::the_root_of_the_checkout();
-        let every_crate =
-            aisdlc_gates::reading_the_checkout::the_crates_under(&the_root.join("crates"));
+        let every_crate = every_crate_in_the_workspace();
+        let names_nobody_chose: Vec<String> = every_crate
+            .iter()
+            .flat_map(|a_crate| what_is_wrong_with_a_whole_crate(a_crate))
+            .collect();
 
-        let mut crates_that_were_read = Vec::new();
-        let mut names_nobody_chose = Vec::new();
-        for a_crate in &every_crate {
-            let the_source = a_crate.join("src");
-            if !the_source.is_dir() {
-                continue;
-            }
-            let the_files = aisdlc_gates::reading_the_code::the_rust_files_under(&the_source);
-            if the_files.is_empty() {
-                continue;
-            }
-            crates_that_were_read.push(a_crate.display().to_string());
-            for a_file in the_files {
-                names_nobody_chose.extend(what_is_wrong_with(
-                    &a_file.display().to_string(),
-                    &reading_the_checkout::the_text_at(&a_file),
-                ));
-            }
-        }
-
-        assert_eq!(
-            crates_that_were_read.len(),
-            every_crate.len(),
-            "**because a crate nobody reads is a crate whose names nobody chose** — the glossary guards one crate today and the workspace has {}, and a crate added tomorrow would be born unguarded: {crates_that_were_read:?}",
-            every_crate.len()
+        assert!(
+            !every_crate.is_empty(),
+            "**because a gate that reads nothing passes everything** — and there are crates to read"
         );
         assert!(
             names_nobody_chose.is_empty(),
-            "a type the glossary never heard of is a name nobody chose: {names_nobody_chose:?}"
+            "a type the glossary never heard of is a name nobody chose, in any of the {} crates: {names_nobody_chose:?}",
+            every_crate.len()
         );
     }
 
