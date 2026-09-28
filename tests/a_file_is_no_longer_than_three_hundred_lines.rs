@@ -15,7 +15,8 @@
 //! gate over three hundred lines would be the only file in the repository nobody had
 //! checked — so its own count is one of the counts it reports on.
 
-use aisdlc_gates::scanning::{self, HowTheFileIsWritten, WhatIsWrittenThere};
+use aisdlc_gates::reading_the_checkout;
+use aisdlc_gates::scanning::{HowTheFileIsWritten, WhatIsWrittenThere};
 
 /// The most lines of code a file may spend.
 const THE_MOST_A_FILE_MAY_SPEND: usize = 300;
@@ -31,14 +32,18 @@ const THE_LINE_TO_LOOK_AT_A_FILE_FROM: usize = 200;
 /// test that it refuses is to write a long file — and a test that writes is a test that
 /// cleans up after itself or leaves a repository dirty. Text in, answer out.
 fn what_is_wrong_with(a_name: &str, the_code: &str) -> Option<String> {
-    let _the_name_nobody_read = a_name;
-    let _the_code_nobody_counted = the_code;
-    None
+    let spent = the_count_in(the_code);
+    if spent <= THE_MOST_A_FILE_MAY_SPEND {
+        return None;
+    }
+    Some(format!(
+        "{a_name} spends {spent} lines of code and the most is {THE_MOST_A_FILE_MAY_SPEND}"
+    ))
 }
 
 /// The lines of `a_file` that carry code.
 fn the_lines_carrying_code(a_file: &std::path::Path) -> usize {
-    the_count_in(&scanning::the_text_at(a_file))
+    the_count_in(&reading_the_checkout::the_text_at(a_file))
 }
 
 /// The lines of `the_code` that carry code, one per line rather than per stretch.
@@ -57,7 +62,10 @@ fn the_count_in(the_code: &str) -> usize {
 /// Every `.rs` file in this checkout, in the order a reader would meet them.
 fn every_source_file() -> Vec<std::path::PathBuf> {
     let mut found = Vec::new();
-    collect_from(&scanning::the_root_of_the_checkout(), &mut found);
+    collect_from(
+        &reading_the_checkout::the_root_of_the_checkout(),
+        &mut found,
+    );
     found.sort();
     found
 }
@@ -86,7 +94,7 @@ fn no_file_in_this_repository_is_longer_than_it_may_be() {
     let mut too_long = Vec::new();
     for a_file in every_source_file() {
         let name = a_file.display().to_string();
-        if let Some(why) = what_is_wrong_with(&name, &scanning::the_text_at(&a_file)) {
+        if let Some(why) = what_is_wrong_with(&name, &reading_the_checkout::the_text_at(&a_file)) {
             too_long.push(why);
         }
     }
@@ -135,8 +143,8 @@ fn a_file_that_was_actually_read_is_counted_as_more_than_nothing() {
 
 #[test]
 fn the_lines_that_do_not_carry_code_are_the_ones_a_file_does_not_spend() {
-    let a_file = scanning::the_root_of_the_checkout().join("src/scanning.rs");
-    let the_code = scanning::the_text_at(&a_file);
+    let a_file = reading_the_checkout::the_root_of_the_checkout().join("src/scanning.rs");
+    let the_code = reading_the_checkout::the_text_at(&a_file);
     let mut lines_with_code = 0;
     for stretch in HowTheFileIsWritten::of(&the_code).stretches() {
         if stretch.kind() == WhatIsWrittenThere::Code {
@@ -161,7 +169,7 @@ fn a_file_over_the_ceiling_is_refused_and_named() {
     assert_eq!(
         what_is_wrong_with(
             &a_file.display().to_string(),
-            &scanning::the_text_at(&a_file)
+            &reading_the_checkout::the_text_at(&a_file)
         ),
         None,
         "the real file is under the ceiling, so a refusal here would be the gate refusing a file it should accept"
@@ -186,11 +194,11 @@ fn a_file_of_exactly_the_ceiling_is_accepted() {
 fn documentation_and_blank_lines_are_not_lines_a_file_spends() {
     let a_wordy_file = format!(
         "//! One line of code.\n{}\n//! Two hundred lines of the most valuable thing here.\n\n{}",
-        (0..=THE_MOST_A_FILE_MAY_SPEND)
+        (0..(THE_LINE_TO_LOOK_AT_A_FILE_FROM * 3))
             .map(|one| format!("/// A line that explains something, number {one}."))
             .collect::<Vec<String>>()
             .join("\n"),
-        (0..=THE_MOST_A_FILE_MAY_SPEND)
+        (0..THE_LINE_TO_LOOK_AT_A_FILE_FROM)
             .map(|one| format!("let the_{one} = {one};"))
             .collect::<Vec<String>>()
             .join("\n")
@@ -199,9 +207,8 @@ fn documentation_and_blank_lines_are_not_lines_a_file_spends() {
     let count = the_count_in(&a_wordy_file);
 
     assert_eq!(
-        count,
-        THE_MOST_A_FILE_MAY_SPEND + 1,
-        "six hundred lines of this file are explanation and three hundred and one are code: a rule that made documentation expensive would be a rule against saying why, so only the code is counted"
+        count, THE_LINE_TO_LOOK_AT_A_FILE_FROM,
+        "eight hundred lines of this file are explanation and two hundred are code: a rule that made documentation expensive would be a rule against saying why, so only the code is counted"
     );
     assert_eq!(
         what_is_wrong_with("a_wordy_file.rs", &a_wordy_file),

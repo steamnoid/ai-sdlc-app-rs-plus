@@ -10,7 +10,8 @@
 //! `std::fs` in its documentation — the walk that would refuse that is the walk this gate
 //! exists to make impossible.
 
-use aisdlc_gates::scanning::{self, HowTheFileIsWritten, WhatIsWrittenThere};
+use aisdlc_gates::reading_the_checkout;
+use aisdlc_gates::scanning::{HowTheFileIsWritten, WhatIsWrittenThere};
 
 /// The manifest of the domain, and the directory its source lives in.
 const THE_DOMAIN: &str = "crates/domain";
@@ -310,7 +311,7 @@ fn the_text_of_a_manifest() -> String {
 fn the_source_of_the_domain() -> String {
     let mut the_source = String::new();
     for path in every_rust_file_under_the_domain() {
-        the_source.push_str(&scanning::the_text_at(&path));
+        the_source.push_str(&reading_the_checkout::the_text_at(&path));
         the_source.push('\n');
     }
     the_source
