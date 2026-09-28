@@ -59,8 +59,8 @@ fn the_artifact_being_produced() -> WhichArtifact {
     WhichArtifact::try_from("DiscoveryReport").expect("an artifact has a name")
 }
 
-fn a_work_item_waiting_to_be_ruled_on() -> WorkItem {
-    let commissioned = a_work_item_commissioned_for_an_agent(
+fn a_work_item_being_worked_on() -> WorkItem {
+    a_work_item_commissioned_for_an_agent(
         WorkItemId::try_from("WELLBEINGT-5").expect("a name is not blank"),
         WhoCommissioned::try_from("paligakrzychu").expect("a name is not blank"),
         Repository::try_from("steamnoid/ai-sdlc-app-rs-plus").expect("two halves"),
@@ -72,10 +72,15 @@ fn a_work_item_waiting_to_be_ruled_on() -> WorkItem {
             )
             .expect("a request with a title and a body is a request"),
         ),
-    );
-    let picked_up =
-        aisdlc_run::the_framework_picks_the_work_up(commissioned, the_agent_who_did_the_work())
-            .expect("a work item standing at `READY` may be picked up");
+    )
+}
+
+fn a_work_item_waiting_to_be_ruled_on() -> WorkItem {
+    let picked_up = aisdlc_run::the_framework_picks_the_work_up(
+        a_work_item_being_worked_on(),
+        the_agent_who_did_the_work(),
+    )
+    .expect("a work item standing at `READY` may be picked up");
     let started = aisdlc_run::the_agent_takes_the_work_item_into_its_own_hands(
         picked_up,
         the_agent_who_did_the_work(),
@@ -158,13 +163,7 @@ fn a_refusal_leaves_no_record_and_so_nothing_to_close() {
 #[test]
 fn closing_a_work_item_that_is_not_waiting_for_a_ruling_is_refused() {
     let still_being_worked_on = aisdlc_run::the_framework_picks_the_work_up(
-        a_work_item_commissioned_for_an_agent(
-            WorkItemId::try_from("WELLBEINGT-5").expect("a name is not blank"),
-            WhoCommissioned::try_from("paligakrzychu").expect("a name is not blank"),
-            Repository::try_from("steamnoid/ai-sdlc-app-rs-plus").expect("two halves"),
-            Role::Product,
-            None,
-        ),
+        a_work_item_being_worked_on(),
         the_agent_who_did_the_work(),
     )
     .expect("a work item standing at `READY` may be picked up");
