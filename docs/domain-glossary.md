@@ -937,6 +937,14 @@ the only place a reason can live is a place the compiler reads, and a reason in 
 reason a reader cannot lose by deleting the line above it. `#[test]` and `#[derive(…)]` are not
 ignores, and a rule drawn at "any attribute without an `=`" refused both.
 
+**`dyn` and not a dispatch.** A trait object is a promise that the concrete type behind a value
+can be replaced, and in the core that promise buys nothing: a work item is a work item, a stage
+is a stage, and a value that is "some stage" is a value nobody can say anything definite about.
+The rule is drawn at the word rather than at the dispatch, **because a list of the dispatches
+this repository does not need is a list somebody has to keep in step with a language**. The core
+is the domain and the gates — both are where a decision has to be visible in the source — and
+`dynamic` is a word rather than three letters inside one.
+
 ## The rules and what holds each
 
 **One row per rule, and the middle column names the file whose `mod` holds it.** A rule with
@@ -972,7 +980,7 @@ record of it. The two compiler rows are not tests — they are `#![forbid(unsafe
 | `the_role_is_a_closed_set_of_five` | — | not built yet — with the domain |
 | `the_dependencies_point_inward` | — | not built yet — with the crates |
 | `every_third_party_crate_is_on_its_crate_allowlist` | — | not built yet — with `aisdlc-outside` |
-| `the_core_never_names_a_trait_object` | — | not built yet — with the domain |
+| `the_core_never_names_a_trait_object` | `readability_guards.rs` | with the domain |
 | `an_ignored_test_says_why_it_is_ignored` | `readability_guards.rs` | with the tests |
 | `every_change_is_a_red_then_a_green` | — | not built yet — with the history |
 
