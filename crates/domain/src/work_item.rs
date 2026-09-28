@@ -145,22 +145,14 @@ pub fn a_work_item_commissioned_for_an_agent(
     the_role: Role,
     requested: Option<CommissionedRequest>,
 ) -> WorkItem {
-    let _the_five_arguments_were_not_read = (
-        &work_item_id,
-        &who_commissioned,
-        &the_repository,
-        &the_role,
-        &requested,
-    );
-    let _the_entry_state_was_not_entered = Stage::Ready;
     WorkItem {
-        work_item_id: WorkItemId::try_from("x").expect("x is a name"),
-        who_commissioned: WhoCommissioned::try_from("x").expect("x is a name"),
-        repository: Repository::try_from("a/b").expect("two halves"),
-        role: Role::Product,
+        work_item_id,
+        who_commissioned,
+        repository: the_repository,
+        role: the_role,
         stage: Stage::Ready,
         agent: None,
-        the_request: None,
+        the_request: requested,
     }
 }
 
