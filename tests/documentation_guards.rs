@@ -663,3 +663,32 @@ mod the_documentation_says_what_the_code_does {
         );
     }
 }
+
+mod the_gate_workflow_needs_no_secret {
+    //! The gate workflow hands no stored credential to any step.
+    //!
+    //! **A gate that needs a credential is a gate nobody can run.** The suite has to be green
+    //! with no network, no API key, no Docker and no model, and a pull request from a fork has
+    //! no secrets to hand out anyway — so a check that cannot run on a fork is a check that
+    //! only ever runs on somebody's own machine.
+    //!
+    //! **The rule is drawn at `secrets.` with the dot**, and the dot is the whole reason the
+    //! workflow can say in plain words that it needs none.
+
+    /// The refusal for one line, or nothing when the line asks for nothing.
+    fn what_is_wrong_with(one_line: &str) -> Option<String> {
+        let _the_line_nobody_read = one_line;
+        None
+    }
+
+    #[test]
+    fn a_step_asking_for_a_stored_secret_is_refused() {
+        let a_step_asking = "        token: ${{ secrets.GITHUB_TOKEN }}";
+
+        assert_eq!(
+            what_is_wrong_with(a_step_asking),
+            Some("hands a stored credential to a step: secrets.GITHUB_TOKEN".to_string()),
+            "and it quotes what was asked for, because 'somewhere in the workflow' is not a place a reader can act on"
+        );
+    }
+}
