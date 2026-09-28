@@ -228,6 +228,11 @@ impl<'a> WhereTheReadingHasGotTo<'a> {
         let the_hashes = self.counting_the_hashes_of_an_opening(the_opening);
         self.take(the_opening);
         let closing = format!("\"{}", "#".repeat(the_hashes));
+        self.take_until_the_string_closes(&closing, the_hashes);
+    }
+
+    /// Move forward until the string's closing run of hashes, or until the file ends.
+    fn take_until_the_string_closes(&mut self, closing: &str, the_hashes: usize) {
         loop {
             if self.is_at_the_end() {
                 return;

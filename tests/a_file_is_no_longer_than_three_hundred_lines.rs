@@ -191,18 +191,28 @@ fn a_file_of_exactly_the_ceiling_is_accepted() {
     );
 }
 
+/// Three times as many lines of explanation as the repository's line of warning.
+fn the_explanation() -> String {
+    (0..(THE_LINE_TO_LOOK_AT_A_FILE_FROM * 3))
+        .map(|one| format!("/// A line that explains something, number {one}."))
+        .collect::<Vec<String>>()
+        .join("\n")
+}
+
+/// A warning's worth of code, which is under the ceiling and over the signal.
+fn the_code() -> String {
+    (0..THE_LINE_TO_LOOK_AT_A_FILE_FROM)
+        .map(|one| format!("let the_{one} = {one};"))
+        .collect::<Vec<String>>()
+        .join("\n")
+}
+
 #[test]
 fn documentation_and_blank_lines_are_not_lines_a_file_spends() {
     let a_wordy_file = format!(
-        "//! One line of code.\n{}\n//! Two hundred lines of the most valuable thing here.\n\n{}",
-        (0..(THE_LINE_TO_LOOK_AT_A_FILE_FROM * 3))
-            .map(|one| format!("/// A line that explains something, number {one}."))
-            .collect::<Vec<String>>()
-            .join("\n"),
-        (0..THE_LINE_TO_LOOK_AT_A_FILE_FROM)
-            .map(|one| format!("let the_{one} = {one};"))
-            .collect::<Vec<String>>()
-            .join("\n")
+        "//! One line of code.\n{}\n{}\n",
+        the_explanation(),
+        the_code()
     );
 
     let count = the_count_in(&a_wordy_file);

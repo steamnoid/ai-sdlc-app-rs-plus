@@ -10,6 +10,7 @@
 //! gate in this repository refuses, or a copy.
 
 use aisdlc_gates::a_stretch_of_the_file::{AStretchOfTheFile, WhatIsWrittenThere};
+use aisdlc_gates::reading_the_checkout;
 use aisdlc_gates::scanning::HowTheFileIsWritten;
 
 /// A source with a scheme in a string and a comment beside it.
@@ -45,27 +46,27 @@ fn the_walk_puts_every_byte_in_exactly_one_stretch() {
     );
 }
 
+/// The text of every stretch of one kind, in the order the walk found them.
+fn the_texts_of(the_read: &HowTheFileIsWritten, which: WhatIsWrittenThere) -> Vec<&str> {
+    the_read
+        .stretches()
+        .iter()
+        .filter(|one| one.kind() == which)
+        .map(AStretchOfTheFile::text)
+        .collect()
+}
+
 #[test]
 fn a_code_stretch_is_one_line_and_not_one_character() {
     let read = HowTheFileIsWritten::of("let one = 1; let two = 2;\nlet three = 3;\n");
 
-    let the_lines_of_code: Vec<&str> = read
-        .stretches()
-        .iter()
-        .filter(|one| one.kind() == WhatIsWrittenThere::Code)
-        .map(AStretchOfTheFile::text)
-        .collect();
+    let the_lines_of_code: Vec<&str> = the_texts_of(&read, WhatIsWrittenThere::Code);
     assert_eq!(
         the_lines_of_code,
         vec!["let one = 1; let two = 2;", "let three = 3;"],
         "a stretch of code is the code of one line, so a place in a file is a line and an offset into it rather than one number"
     );
-    let the_line_endings: Vec<&str> = read
-        .stretches()
-        .iter()
-        .filter(|one| one.kind() == WhatIsWrittenThere::TheSpaceBetween)
-        .map(AStretchOfTheFile::text)
-        .collect();
+    let the_line_endings: Vec<&str> = the_texts_of(&read, WhatIsWrittenThere::TheSpaceBetween);
     assert_eq!(
         the_line_endings,
         vec!["\n", "\n"],
@@ -236,19 +237,12 @@ fn a_file_with_nothing_in_it_is_no_stretches_at_all() {
 #[test]
 fn the_walk_reads_the_file_that_documents_it() {
     let the_file_holding_the_walk = concat!(env!("CARGO_MANIFEST_DIR"), "/src/scanning.rs");
-    let source = std::fs::read_to_string(the_file_holding_the_walk)
-        .expect("the file that holds the walk is a file that can be read");
+    let source = reading_the_checkout::the_text_at(std::path::Path::new(the_file_holding_the_walk));
 
     let read = HowTheFileIsWritten::of(&source);
-    let mut what_was_found = Vec::new();
-    for stretch in read.stretches() {
-        if stretch.kind() != WhatIsWrittenThere::AComment {
-            continue;
-        }
-        what_was_found.push(stretch.text().to_string());
-    }
+    let the_comments = the_texts_of(&read, WhatIsWrittenThere::AComment);
 
-    let not_documentation: Vec<&String> = what_was_found
+    let not_documentation: Vec<&&str> = the_comments
         .iter()
         .filter(|one| !one.starts_with("///") && !one.starts_with("//!"))
         .collect();
@@ -257,9 +251,9 @@ fn the_walk_reads_the_file_that_documents_it() {
         "the file that documents the walk holds a comment that is not documentation, and a walk that cannot be run against its own author is a walk nobody has checked: {not_documentation:?}"
     );
     assert!(
-        what_was_found.len() > 20,
+        the_comments.len() > 20,
         "the walk found {} comments in the file that documents it, which is too few to be a file with this much documentation",
-        what_was_found.len()
+        the_comments.len()
     );
 }
 

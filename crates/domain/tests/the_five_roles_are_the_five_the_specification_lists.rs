@@ -84,15 +84,18 @@ fn the_refusal_says_which_name_was_refused_and_how_many_there_are() {
     );
 }
 
+/// The five pairs, as the specification's table gives them.
+const EVERY_ROLE_AND_ITS_CAPITALS: [(&str, Role); 5] = [
+    ("PO", Role::Product),
+    ("DEV", Role::Development),
+    ("QA", Role::Quality),
+    ("SEC", Role::Security),
+    ("ARCH", Role::Architecture),
+];
+
 #[test]
 fn a_role_is_written_in_capitals_and_is_the_variant_a_reader_expects() {
-    for (written, expected) in [
-        ("PO", Role::Product),
-        ("DEV", Role::Development),
-        ("QA", Role::Quality),
-        ("SEC", Role::Security),
-        ("ARCH", Role::Architecture),
-    ] {
+    for (written, expected) in EVERY_ROLE_AND_ITS_CAPITALS {
         assert_eq!(
             Role::try_from(written).ok(),
             Some(expected),
