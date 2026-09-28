@@ -106,6 +106,24 @@ impl AnAnswerIsNotYetAnArtifact {
         self.which_artifact.clone()
     }
 
+    /// The same answer, with what the project holds written into the question.
+    ///
+    /// **A copy and not a mutation**, because the answer came back from a call already spent and
+    /// a model cannot be asked the same question twice for one listing.
+    #[must_use]
+    pub fn with_the_project_named_in_the_question(
+        &self,
+        what_is_in_it: &[String],
+    ) -> AnAnswerIsNotYetAnArtifact {
+        let mut the_answer = self.clone();
+        the_answer.the_question = format!(
+            "{}\n\nthe project holds:\n{}",
+            self.the_question,
+            what_is_in_it.join("\n")
+        );
+        the_answer
+    }
+
     /// Which organisation's model answered.
     pub fn who_reasoned(&self) -> WhichOrganisationReasons {
         self.who_reasoned
@@ -335,9 +353,9 @@ pub fn the_agent_reads(
 /// The agent asks a model about the project, and the question carries what the project holds.
 ///
 /// **The question is the request and the listing**, because a model asked a question with no
-/// repository in it is answering about a repository it has not seen — and every slice in this
-/// repository asked a model about a work item while holding a port that reads the project and
-/// never once opened it.
+/// repository in it is answering about a repository it has not seen. **The listing is read once
+/// and the read has to be used**, or the port is opened, the answer is read, and it is thrown
+/// away — which is the shape a call site takes when the thing it reads is not yet needed.
 ///
 /// **A project holding nothing is refused before the call and not after.** A model asked about
 /// a repository with nothing in it is answering about nothing, and a refusal that has already
@@ -356,7 +374,24 @@ pub fn the_agent_asks_a_model_about_the_project(
             "the project holds nothing, and a model asked about a repository with nothing in it is answering about nothing",
         ));
     }
+    the_agent_asks_a_question_naming(
+        the_model,
+        the_work_item,
+        which_artifact,
+        who_reasoned,
+        &what_is_in_it,
+    )
+}
+
+/// The same call, with what the project holds written into the question.
+fn the_agent_asks_a_question_naming(
+    the_model: &mut impl AReasoningModel,
+    the_work_item: &WorkItem,
+    which_artifact: &WhichArtifact,
+    who_reasoned: WhichOrganisationReasons,
+    what_is_in_it: &[String],
+) -> Result<AnAnswerIsNotYetAnArtifact, AnUnanswerableRequest> {
     let the_answer =
         the_agent_asks_for_its_artifact(the_model, the_work_item, which_artifact, who_reasoned)?;
-    Ok(the_answer)
+    Ok(the_answer.with_the_project_named_in_the_question(what_is_in_it))
 }
