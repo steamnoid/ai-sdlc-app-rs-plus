@@ -14,6 +14,7 @@
 //! the type and into a line of code.
 
 use aisdlc_domain::agent_identifier::AgentIdentifier;
+use aisdlc_domain::approval::WhichArtifact;
 use aisdlc_domain::stage::Stage;
 use aisdlc_domain::state_machine::{StateMachineError, transition};
 use aisdlc_domain::work_item::WorkItem;
@@ -56,4 +57,54 @@ pub fn the_agent_takes_the_work_item_into_its_own_hands(
         Stage::InProgressByAgent,
         Some(the_agent_taking_it),
     )
+}
+
+/// A model that answers with a validated artifact.
+pub trait AReasoningModel {
+    /// What the model says when asked for one artifact.
+    fn what_it_says_when_asked_for(
+        &mut self,
+        which_artifact: &WhichArtifact,
+        the_question: &str,
+    ) -> String;
+}
+
+/// What a model said when it was asked for an artifact, before anything checked it.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct AnAnswerIsNotYetAnArtifact {
+    which_artifact: WhichArtifact,
+    the_question: String,
+    what_the_model_said: String,
+}
+
+impl AnAnswerIsNotYetAnArtifact {
+    /// Which artifact the model was asked for.
+    pub fn which_artifact_was_asked_for(&self) -> WhichArtifact {
+        self.which_artifact.clone()
+    }
+
+    /// The question the model was given.
+    pub fn the_question_it_was_given(&self) -> String {
+        self.the_question.clone()
+    }
+
+    /// The words the model said, unaltered.
+    pub fn what_the_model_said(&self) -> String {
+        self.what_the_model_said.clone()
+    }
+}
+
+/// An agent asks a model for the artifact its work item needs.
+pub fn the_agent_asks_for_its_artifact(
+    the_model: &mut impl AReasoningModel,
+    the_work_item: &WorkItem,
+    which_artifact: &WhichArtifact,
+) -> AnAnswerIsNotYetAnArtifact {
+    let the_question = String::new();
+    let what_the_model_said = the_model.what_it_says_when_asked_for(which_artifact, &the_question);
+    AnAnswerIsNotYetAnArtifact {
+        which_artifact: which_artifact.clone(),
+        the_question,
+        what_the_model_said,
+    }
 }
