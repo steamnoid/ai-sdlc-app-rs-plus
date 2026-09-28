@@ -503,6 +503,19 @@ API.** The clone is here, the commit is in it, and pushing it is what `git` is f
 **`Approval`** — a record that somebody approved an exact artifact at an exact version of
 one work item. It stops covering that the moment any of the three changes.
 
+**The record carries no instant, and that is the domain's edge rather than an omission.**
+This definition names three things — an artifact, a version, a work item — and a clock is
+not one of them. The domain has no dependencies and therefore no way to know what time it
+is, and the only honest way to hold one would be to be handed it, which would make the
+domain a thing that believes what it is told about the world. **The instant is recorded
+beside the record, by the boundary that has a clock**, and the two are written together so
+a reader can find one from the other.
+
+An earlier implementation of this repository carried `decided_at` on the decision itself.
+That was possible because that domain had a `chrono` dependency, and it is the same
+dependency the rewrite exists to remove — so the field is not lost, it is moved to the only
+layer entitled to it.
+
 **`WhoDecided`** — the party that ruled, recorded verbatim and never replaced. A person's
 name and a policy's name are both valid and the record keeps the difference.
 
