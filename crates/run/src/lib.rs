@@ -269,3 +269,20 @@ pub fn the_gate_records_what_the_human_decided_at(
     Approval::what_the_ruling_left_behind(&a_ruling)
         .ok_or(NotStandingAtTheGate::because(Stage::AwaitingHumanApproval))
 }
+
+/// A run closes a work item, holding the record of somebody's ruling.
+///
+/// **The record is an argument and the refusal is a type.** The gate produces an `Approval` only
+/// after an affirmative ruling, so this cannot be called with a refusal in hand at all — and a
+/// function that took a boolean and checked it would be a rule a caller could pass through by
+/// lying about the boolean.
+///
+/// **The move is the one the table allows**, which is also the only edge into `DONE`. A work
+/// item that is not standing at the gate is refused by that table rather than by a check here,
+/// so one work item's record cannot close another.
+pub fn the_run_closes_the_work_item(
+    a_work_item: WorkItem,
+    _the_record_of_a_ruling: &Approval,
+) -> Result<WorkItem, StateMachineError> {
+    transition(a_work_item, Stage::Done, None)
+}
