@@ -467,13 +467,24 @@ same work item find the same place and a resumed run does not re-clone underneat
 where it lands. The destination is a field and not a convention because it is **derived,
 not chosen**.
 
-**`AClonedRepository`** — a checkout on disk, and **the commit and the ref it is standing
+**`ACloneOnDisk`** — a checkout on disk, and **the commit and the ref it is standing
 on, both read from the clone and never remembered.** A value kept from an earlier run is a
 value about the wrong commit.
 
 **`ref_name`, and not `branch`.** A checkout is not always on a branch: cloning a detached
 ref leaves none behind, and the honest answer for a checkout that is on none is `HEAD`.
 Naming the field `branch` would be a lie in precisely the case where the value matters.
+
+**`TheCommit`** and **`TheRef`** — what a clone is standing on, both read from the clone and
+**never remembered**, because a value kept from an earlier run is a value about the wrong commit and
+a run that resumed believing it knows which commit it has would report its changes against one it
+stopped at days ago. **`HEAD` is a ref and not a branch**, because a checkout cloned detached leaves
+no branch behind, and the honest answer for one on none is `HEAD`.
+
+**`ACommitThatNamesNothing`** and **`ARefThatNamesNothing`** — a blank in either, refused and
+quoting the input back, because a name this system silently tidies is a name a lookup will miss.
+**The same sentence keeps `WorkItemId` from trimming**, and one sentence serving two types is a
+sentence that was worth writing once.
 
 **`CloningTheRepositoryFailed`** — four ways, and the last two are this system's own
 findings. *The destination already holds something* is a refusal on principle: a run
