@@ -18,7 +18,9 @@ impl TryFrom<&str> for WhoCommissioned {
     type Error = AWorkItemThatNamesNobody;
 
     fn try_from(name: &str) -> Result<Self, Self::Error> {
-        let _the_name_nobody_read = name;
+        if name.trim().is_empty() {
+            return Err(AWorkItemThatNamesNobody(name.to_string()));
+        }
         Ok(WhoCommissioned(name.to_string()))
     }
 }

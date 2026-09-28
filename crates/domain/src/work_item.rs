@@ -63,13 +63,12 @@ impl WorkItem {
         the_role: Role,
         the_stage: Stage,
     ) -> Result<Self, AnUncheckedWorkItem> {
-        let _the_five_arguments_were_not_read = (
-            &work_item_id,
-            &who_commissioned,
-            &the_repository,
-            &the_role,
-            &the_stage,
-        );
+        let needs_an_agent = the_stage.an_agent_must_be_holding_it();
+        if needs_an_agent {
+            return Err(AnUncheckedWorkItem {
+                why: format!("{the_stage} needs an agent and this door holds nobody"),
+            });
+        }
         Ok(WorkItem {
             work_item_id,
             who_commissioned,
@@ -97,14 +96,12 @@ impl WorkItem {
         the_stage: Stage,
         agent: AgentIdentifier,
     ) -> Result<Self, AnUncheckedWorkItem> {
-        let _the_six_arguments_were_not_read = (
-            &work_item_id,
-            &who_commissioned,
-            &the_repository,
-            &the_role,
-            &the_stage,
-            &agent,
-        );
+        let no_agent_may_hold = !the_stage.an_agent_must_be_holding_it();
+        if no_agent_may_hold {
+            return Err(AnUncheckedWorkItem {
+                why: format!("{the_stage} is a stage no agent may hold"),
+            });
+        }
         Ok(WorkItem {
             work_item_id,
             who_commissioned,
@@ -120,8 +117,8 @@ impl WorkItem {
     ///
     /// **Refuses nothing**: a request is a fact, not a position.
     pub fn answering(self, the_request: CommissionedRequest) -> Result<Self, AnUncheckedWorkItem> {
-        let _the_request_was_not_read = &the_request;
-        let answered = self;
+        let mut answered = self;
+        answered.the_request = Some(the_request);
         Ok(answered)
     }
 }
