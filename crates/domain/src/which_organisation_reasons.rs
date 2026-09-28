@@ -21,7 +21,7 @@ pub const EVERY_ORGANISATION_THAT_REASONS: [WhichOrganisationReasons; 4] = [
 /// The company a reasoning model works for.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum WhichOrganisationReasons {
-    /// OpenAI.
+    /// `OpenAI`, the company's own name.
     Openai,
     /// A model running on the machine.
     Ollama,
