@@ -13,7 +13,8 @@
 use aisdlc_gates::a_stretch_of_the_file::{AStretchOfTheFile, WhatIsWrittenThere};
 use aisdlc_gates::reading_the_checkout;
 use aisdlc_gates::reading_the_glossary::{
-    it_as_letters, the_glossary_text, the_refused_as_letters, the_words_refused_only_as_whole_names,
+    it_as_letters, the_blessed_names, the_glossary_text, the_refused_as_letters,
+    the_words_refused_only_as_whole_names,
 };
 use aisdlc_gates::scanning::HowTheFileIsWritten;
 
@@ -21,9 +22,14 @@ const THE_DOMAIN: &str = "crates/domain/src";
 
 /// Every refusal for one file, given its name and its text.
 fn what_is_wrong_with(a_file_name: &str, the_code: &str) -> Vec<String> {
-    let _the_file_name_nobody_read = a_file_name;
-    let _the_code_nobody_read = the_code;
-    Vec::new()
+    let blessed = the_blessed_names(&the_glossary_text());
+    the_types_in(the_code)
+        .into_iter()
+        .filter(|one_type| !blessed.contains(&it_as_letters(one_type)))
+        .map(|one_type| {
+            format!("{a_file_name} defines {one_type}, which the glossary does not name")
+        })
+        .collect()
 }
 
 /// Every `.rs` file of the domain, in the order a reader would meet them.
@@ -51,7 +57,6 @@ fn collect_rust_files_under(directory: &std::path::Path, found: &mut Vec<std::pa
 
 #[test]
 fn every_type_the_domain_defines_is_a_term_the_glossary_blesses() {
-    let the_glossary = the_glossary_text();
     let mut found = Vec::new();
     for a_file in every_domain_file() {
         let name = a_file.display().to_string();
@@ -59,7 +64,6 @@ fn every_type_the_domain_defines_is_a_term_the_glossary_blesses() {
             &name,
             &reading_the_checkout::the_text_at(&a_file),
         ));
-        let _the_glossary_was_read = &the_glossary;
     }
 
     assert!(
@@ -148,27 +152,53 @@ fn the_types_in(the_code: &str) -> Vec<String> {
 }
 
 /// The name after every `pub struct` and `pub enum` on a line.
+///
+/// **`pub` or nothing, and the name ends at the first bracket.** A tuple struct writes its
+/// fields on the same line — `pub struct WhichArtifact(pub String)` — and a reader that took
+/// the whitespace-delimited word after the keyword got `WhichArtifact(pub`, which no glossary
+/// has ever heard of. The first version reported seventeen of the domain's twenty-six types
+/// as unblessed for that reason alone.
 fn the_types_one_line_introduces(one_line: &str) -> Vec<String> {
-    const THE_KEYWORDS_A_TYPE_CAN_FOLLOW: [&str; 2] = ["struct", "enum"];
+    the_words_a_line_begins_with(one_line, "pub")
+        .into_iter()
+        .filter(|(the_word, _)| THE_TYPES_WORDS.contains(&the_word.as_str()))
+        .map(|(_, the_name)| the_name)
+        .collect()
+}
+
+/// The two words that say a line introduces a public type.
+const THE_TYPES_WORDS: [&str; 2] = ["struct", "enum"];
+
+/// Each `(the word before it, the word after it)` pair on a line, starting after `pub`.
+///
+/// **The pairs and not the positions**, because a reader that walked indices had to remember
+/// that the first word is `pub` and that a type is two words on — and it got the first wrong
+/// for a private type, which is a name nobody outside the crate can use.
+fn the_words_a_line_begins_with(one_line: &str, first: &str) -> Vec<(String, String)> {
+    let words: Vec<&str> = one_line.split_whitespace().collect();
+    let Some(the_start) = words.iter().position(|one| *one == first) else {
+        return Vec::new();
+    };
     let mut found = Vec::new();
-    let mut parts = one_line.split_whitespace().peekable();
-    while let Some(one) = parts.next() {
-        let the_name_after = parts.peek().map(|it| (*it).to_string());
-        if THE_KEYWORDS_A_TYPE_CAN_FOLLOW.contains(&one.trim_end_matches('{')) {
-            found.extend(the_name_after);
-        }
+    for at in (the_start + 1)..words.len() {
+        found.push((words[at - 1].to_string(), the_name_out_of(words[at])));
     }
     found
-        .iter()
-        .map(|one| one.trim_matches(|c: char| !c.is_alphanumeric()).to_string())
-        .collect()
+}
+
+/// The type's name, without the fields a tuple struct writes beside it.
+fn the_name_out_of(a_word: &str) -> String {
+    let without_the_fields = a_word.split('(').next().unwrap_or(a_word);
+    without_the_fields
+        .trim_matches(|c: char| !c.is_alphanumeric())
+        .to_string()
 }
 
 /// Every line of the code that carries code on it.
 fn the_lines_of_code(the_code: &str) -> Vec<String> {
     let mut found = Vec::new();
     for stretch in HowTheFileIsWritten::of(the_code).stretches() {
-        append_the_code_lines_of(&stretch, &mut found);
+        append_the_code_lines_of(stretch, &mut found);
     }
     found
 }
