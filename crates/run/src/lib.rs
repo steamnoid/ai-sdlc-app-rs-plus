@@ -17,6 +17,7 @@ use aisdlc_domain::agent_identifier::AgentIdentifier;
 use aisdlc_domain::approval::{AnArtifactVersion, Approval, ApprovalDecision, WhichArtifact};
 use aisdlc_domain::stage::Stage;
 use aisdlc_domain::state_machine::{StateMachineError, transition};
+use aisdlc_domain::which_organisation_reasons::WhichOrganisationReasons;
 use aisdlc_domain::work_item::WorkItem;
 use aisdlc_domain::work_item_id::WorkItemId;
 
@@ -66,6 +67,7 @@ pub trait AReasoningModel {
     fn what_it_says_when_asked_for(
         &mut self,
         which_artifact: &WhichArtifact,
+        which_organisation: WhichOrganisationReasons,
         the_question: &str,
     ) -> String;
 }
@@ -74,6 +76,7 @@ pub trait AReasoningModel {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AnAnswerIsNotYetAnArtifact {
     which_artifact: WhichArtifact,
+    who_reasoned: WhichOrganisationReasons,
     the_question: String,
     what_the_model_said: String,
 }
@@ -82,6 +85,11 @@ impl AnAnswerIsNotYetAnArtifact {
     /// Which artifact the model was asked for.
     pub fn which_artifact_was_asked_for(&self) -> WhichArtifact {
         self.which_artifact.clone()
+    }
+
+    /// Which organisation's model answered.
+    pub fn who_reasoned(&self) -> WhichOrganisationReasons {
+        self.who_reasoned
     }
 
     /// The question the model was given.
@@ -109,6 +117,7 @@ pub fn the_agent_asks_for_its_artifact(
     the_model: &mut impl AReasoningModel,
     the_work_item: &WorkItem,
     which_artifact: &WhichArtifact,
+    who_reasoned: WhichOrganisationReasons,
 ) -> Result<AnAnswerIsNotYetAnArtifact, AnUnanswerableRequest> {
     let the_request = the_work_item.the_request_it_answers();
     let Some(requested) = the_request else {
@@ -118,9 +127,10 @@ pub fn the_agent_asks_for_its_artifact(
         ));
     };
     let what_the_model_said =
-        the_model.what_it_says_when_asked_for(which_artifact, &requested.title);
+        the_model.what_it_says_when_asked_for(which_artifact, who_reasoned, &requested.title);
     Ok(AnAnswerIsNotYetAnArtifact {
         which_artifact: which_artifact.clone(),
+        who_reasoned,
         the_question: requested.title,
         what_the_model_said,
     })
