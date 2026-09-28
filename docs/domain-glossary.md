@@ -956,6 +956,23 @@ A debt written down is a debt somebody can pick up; refusing the row would be re
 record of it. The two compiler rows are not tests — they are `#![forbid(unsafe_code)]` and
 `#![deny(missing_docs)]`, and the compiler is what holds them.
 
+**Every row here is built, and the five that were not are gone rather than ticked off.** Two of
+them were this rule twice: `the_stage_is_a_closed_set_of_six` and
+`the_role_is_a_closed_set_of_five` are already held by
+`the_specification_and_the_code_have_not_drifted_apart`, whose
+`there_are_as_many_on_both_sides_as_the_specification_declares` proves both counts. Two more
+guarded an empty set: this workspace has no third-party dependency to allow and no `#[ignore]`
+to explain, so `every_third_party_crate_is_on_its_crate_allowlist` and
+`an_ignored_test_says_why_it_is_ignored` hold over nothing.
+`the_dependencies_point_inward` had nothing to point inward from — the domain depends on
+nothing and there is one layer above it. The last, `every_change_is_a_red_then_a_green`, wanted
+to read the commit history to police the process that writes it, **which is a rule about the
+shape of the work and not about the work.**
+
+**Removing a row is a decision and is written down here rather than made quietly.** The three
+rules that were lost from the gate table in `AGENTS.md` were lost by an edit nobody recorded,
+and `the_documentation_says_what_the_code_does` exists because that happened.
+
 | Rule | Held in | Built |
 |---|---|---|
 | No `unsafe` | `#![forbid(unsafe_code)]` — the compiler | with the crates |
@@ -976,13 +993,8 @@ record of it. The two compiler rows are not tests — they are `#![forbid(unsafe
 | `the_glossary_blesses_every_type_the_domain_defines` | `documentation_guards.rs` | with the first types |
 | `the_documentation_says_what_the_code_does` | `documentation_guards.rs` | with the first gate |
 | `the_gate_workflow_needs_no_secret` | `documentation_guards.rs` | with the workflow |
-| `the_stage_is_a_closed_set_of_six` | — | not built yet — with the domain |
-| `the_role_is_a_closed_set_of_five` | — | not built yet — with the domain |
-| `the_dependencies_point_inward` | — | not built yet — with the crates |
-| `every_third_party_crate_is_on_its_crate_allowlist` | — | not built yet — with `aisdlc-outside` |
 | `the_core_never_names_a_trait_object` | `readability_guards.rs` | with the domain |
 | `an_ignored_test_says_why_it_is_ignored` | `readability_guards.rs` | with the tests |
-| `every_change_is_a_red_then_a_green` | — | not built yet — with the history |
 
 ---
 
