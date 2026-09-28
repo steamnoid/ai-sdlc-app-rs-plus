@@ -12,21 +12,63 @@
 
 use aisdlc_gates::reading_the_checkout;
 
-/// What a row of the table promises, as `(the gate it names, the phrase in its last cell)`.
+/// What a row of the gate table promises, as `(the gate it names, the phrase in its last cell)`.
+///
+/// **Only the table whose header names a gate.** `AGENTS.md` holds four tables and the other
+/// three have three columns, so a reader that took every row of four cells found the layers
+/// table, the layout table and two rows of prose, and reported twenty-one gates of which
+/// eleven are sentences.
 fn what_the_table_promises(the_document: &str) -> Vec<(String, String)> {
+    the_rows_of_the_gate_table(the_document)
+        .into_iter()
+        .filter_map(|(name, what_it_promises)| {
+            let it_names_a_gate = name.starts_with(|c: char| c.is_ascii_lowercase());
+            if it_names_a_gate {
+                Some((name, what_it_promises))
+            } else {
+                None
+            }
+        })
+        .collect()
+}
+
+/// The rows of the gate table, as `(the name in its second cell, its last cell)`.
+fn the_rows_of_the_gate_table(the_document: &str) -> Vec<(String, String)> {
     let mut found = Vec::new();
+    let mut inside = false;
     for one_line in the_document.lines() {
-        let cells: Vec<&str> = one_line.split('|').collect();
-        if cells.len() < 5 || !one_line.starts_with('|') {
+        if one_line.starts_with("| Rule |") {
+            inside = true;
             continue;
         }
-        let the_gate = cells[2].trim().trim_matches('`');
-        if the_gate.is_empty() || !the_gate.starts_with(|c: char| c.is_ascii_lowercase()) {
+        if !inside || !one_line.starts_with('|') {
+            inside = inside && one_line.starts_with('|');
             continue;
         }
-        found.push((the_gate.to_string(), cells[4].trim().to_string()));
+        found.push(the_two_cells_of(one_line));
     }
     found
+}
+
+/// The name in a row's second cell and the last cell that says something.
+fn the_two_cells_of(one_line: &str) -> (String, String) {
+    let cells: Vec<&str> = one_line.split('|').collect();
+    let name = cells.get(2).map_or("", |one| one.trim().trim_matches('`'));
+    (name.to_string(), the_last_cell_with_something_in_it(&cells))
+}
+
+/// The last cell that says something, which is the column of when or of built.
+///
+/// **The last one and not the fourth**, because the gate table has three columns and a reader
+/// that reached for the fourth found the empty cell the trailing bar leaves behind. It then
+/// read every three-column row as saying nothing about whether the gate exists.
+fn the_last_cell_with_something_in_it(cells: &[&str]) -> String {
+    cells
+        .iter()
+        .rev()
+        .find(|one| !one.trim().is_empty())
+        .map(|one| one.trim().to_string())
+        .unwrap_or_default()
 }
 
 /// Whether this gate has a file, which is the whole of what "built" means here.
@@ -39,8 +81,16 @@ fn the_gate_exists(a_gate: &str) -> bool {
 
 /// The refusal for one row, if the row is not true.
 fn what_is_wrong_with(the_gate: &str, the_phrase: &str) -> Option<String> {
-    let _the_gate_nobody_read = the_gate;
-    let _the_phrase_nobody_read = the_phrase;
+    let it_exists = the_gate_exists(the_gate);
+    let the_table_denies_it = the_phrase.contains("not built");
+    if it_exists && the_table_denies_it {
+        return Some(format!("{the_gate} is built and the table says not built"));
+    }
+    if !it_exists && !the_table_denies_it {
+        return Some(format!(
+            "{the_gate} is named, is not built, and does not say so"
+        ));
+    }
     None
 }
 

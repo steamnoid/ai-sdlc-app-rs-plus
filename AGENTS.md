@@ -339,8 +339,8 @@ repository had eight of them, all green, all empty.
 | A stage is a closed set of six | `the_stage_is_a_closed_set_of_six` | not built |
 | A role is a closed set of five | `the_role_is_a_closed_set_of_five` | not built |
 | The domain depends on nothing | `the_domain_depends_on_nothing` | with the domain |
-| Dependencies point inward | `the_dependencies_point_inward` | with the crates |
-| A crate from outside is welcome or not | `every_third_party_crate_is_on_its_crate_allowlist` | with `aisdlc-outside` |
+| Dependencies point inward | `the_dependencies_point_inward` | not built — with the crates |
+| A crate from outside is welcome or not | `every_third_party_crate_is_on_its_crate_allowlist` | not built — with `aisdlc-outside` |
 | No comments | `the_code_carries_no_comments` | with the scanner |
 | A file is at most 300 lines | `a_file_is_no_longer_than_three_hundred_lines` | with the first files |
 | A body is at most 20 lines | `a_function_body_is_no_longer_than_twenty_lines` | with the scanner |
@@ -349,14 +349,14 @@ repository had eight of them, all green, all empty.
 | A synonym is never used | `a_synonym_is_never_used` | with the first types |
 | No `#[allow]` | `no_allow_silences_a_lint` | with the first `.rs` |
 | A type is a term the glossary blesses | `the_glossary_blesses_every_type_the_domain_defines` | with the first types |
-| A name the gates share has one implementation | `a_name_the_gates_share_has_one_implementation` | when three gates share one |
+| A name the gates share has one implementation | `a_name_the_gates_share_has_one_implementation` | when three gates share one | — not built yet
 | No placeholder | `no_placeholder_is_left_in_the_code` | with the first `.rs` |
 | The source is read, not searched | `the_scanner_tells_a_comment_from_a_string` | with the scanner |
 | The documents say what the code does | `the_documentation_says_what_the_code_does` | with the transition table |
-| No `dyn` in the core | `the_core_never_names_a_trait_object` | with the first port |
-| Green with no credentials | `no_test_reads_an_environment_variable`, `the_gate_workflow_needs_no_secret` | with the first test |
-| An ignored test says why | `an_ignored_test_says_why_it_is_ignored` | with `real/` |
-| A cycle is a RED and a GREEN | `every_change_is_a_red_then_a_green` | with the second cycle |
+| No `dyn` in the core | `the_core_never_names_a_trait_object` | with the first port | — not built yet
+| Green with no credentials | `no_test_reads_an_environment_variable`, `the_gate_workflow_needs_no_secret` | with the first test | — not built yet
+| An ignored test says why | `an_ignored_test_says_why_it_is_ignored` | with `real/` | — not built yet
+| A cycle is a RED and a GREEN | `every_change_is_a_red_then_a_green` | with the second cycle | — not built yet
 
 **A rule with a gate that is not built is a wish, and it is in this table as a wish.** The
 ones marked not built are the rules a later phase will need, and each arrives with the
