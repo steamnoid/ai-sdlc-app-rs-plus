@@ -70,8 +70,24 @@ and **the name is refused, not the trimmed name** — a caller that sent `"  x  
 back, because a name this system silently tidies is a name a lookup will miss.
 
 **`WhoCommissioned`** — the party that asked for the work. **Who asked** and **which
-discipline answers** are two questions in two fields. An `aisdlc-` identifier here means a
-policy asked on somebody's behalf, and the name is kept verbatim.
+discipline answers** are two questions in two fields, and the name is kept verbatim.
+
+**The `aisdlc-` namespace belongs to agents and to nothing else.** An agent identifier
+starts `aisdlc-` — `aisdlc-po-analyze`, `aisdlc-dev-impl` — and a gate **refuses a decision
+made by one**, because an agent may ask for work and may not rule on the result. That is
+why the namespace is fixed and readable rather than free text.
+
+**A policy is `autopilot:<policy>`, and that is a different namespace on purpose.** A policy
+may rule at a gate, on somebody's behalf, and the record says so verbatim rather than naming
+a person: a record naming a person for a decision a policy made would be a forged audit
+trail, and it would look exactly like the real thing at the moment somebody needs to tell
+them apart. **One prefix cannot mean both "an agent" and "a policy"**, because the gate's
+whole rule is that an `aisdlc-` name is refused — a policy sharing that namespace would be
+refused along with the agents it is defined in contrast to.
+
+This line previously said that an `aisdlc-` identifier meant a policy, which contradicted
+the gate rule that refuses every one of them. Both were in this repository: the sentence here
+and the check in `docs` and, in the earlier implementation, in the gate itself.
 
 **`AgentIdentifier`** — an agent, named. Absence is `None` and never a string that says
 "absent": `"none"`, `""` and `"   "` are all refused, because the state machine decides
