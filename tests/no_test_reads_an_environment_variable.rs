@@ -101,8 +101,22 @@ struct ARuntimeReadOfTheEnvironment {
 }
 
 /// Every run-time read of the environment in `source`, in the order the file wrote them.
+///
+/// **Whether the environment is imported is asked once for the whole file, and that is
+/// what joins two lines into one finding.** A call written bare says nothing about what
+/// it is a call into; the `use` line above it says it, and the two are written apart
+/// every time. A reading that asked each stretch on its own would answer neither, and
+/// `a_bare_call_with_no_import_is_accepted` is the test that says so.
 fn the_runtime_reads_in(source: &str) -> Vec<ARuntimeReadOfTheEnvironment> {
-    Vec::new()
+    let reading = HowTheFileIsWritten::of(source);
+    let every_stretch = reading.stretches();
+    let the_environment_is_imported = does_the_file_import_the_environment(every_stretch);
+
+    (0..every_stretch.len())
+        .filter_map(|at| {
+            the_read_opening_at(source, every_stretch, at, the_environment_is_imported)
+        })
+        .collect()
 }
 
 /// The line `on_line` of `source`, exactly as the file wrote it.
@@ -126,7 +140,7 @@ fn the_line_at(source: &str, on_line: usize) -> String {
 fn does_the_file_import_the_environment(every_stretch: &[AStretchOfTheFile]) -> bool {
     every_stretch
         .iter()
-        .any(|stretch| this_stretch_imports_the_environment(stretch))
+        .any(this_stretch_imports_the_environment)
 }
 
 /// Whether this one stretch is a `use` bringing in the module named `env`.
@@ -215,8 +229,7 @@ fn how_many_build_time_environment_macros_the_workspace_holds() -> usize {
                 .stretches()
                 .iter()
                 .filter(|stretch| {
-                    stretch.kind() == WhatIsWrittenThere::Code
-                        && stretch.text().contains("env!")
+                    stretch.kind() == WhatIsWrittenThere::Code && stretch.text().contains("env!")
                 })
                 .count()
         })
@@ -265,10 +278,7 @@ fn the_one_read_refused_in(source: &str, because: &str) -> ARuntimeReadOfTheEnvi
         1,
         "{because}, and this is what it refused: {refused:?}"
     );
-    refused
-        .into_iter()
-        .next()
-        .expect("the count above is one")
+    refused.into_iter().next().expect("the count above is one")
 }
 
 /// Assert that the reading of `source` reached its code and refused nothing in it, and say
@@ -301,8 +311,7 @@ fn a_var_of_a_github_token_through_the_full_path_is_refused() {
         "the call is the second line of the file"
     );
     assert!(
-        refused.the_line_as_it_is_written
-            == r#"    let token = std::env::var("GITHUB_TOKEN");"#,
+        refused.the_line_as_it_is_written == r#"    let token = std::env::var("GITHUB_TOKEN");"#,
         "and the whole line is quoted, with the argument the stretch of code had cut off"
     );
 }

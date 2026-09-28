@@ -119,8 +119,23 @@ fn the_text_of_the_gate_workflow() -> String {
 }
 
 /// Every secret `workflow` declares, in the order the file writes them.
+///
+/// **One pass over the lines, and both questions asked of each of them.** Two separate
+/// readings would report their findings in the order they happened to find them, and a
+/// refusal listing a workflow's lines out of their own order is a list a reader has to
+/// put back together before it can be acted on.
 fn the_declared_secrets_in(workflow: &str) -> Vec<ADeclaredSecret> {
-    Vec::new()
+    let credential_lines = the_lines_declaring_a_credential(workflow);
+    let mut declared = Vec::new();
+    for (at, line) in workflow.lines().enumerate() {
+        if this_line_declares_a_secret(line, at + 1, &credential_lines) {
+            declared.push(ADeclaredSecret {
+                the_line_it_is_written_on: at + 1,
+                the_line_as_it_is_written: line.to_string(),
+            });
+        }
+    }
+    declared
 }
 
 /// Whether this line declares a secret: either it names the stored credentials, or it sets
@@ -155,7 +170,7 @@ fn every_line_inside_a_block_of_environment_variables(workflow: &str) -> Vec<(us
     let mut inside = Vec::new();
     for (at, line) in lines.iter().enumerate() {
         if let Some(how_far) = where_a_block_of_environment_variables_opens(line) {
-            inside.extend(the_lines_written_further_in(&lines, at, how_far));
+            inside.extend(the_lines_written_further_in(&lines, at + 1, how_far));
         }
     }
     inside
@@ -183,28 +198,45 @@ fn how_far_a_line_is_indented(line: &str) -> Option<usize> {
 /// the indentation of a line that opens no block would return a number this reading has no
 /// standing to use.
 fn where_a_block_of_environment_variables_opens(line: &str) -> Option<usize> {
-    if line.trim_end() != THE_KEY_THAT_OPENS_A_BLOCK_OF_ENVIRONMENT_VARIABLES {
+    if line.trim() != THE_KEY_THAT_OPENS_A_BLOCK_OF_ENVIRONMENT_VARIABLES {
         return None;
     }
     how_far_a_line_is_indented(line)
 }
 
-/// The lines written further in than `how_far`, each with the line it is written on, and
-/// nothing at all once a line is written no further in than that.
+/// The lines from `the_line_after_the_key` onwards that are written further in than
+/// `how_far`, each with the line it is written on, and nothing at all once a line is
+/// written no further in than that.
+///
+/// **The key's own line is not among the lines looked for, and that is why the walk
+/// starts one line on.** A key is written exactly as far in as its own threshold, so a
+/// walk that started on it would stop on it and find every block of environment variables
+/// in the repository to be empty.
 fn the_lines_written_further_in(
     lines: &[&str],
-    from: usize,
+    the_line_after_the_key: usize,
     how_far: usize,
 ) -> Vec<(usize, String)> {
     let mut found = Vec::new();
-    for (at, line) in lines.iter().enumerate().skip(from) {
-        match how_far_a_line_is_indented(line) {
-            None => continue,
-            Some(written) if written <= how_far => break,
-            Some(_) => found.push((at + 1, line.to_string())),
+    for (at, line) in lines.iter().enumerate().skip(the_line_after_the_key) {
+        if this_line_closes_the_block(line, how_far) {
+            break;
+        }
+        if how_far_a_line_is_indented(line).is_some() {
+            found.push((at + 1, line.to_string()));
         }
     }
     found
+}
+
+/// Whether this line is written no further in than the key, which is what ends a block.
+///
+/// **A line with nothing written on it does not end one, and that is the whole of what
+/// this asks.** A blank line and a comment standing in the margin both leave the block
+/// they are written beside open, and a block that ended on either of them would find every
+/// block in a workflow to be one line long the moment the file had a blank line in it.
+fn this_line_closes_the_block(line: &str, how_far: usize) -> bool {
+    how_far_a_line_is_indented(line).is_some_and(|written| written <= how_far)
 }
 
 /// Whether this line writes a name a credential is called by, followed by a colon.
@@ -229,8 +261,7 @@ fn what_the_workflow_would_have_to_answer_for() -> String {
         writeln!(
             said,
             "line {}: {}",
-            one_refused.the_line_it_is_written_on,
-            one_refused.the_line_as_it_is_written
+            one_refused.the_line_it_is_written_on, one_refused.the_line_as_it_is_written
         )
         .expect("a `String` is written to rather than a file, so this cannot fail");
     }
@@ -247,20 +278,14 @@ fn the_one_secret_refused_in(workflow: &str, because: &str) -> ADeclaredSecret {
         1,
         "{because}, and this is what it refused: {refused:?}"
     );
-    refused
-        .into_iter()
-        .next()
-        .expect("the count above is one")
+    refused.into_iter().next().expect("the count above is one")
 }
 
 /// Assert that `workflow` declares nothing, and say what it refused when it did.
 fn the_workflow_declares_nothing(workflow: &str, because: &str) {
     let refused = the_declared_secrets_in(workflow);
 
-    assert!(
-        refused.is_empty(),
-        "{because}, and it refused: {refused:?}"
-    );
+    assert!(refused.is_empty(), "{because}, and it refused: {refused:?}");
 }
 
 #[test]
@@ -286,7 +311,9 @@ jobs:
         "the declaration is the eighth line of this workflow"
     );
     assert!(
-        refused.the_line_as_it_is_written.contains("secrets.GITHUB_TOKEN"),
+        refused
+            .the_line_as_it_is_written
+            .contains("secrets.GITHUB_TOKEN"),
         "and the line is quoted whole rather than described: {}",
         refused.the_line_as_it_is_written
     );
