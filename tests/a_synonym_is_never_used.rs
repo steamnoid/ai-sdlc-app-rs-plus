@@ -17,13 +17,78 @@
 
 use aisdlc_gates::a_stretch_of_the_file::{AStretchOfTheFile, WhatIsWrittenThere};
 use aisdlc_gates::reading_the_checkout;
+use aisdlc_gates::reading_the_glossary::{
+    it_as_letters, the_blessed_names, the_glossary_spelling_of, the_glossary_text,
+    the_refused_as_letters, the_words_of, the_words_refused_anywhere,
+    the_words_refused_only_as_whole_names,
+};
 use aisdlc_gates::scanning::HowTheFileIsWritten;
 
 /// Every refusal in one file, given its name and its text.
 fn what_is_wrong_with(a_file_name: &str, the_code: &str) -> Vec<String> {
-    let _the_file_name_nobody_read = a_file_name;
-    let _the_code_nobody_read = the_code;
-    Vec::new()
+    let the_glossary = the_glossary_text();
+    let mut found = Vec::new();
+    for one_name in the_names_the_code_introduces(the_code) {
+        found.extend(the_refusal_of(&one_name, &the_glossary, a_file_name));
+    }
+    found
+}
+
+/// The refusal for one name, if the glossary refuses it.
+fn the_refusal_of(one_name: &str, the_glossary: &str, a_file_name: &str) -> Vec<String> {
+    if the_blessed_names(the_glossary).contains(&it_as_letters(one_name)) {
+        return Vec::new();
+    }
+    if the_words_refused_only_as_whole_names(the_glossary).contains(&it_as_letters(one_name)) {
+        return vec![format!(
+            "{a_file_name} names {one_name}, which is a refused word on its own"
+        )];
+    }
+    let carried = the_word_it_carries_from(the_glossary, one_name);
+    carried
+        .into_iter()
+        .map(|one| format!("{a_file_name} names {one_name}, which carries a refused word: {one}"))
+        .collect()
+}
+
+/// The refused word this name carries, if it carries one.
+fn the_word_it_carries_from(the_glossary: &str, one_name: &str) -> Option<String> {
+    let refused = the_refused_as_letters(the_glossary);
+    let whole_names_only = the_words_refused_only_as_whole_names(the_glossary);
+    let carried = the_words_of(one_name);
+    let found = carried
+        .iter()
+        .find(|one| refused.contains(one) && !whole_names_only.contains(one))?;
+    the_glossary_spelling_of(the_glossary, found)
+}
+
+/// The keywords a name can follow, and which is why a name is an introduction.
+const THE_KEYWORDS_A_NAME_CAN_FOLLOW: [&str; 6] = ["struct", "enum", "trait", "type", "fn", "mod"];
+
+/// Every name the code introduces, and nothing it merely uses.
+fn the_names_the_code_introduces(the_code: &str) -> Vec<String> {
+    let mut found = Vec::new();
+    for one_line in the_lines_of_code(the_code) {
+        found.extend(the_names_immediately_after(&one_line));
+    }
+    found.retain(|one| !one.is_empty());
+    found
+}
+
+/// The word after every keyword on a line.
+fn the_names_immediately_after(one_line: &str) -> Vec<String> {
+    let mut found = Vec::new();
+    let mut parts = one_line.split_whitespace().peekable();
+    while let Some(one) = parts.next() {
+        let the_name_after = parts.peek().map(|it| (*it).to_string());
+        if THE_KEYWORDS_A_NAME_CAN_FOLLOW.contains(&one.trim_end_matches('{')) {
+            found.extend(the_name_after);
+        }
+    }
+    found
+        .iter()
+        .map(|one| one.trim_matches(|c: char| !c.is_alphanumeric()).to_string())
+        .collect()
 }
 
 /// Every `.rs` file in this checkout, skipping what a build leaves behind.
@@ -71,11 +136,11 @@ fn no_name_in_this_repository_is_built_out_of_a_refused_word() {
 
 #[test]
 fn a_name_built_out_of_a_refused_word_is_refused_and_named() {
-    let the_code = "struct CurrentStage {\n    one: u8,\n}\n";
+    let the_code = "struct CurrentStatus {\n    one: u8,\n}\n";
 
     assert_eq!(
         what_is_wrong_with("a_file.rs", the_code),
-        vec!["a_file.rs names CurrentStage, which carries a refused word: Status".to_string()],
+        vec!["a_file.rs names CurrentStatus, which carries a refused word: Status".to_string()],
         "a compound carrying Status is carrying the wrong word for this system's Stage, and the refusal names which one"
     );
 }
@@ -123,8 +188,8 @@ fn the_glossary_was_read_and_not_assumed() {
     let the_whole_names_only = the_words_refused_only_as_whole_names(&the_glossary);
 
     assert!(
-        the_refused_anywhere.contains(&"status".to_string()),
-        "the stage table's Not column refuses Status and the guard found it: {the_refused_anywhere:?}"
+        the_refused_anywhere.contains(&"Status".to_string()),
+        "the stage table's Not column refuses Status and the guard found it as the glossary spells it, because a refusal quotes the document: {the_refused_anywhere:?}"
     );
     assert!(
         the_whole_names_only.contains(&"step".to_string()),
@@ -132,57 +197,11 @@ fn the_glossary_was_read_and_not_assumed() {
     );
 }
 
-/// The words every `Not` column refuses, wherever a name carries them.
-fn the_words_refused_anywhere(the_glossary: &str) -> Vec<String> {
-    let mut found = Vec::new();
-    for line in the_glossary.lines() {
-        if !line.trim_start().starts_with("|") {
-            continue;
-        }
-        let cells: Vec<&str> = line.split('|').collect();
-        let Some(the_refused_cell) = cells.iter().rev().find(|one| one.contains('`')) else {
-            continue;
-        };
-        for word in the_refused_cell.split('`').skip(1).step_by(2) {
-            found.push(word.to_lowercase());
-        }
-    }
-    found.sort();
-    found.dedup();
-    found
-}
-
-/// The words the glossary refuses only when a name is that word.
-fn the_words_refused_only_as_whole_names(the_glossary: &str) -> Vec<String> {
-    let mut found = Vec::new();
-    let mut collecting = false;
-    for line in the_glossary.lines() {
-        if line.contains("ordinary English") {
-            collecting = true;
-            continue;
-        }
-        if collecting && line.trim_start().starts_with("```") {
-            break;
-        }
-        if collecting {
-            found.extend(line.split_whitespace().map(str::to_lowercase));
-        }
-    }
-    found
-}
-
-/// The glossary's own text, read once by every function that needs it.
-fn the_glossary_text() -> String {
-    reading_the_checkout::the_text_at(
-        &reading_the_checkout::the_root_of_the_checkout().join("docs/domain-glossary.md"),
-    )
-}
-
 /// Every line of the code that carries code on it.
 fn the_lines_of_code(the_code: &str) -> Vec<String> {
     let mut found = Vec::new();
     for stretch in HowTheFileIsWritten::of(the_code).stretches() {
-        append_the_code_lines_of(&stretch, &mut found);
+        append_the_code_lines_of(stretch, &mut found);
     }
     found
 }

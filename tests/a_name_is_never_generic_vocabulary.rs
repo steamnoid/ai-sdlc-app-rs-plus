@@ -16,6 +16,10 @@
 
 use aisdlc_gates::a_stretch_of_the_file::{AStretchOfTheFile, WhatIsWrittenThere};
 use aisdlc_gates::reading_the_checkout;
+use aisdlc_gates::reading_the_glossary::{
+    it_as_letters, the_glossary_text, the_last_word_of, the_word_under,
+    the_words_the_glossary_refuses,
+};
 use aisdlc_gates::scanning::HowTheFileIsWritten;
 
 /// Every refusal in one file, given its name and its text.
@@ -33,10 +37,10 @@ fn what_is_wrong_with(a_file_name: &str, the_code: &str) -> Vec<String> {
 
 /// The banned word this name ends on, unless the glossary blesses it here.
 fn the_banned_word_one_name_ends_on(one_name: &str) -> Option<String> {
-    let refused = the_words_the_glossary_refuses();
+    let refused = the_words_the_glossary_refuses(&the_glossary_text());
     let word = refused
         .iter()
-        .find(|one| a_name_ends_on(&it_normalised_to_letters(one), one_name))?;
+        .find(|one| a_name_ends_on(&it_as_letters(one), one_name))?;
     if the_glossary_blesses_the_same_word_as_a_whole_name(word, one_name) {
         return None;
     }
@@ -48,16 +52,14 @@ fn the_banned_word_one_name_ends_on(one_name: &str) -> Option<String> {
 
 /// Whether the name is exactly the word the glossary blesses on its own.
 fn the_glossary_blesses_the_same_word_as_a_whole_name(a_word: &str, one_name: &str) -> bool {
-    let the_same_word = it_normalised_to_letters(a_word) == it_normalised_to_letters(one_name);
-    let blessed = the_words_under(BLESSED_AS_A_WHOLE_NAME);
-    blessed.contains(&it_normalised_to_letters(a_word)) && the_same_word
+    let the_same_word = it_as_letters(a_word) == it_as_letters(one_name);
+    the_glossary_blesses(BLESSED_AS_A_WHOLE_NAME, &it_as_letters(a_word)) && the_same_word
 }
 
 /// Whether the name is a compound ending on a word the glossary blesses there.
 fn the_glossary_blesses_it_as_a_compounds_ending(a_word: &str, one_name: &str) -> bool {
-    let the_same_word = it_normalised_to_letters(a_word) == it_normalised_to_letters(one_name);
-    let blessed = the_words_under(BLESSED_AS_A_COMPOUNDS_ENDING);
-    blessed.contains(&it_normalised_to_letters(a_word)) && !the_same_word
+    let the_same_word = it_as_letters(a_word) == it_as_letters(one_name);
+    the_glossary_blesses(BLESSED_AS_A_COMPOUNDS_ENDING, &it_as_letters(a_word)) && !the_same_word
 }
 
 /// Whether a name ends on a word, compared as letters and digits alone.
@@ -67,79 +69,15 @@ fn the_glossary_blesses_it_as_a_compounds_ending(a_word: &str, one_name: &str) -
 /// a function a port in a repository whose ports are named after what they reach.
 fn a_name_ends_on(a_word: &str, one_name: &str) -> bool {
     let the_last_word = the_last_word_of(one_name);
-    it_normalised_to_letters(&the_last_word) == a_word
+    it_as_letters(&the_last_word) == a_word
 }
 
-/// The last word of a name, whatever spelling the name is written in.
-fn the_last_word_of(one_name: &str) -> String {
-    let mut the_words: Vec<String> = Vec::new();
-    let mut one_word = String::new();
-    for one in one_name.chars() {
-        if one == '_' {
-            the_words.push(std::mem::take(&mut one_word));
-            continue;
-        }
-        if one.is_uppercase() && !one_word.is_empty() {
-            the_words.push(std::mem::take(&mut one_word));
-        }
-        one_word.push(one);
-    }
-    the_words.push(one_word);
-    the_words.pop().unwrap_or_default()
-}
-
-/// The words the glossary's list refuses, read out of the block it keeps them in.
-fn the_words_the_glossary_refuses() -> Vec<String> {
-    let the_glossary = reading_the_checkout::the_text_at(
-        &reading_the_checkout::the_root_of_the_checkout().join("docs/domain-glossary.md"),
-    );
-    the_block_the_glossary_keeps_them_in(&the_glossary)
-        .split_whitespace()
-        .filter(|word| !word.starts_with('`') && *word != "<Domain>")
-        .map(str::to_string)
-        .collect()
-}
-
-/// The fenced block that holds the list, found by the one word every list contains.
+/// Whether the glossary writes a word on one of its two exemption lines.
 ///
-/// **The block and not a line prefix.** A reader that took the lines starting with `Manager`
-/// missed a word appended as its own line — which is exactly how a list grows, and a gate
-/// that reads the old shape of a list is a gate that stops reading it.
-fn the_block_the_glossary_keeps_them_in(the_glossary: &str) -> String {
-    let mut collecting = false;
-    let mut the_block = Vec::new();
-    for one_line in the_glossary.lines() {
-        if one_line.contains("Manager") {
-            collecting = true;
-            continue;
-        }
-        if collecting && one_line.trim_start().starts_with("```") {
-            break;
-        }
-        if collecting {
-            the_block.push(one_line);
-        }
-    }
-    the_block.join(" ")
-}
-
-/// The words the glossary writes under one of its two exemption lines.
-fn the_words_under(the_heading: &str) -> Vec<String> {
-    let the_line = the_line_under(the_heading);
-    let the_word = the_line.split('`').nth(1).map(it_normalised_to_letters);
-    the_word.into_iter().filter(|one| !one.is_empty()).collect()
-}
-
-/// The glossary's own line carrying a heading, or nothing.
-fn the_line_under(the_heading: &str) -> String {
-    let the_glossary = reading_the_checkout::the_text_at(
-        &reading_the_checkout::the_root_of_the_checkout().join("docs/domain-glossary.md"),
-    );
-    the_glossary
-        .lines()
-        .find(|one| one.contains(the_heading))
-        .unwrap_or_default()
-        .to_string()
+/// **A single word, not a list.** Each line names exactly one, and a reader that returned a
+/// list made `contains` a question about the list rather than about the word.
+fn the_glossary_blesses(the_heading: &str, a_word: &str) -> bool {
+    the_word_under(&the_glossary_text(), the_heading).as_deref() == Some(a_word)
 }
 
 /// The words the glossary blesses as a whole name and refuses as a compound's ending.
@@ -147,14 +85,6 @@ const BLESSED_AS_A_WHOLE_NAME: &str = "Blessed as a whole name";
 
 /// The words the glossary refuses alone and blesses as a compound's ending.
 const BLESSED_AS_A_COMPOUNDS_ENDING: &str = "Refused alone, blessed as a compound's ending";
-
-/// A name and a word as letters and digits alone, so the two spellings are one name.
-fn it_normalised_to_letters(one: &str) -> String {
-    one.chars()
-        .filter(char::is_ascii_alphanumeric)
-        .collect::<String>()
-        .to_lowercase()
-}
 
 /// The keywords a name can follow, and which is why a name is an introduction.
 const THE_KEYWORDS_A_NAME_CAN_FOLLOW: [&str; 6] = ["struct", "enum", "trait", "type", "fn", "mod"];
