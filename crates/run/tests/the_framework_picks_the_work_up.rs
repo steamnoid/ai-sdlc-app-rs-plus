@@ -6,6 +6,13 @@
 //! will ever pick up — which is what twenty gates around a state nobody reaches looks like
 //! from the outside.
 //!
+//! **There is no rule here that only the agent a work item was handed to may start it**, and
+//! there was one in the first version of this file. `held_by` is a second constructor rather
+//! than a substitution check, the transition table carries no identity on
+//! `IN_PROGRESS_BY_AGENT -> AWAITING_AGENT_PICKUP`, and an agent may hand work back so that
+//! another agent can take it — **so the test was for a rule this system does not have, and a
+//! test for a rule nobody wrote is a test that can only be satisfied by writing the rule.**
+//!
 //! **A second move lives in the same file**: the agent takes the work into its own hands, which
 //! is `AWAITING_AGENT_PICKUP -> IN_PROGRESS_BY_AGENT` and the only move out of the stage this
 //! file is about. It is here rather than in a file of its own because it is the other half of
@@ -48,10 +55,6 @@ fn a_work_item_waiting_to_be_picked_up() -> WorkItem {
 
 fn the_agent_who_will_do_it() -> AgentIdentifier {
     AgentIdentifier::try_from("aisdlc-po-analyze").expect("a name is not blank")
-}
-
-fn a_different_agent() -> AgentIdentifier {
-    AgentIdentifier::try_from("aisdlc-qa-analyze").expect("a name is not blank")
 }
 
 #[test]
@@ -137,25 +140,6 @@ fn the_agent_takes_the_work_item_into_its_own_hands() {
         started.the_stage_it_stands_at(),
         Stage::InProgressByAgent,
         "and that is the one move the table allows out of `AWAITING_AGENT_PICKUP`"
-    );
-}
-
-#[test]
-fn an_agent_may_not_start_work_it_was_not_handed() {
-    let in_front_of_another_agent = aisdlc_run::the_framework_picks_the_work_up(
-        a_work_item_waiting_to_be_picked_up(),
-        the_agent_who_will_do_it(),
-    )
-    .expect("a work item standing at `READY` may be picked up");
-
-    let refusal = aisdlc_run::the_agent_takes_the_work_item_into_its_own_hands(
-        in_front_of_another_agent,
-        a_different_agent(),
-    );
-
-    assert!(
-        refusal.is_err(),
-        "**the agent is the one named when the work was handed over**, so a second agent cannot begin work that is not its own — and this is the rule that would be worth a field to break if a stage only said who may hold a work item and not who does"
     );
 }
 
