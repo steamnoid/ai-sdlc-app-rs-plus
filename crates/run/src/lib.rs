@@ -13,6 +13,8 @@
 //! use case that says `reqwest` instead of `AGitHubWeReadFrom` has moved a decision out of
 //! the type and into a line of code.
 
+pub mod a_path_in_the_project;
+
 use aisdlc_domain::agent_identifier::AgentIdentifier;
 use aisdlc_domain::approval::{AnArtifactVersion, Approval, ApprovalDecision, WhichArtifact};
 use aisdlc_domain::stage::Stage;
