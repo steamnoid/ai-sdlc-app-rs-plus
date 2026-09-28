@@ -8,8 +8,10 @@
 //! repository, writing files, running tests and keeping state are all deterministic and
 //! all live outside this crate, behind a port.
 
+mod repository;
 mod role;
 mod stage;
 
+pub use repository::{AHalfThatIdentifiesNothing, Repository};
 pub use role::{ARoleThatNobodyNamed, EVERY_ROLE, Role};
 pub use stage::{AStageThatNobodyNamed, EVERY_STAGE, Stage};
