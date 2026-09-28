@@ -87,10 +87,10 @@ fn the_address_that_was_refused_is_reported_back_whole() {
 
 #[test]
 fn a_request_is_the_words_and_not_an_address() {
-    let request = CommissionedRequest::try_from((
+    let request = CommissionedRequest::asked_for(
         "add a health endpoint".to_string(),
         "GET /health should return 200 and a body".to_string(),
-    ))
+    )
     .expect("a title and a body say something");
 
     assert_eq!(request.title, "add a health endpoint");
@@ -105,7 +105,7 @@ fn the_words_are_kept_exactly_as_they_were_used() {
         ("tabs\there", "newlines\nthere"),
     ] {
         let request =
-            CommissionedRequest::try_from((title.to_string(), body.to_string())).expect("words");
+            CommissionedRequest::asked_for(title.to_string(), body.to_string()).expect("words");
 
         assert_eq!(request.title, title, "a title is kept as typed: {title:?}");
         assert_eq!(request.body, body, "and a body is kept as typed: {body:?}");
@@ -115,7 +115,7 @@ fn the_words_are_kept_exactly_as_they_were_used() {
 #[test]
 fn a_request_with_only_a_title_is_a_request() {
     let request =
-        CommissionedRequest::try_from(("add a health endpoint".to_string(), String::new()))
+        CommissionedRequest::asked_for("add a health endpoint".to_string(), String::new())
             .expect("a title alone says something was asked for");
 
     assert_eq!(request.title, "add a health endpoint", "the title is kept");
@@ -127,7 +127,7 @@ fn a_request_with_only_a_title_is_a_request() {
 
 #[test]
 fn a_request_with_only_a_body_is_a_request() {
-    let request = CommissionedRequest::try_from((String::new(), "please add /health".to_string()))
+    let request = CommissionedRequest::asked_for(String::new(), "please add /health".to_string())
         .expect("a body alone says something was asked for");
 
     assert!(
@@ -140,7 +140,7 @@ fn a_request_with_only_a_body_is_a_request() {
 #[test]
 fn a_request_with_no_title_and_no_body_says_nothing() {
     for (title, body) in [("", ""), ("   ", ""), ("", "\t"), ("  ", "  ")] {
-        let result = CommissionedRequest::try_from((title.to_string(), body.to_string()));
+        let result = CommissionedRequest::asked_for(title.to_string(), body.to_string());
 
         assert_eq!(
             result,
@@ -163,7 +163,7 @@ fn a_request_that_says_nothing_says_so_where_a_reader_can_see_it() {
 #[test]
 fn the_two_boundaries_refuse_different_things() {
     let a_repository = Repository::try_from("/name");
-    let a_request = CommissionedRequest::try_from(("a title".to_string(), "   ".to_string()));
+    let a_request = CommissionedRequest::asked_for("a title".to_string(), "   ".to_string());
 
     assert_eq!(
         a_repository,

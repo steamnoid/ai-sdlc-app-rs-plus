@@ -18,11 +18,14 @@ pub struct CommissionedRequest {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ARequestThatSaysNothing;
 
-impl TryFrom<(String, String)> for CommissionedRequest {
-    type Error = ARequestThatSaysNothing;
-
-    fn try_from(the_words: (String, String)) -> Result<Self, Self::Error> {
-        let (title, body) = the_words;
+impl CommissionedRequest {
+    /// What somebody asked for, in the words they used, or a refusal when they said nothing.
+    ///
+    /// **A named door and not a tuple**, because `asked_for(body, title)` compiles and is
+    /// wrong: two fields of the same type, in an order nobody has to look at. A caller who
+    /// swaps them gets a request whose title is a paragraph, and nothing anywhere reports
+    /// it. Two names the reader can see beat one type the compiler cannot check.
+    pub fn asked_for(title: String, body: String) -> Result<Self, ARequestThatSaysNothing> {
         let says_nothing = title.trim().is_empty() && body.trim().is_empty();
         if says_nothing {
             return Err(ARequestThatSaysNothing);
