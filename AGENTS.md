@@ -142,6 +142,36 @@ Architecture, and a codebase that names its own layers stops talking about the w
 No macro that generates control flow, no dynamic registration, no `Deref` that runs code.
 A `derive` that generates a `Display` is a dependency, and the domain has none.
 
+## 1.9 A file is at most 300 lines, and 200 is a signal to look
+
+Counted from the first line to the last, with documentation and blank lines not counted. No
+exceptions, because an exception is a hole the next person uses.
+
+**A long file is not wrong because it is long. It is wrong because it has two reasons to
+change, and a reader who opens it cannot tell which half they are in.** The number is a
+symptom, and the question a refusal asks is *name the second reason*, not *you have four
+hundred and twelve lines*. A gate that only counts teaches nothing.
+
+**Where the number comes from, and it is not Uncle Bob.** Robert C. Martin gives no number
+for the length of a file. In *Clean Code* a function is bounded by a page, and a file is
+bounded by having one reason to change. The 500 lines that circulate under his name come
+from Jeff Vincent citing him. His own numeric rule is the "Rule of Five" — about members,
+dependencies and responsibilities rather than lines — and he withdrew it as dogmatic.
+
+The number here is ours, and it comes from two other rules in this file and from the files
+the previous version of this repository actually contained: **432 lines at the median, 838 at
+the ninetieth, and 1394 at the worst.** A ceiling set above the median and below the worst is
+a ceiling that bites on a real failure and leaves an ordinary file alone. The longest of those
+files was a test of the twenty-line rule, three times longer than the rule it was checking.
+
+The derivation is 1.5. A body of twenty lines and a file of three hundred is fifteen bodies,
+which is a list of parts a reader can hold. A file of a thousand is fifty, which is a list of
+parts and a second idea, and the second idea is what a reader cannot find.
+
+**A table of data is a `const`, and a `const` has no body**, so a file is never made longer by
+holding its own fixtures inline. That is the answer to this rule and it is the same answer
+1.5 has for a long body.
+
 ---
 
 # RULE 2 — The code mirrors the domain
@@ -295,6 +325,7 @@ repository had eight of them, all green, all empty.
 | Dependencies point inward | `the_dependencies_point_inward` | with the crates |
 | A crate from outside is welcome or not | `every_third_party_crate_is_on_its_crate_allowlist` | with `aisdlc-outside` |
 | No comments | `the_code_carries_no_comments` | with the scanner |
+| A file is at most 300 lines | `a_file_is_no_longer_than_three_hundred_lines` | with the first files |
 | A body is at most 20 lines | `a_function_body_is_no_longer_than_twenty_lines` | with the scanner |
 | A body nests two deep at most | `a_body_nests_no_deeper_than_two` | with the scanner |
 | No generic vocabulary | `a_name_is_never_generic_vocabulary` | with the first types |
