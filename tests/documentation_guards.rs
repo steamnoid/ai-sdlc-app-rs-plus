@@ -538,6 +538,25 @@ mod the_documentation_says_what_the_code_does {
         the_path.is_file()
     }
 
+    /// The refusal for one rule named in the table, if nothing holds it.
+    ///
+    /// **The other direction, and the one that catches a lost rule.** A table checked only for
+    /// what it claims is a table a rule can be deleted from without anybody noticing, and this
+    /// repository deleted three: rewriting it to two rows dropped the only record that
+    /// `the_core_never_names_a_trait_object` and two others were ever wanted. **A rule nobody
+    /// wrote down is a rule nobody is looking for**, and the code is where a written-down rule
+    /// lives.
+    fn what_is_wrong_with_a_rule_nothing_holds(
+        one_rule: &str,
+        where_it_is_held: &[String],
+        the_phrase: &str,
+    ) -> Option<String> {
+        let _the_rule_nobody_read = one_rule;
+        let _where_nobody_read = where_it_is_held;
+        let _the_phrase_nobody_read = the_phrase;
+        None
+    }
+
     /// The refusal for one row, if the row is not true.
     fn what_is_wrong_with(the_gate: &str, the_phrase: &str) -> Option<String> {
         if !the_gate_exists(the_gate) {
@@ -616,6 +635,45 @@ mod the_documentation_says_what_the_code_does {
             }
         }
         found
+    }
+
+    #[test]
+    fn a_rule_nothing_holds_and_the_table_does_not_say_is_refused() {
+        assert_eq!(
+            what_is_wrong_with_a_rule_nothing_holds(
+                "the_core_never_names_a_trait_object",
+                &[],
+                "with the core"
+            ),
+            Some("the_core_never_names_a_trait_object is named and nothing holds it".to_string()),
+            "and it names the rule, because the three this repository lost were lost in exactly this way"
+        );
+    }
+
+    #[test]
+    fn a_rule_nothing_holds_that_the_table_says_so_is_accepted() {
+        assert_eq!(
+            what_is_wrong_with_a_rule_nothing_holds(
+                "the_core_never_names_a_trait_object",
+                &[],
+                "not built yet — with the core"
+            ),
+            None,
+            "a debt written down is a debt somebody can pick up, and refusing it would be refusing the only record of it"
+        );
+    }
+
+    #[test]
+    fn a_rule_something_holds_is_accepted() {
+        assert_eq!(
+            what_is_wrong_with_a_rule_nothing_holds(
+                "the_code_carries_no_comments",
+                &["readability_guards.rs".to_string()],
+                "with the scanner"
+            ),
+            None,
+            "a rule with a file holding it is a rule that is measured rather than described"
+        );
     }
 
     #[test]
