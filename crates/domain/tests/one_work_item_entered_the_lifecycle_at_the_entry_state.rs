@@ -49,7 +49,7 @@ fn commissioned(requested: Option<CommissionedRequest>) -> aisdlc_domain::work_i
 }
 
 #[test]
-fn a_commissioned_work_item_enters_at_the_entry_state() {
+fn a_commissioned_work_item_stands_at_the_entry_stage() {
     let born = commissioned(None);
 
     assert_eq!(
@@ -121,7 +121,7 @@ fn the_entry_state_needs_no_agent_and_so_commissioning_cannot_be_refused() {
 }
 
 #[test]
-fn no_move_in_the_table_puts_a_work_item_back_into_the_entry_state() {
+fn no_move_puts_work_back_into_the_entry_stage() {
     let reaches_ready: Vec<Stage> = [
         Stage::Idle,
         Stage::AwaitingAgentPickup,
