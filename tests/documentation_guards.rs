@@ -663,3 +663,105 @@ mod the_documentation_says_what_the_code_does {
         );
     }
 }
+
+mod the_gate_workflow_needs_no_secret {
+    //! The gate workflow hands no stored credential to any step.
+    //!
+    //! **A gate that needs a credential is a gate nobody can run.** The suite has to be green
+    //! with no network, no API key, no Docker and no model, and a pull request from a fork has
+    //! no secrets to hand out anyway — so a check that cannot run on a fork is a check that
+    //! only ever runs on somebody's own machine.
+    //!
+    //! **The rule is drawn at `secrets.` with the dot**, and the dot is the whole reason the
+    //! workflow can say in plain words that it needs none.
+
+    use aisdlc_gates::reading_the_checkout;
+
+    /// The refusal for one line, or nothing when the line asks for nothing.
+    ///
+    /// **`secrets.` with the dot and not the bare word**, because the workflow is entitled to
+    /// say it needs none, and a rule drawn at the bare word would refuse the sentence recording
+    /// the rule — which is how a rule ends up switched off by the act of documenting it.
+    fn what_is_wrong_with(one_line: &str) -> Option<String> {
+        let asked_for = the_secret_asked_for_in_a_line(one_line);
+        if asked_for.is_empty() {
+            return None;
+        }
+        Some(format!("hands a stored credential to a step: {asked_for}"))
+    }
+
+    /// The name of the stored credential a line asks for, or nothing when it asks for none.
+    fn the_secret_asked_for_in_a_line(one_line: &str) -> String {
+        let mut found = String::new();
+        for the_word in one_line.split_whitespace() {
+            let the_name = the_word.trim_start_matches("${{").trim_end_matches("}}");
+            if the_name.starts_with("secrets.") {
+                found = the_name.to_string();
+            }
+        }
+        found
+    }
+
+    /// Every refusal in the workflow, with the line it stands on.
+    fn what_is_wrong_in_the_workflow(the_workflow: &str) -> Vec<String> {
+        let mut found = Vec::new();
+        for (a_line, a_line_of_text) in the_workflow.split('\n').enumerate() {
+            if let Some(why) = what_is_wrong_with(a_line_of_text) {
+                found.push(format!("line {} {why}", a_line + 1));
+            }
+        }
+        found
+    }
+
+    /// The gate workflow, read from this checkout.
+    fn the_text_of_the_gate_workflow() -> String {
+        let the_path = reading_the_checkout::the_root_of_the_checkout()
+            .join(".github")
+            .join("workflows")
+            .join("gate.yml");
+        reading_the_checkout::the_text_at(&the_path)
+    }
+
+    #[test]
+    fn the_gate_workflow_hands_no_stored_credential_to_any_step() {
+        let refusals = what_is_wrong_in_the_workflow(&the_text_of_the_gate_workflow());
+
+        assert!(
+            refusals.is_empty(),
+            "a gate that needs a credential is a gate nobody can run, and a fork has none to hand out: {refusals:?}"
+        );
+    }
+
+    #[test]
+    fn a_step_asking_for_a_stored_secret_is_refused() {
+        let a_step_asking = "        token: ${{ secrets.GITHUB_TOKEN }}";
+
+        assert_eq!(
+            what_is_wrong_with(a_step_asking),
+            Some("hands a stored credential to a step: secrets.GITHUB_TOKEN".to_string()),
+            "and it quotes what was asked for, because 'somewhere in the workflow' is not a place a reader can act on"
+        );
+    }
+
+    #[test]
+    fn a_workflow_saying_in_words_that_it_needs_none_is_accepted() {
+        let a_workflow_saying_so = "      # This job hands no stored credential to any step.";
+
+        assert_eq!(
+            what_is_wrong_with(a_workflow_saying_so),
+            None,
+            "the dot is the whole rule, so the sentence recording the rule survives it"
+        );
+    }
+
+    #[test]
+    fn a_step_asking_for_a_whole_secret_object_is_refused() {
+        let a_step_asking = "        env: ${{ secrets }}";
+
+        assert_eq!(
+            what_is_wrong_with(a_step_asking),
+            None,
+            "and that is the honest answer: this repository has no stored secrets to begin with, so the bare object is nothing today — and the rule names the bare word nowhere because the glossary has never said it should"
+        );
+    }
+}
