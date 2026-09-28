@@ -85,7 +85,16 @@ pasted into one field.
 an address.** The words arrive with the work, the work item keeps them, and a stage that
 reads them nine reads later reads what the first one read.
 
-**`WhichArtifact`** — which of the eight artifacts a decision was about.
+**`WhichArtifact`** — which of the eight artifacts a decision was about. **A name and not
+a closed set of eight, and the reason is worth stating because the opposite looks tidier.**
+The eight artifacts are produced by agents that do not exist yet, and naming their
+identifiers is their business. A closed set written before them would bake a list into the
+enum, the gate and this document, and every agent arriving later would have to match a name
+it did not choose. **So the type refuses a blank and nothing else, and the first artifact
+whose name is wrong is found by the router refusing to send a gate there.**
+
+This is the one place in the domain where a `str` was nearly right, and it is still not a
+`str`: a blank is refused at the door, so a decision can never be recorded about nothing.
 
 **`WhichOrganisationReasons`** — who does the reasoning: `openai`, `ollama`,
 `openai_compatible`, `openai_responses`. A closed set of four. Distinct from
