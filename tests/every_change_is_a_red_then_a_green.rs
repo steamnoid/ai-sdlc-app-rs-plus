@@ -357,6 +357,46 @@ fn the_body_names_a_red(body: &str) -> bool {
         .any(|word| word.trim_matches(|one: char| !(one.is_alphanumeric() || one == '_')) == "RED")
 }
 
+/// Whether a commit's body says which gate or test was already failing.
+///
+/// **This is the rule's purpose and the marker was only ever one way of meeting it.** A
+/// repair exists because something was already red, and what the record has to carry is
+/// *which*. Reading one word out of a paragraph grades the writer's choice of vocabulary
+/// rather than the fact being recorded, and it did exactly that to a real commit in this
+/// repository: `fix(ci): the checkout was shallow` says the gate is red in CI and was
+/// refused for not writing the word the marker is.
+///
+/// **A line is a record of a failure when it says a test or a gate and says it is failing.**
+/// Both halves are needed and the second is the one that separates a record from a boast:
+/// a body that names `the_glossary_blesses…` and calls it passing is a different sentence.
+fn the_body_says_what_was_failing(body: &str) -> bool {
+    body.lines()
+        .filter(|line| the_line_names_a_gate_or_a_test(line))
+        .any(the_line_says_it_is_failing)
+}
+
+/// Whether a line names something this repository judges its own work with.
+fn the_line_names_a_gate_or_a_test(line: &str) -> bool {
+    let named = line.contains("_is_") || line.contains("_carries_") || line.contains("_refuses_");
+    named || THE_GATE_STANDS_FOR.contains(line)
+}
+
+/// Whether a line says the thing it names is not holding.
+fn the_line_says_it_is_failing(line: &str) -> bool {
+    const THE_WAYS_OF_SAYING_SOMETHING_FAILED: [&str; 6] = [
+        "failed",
+        "failing",
+        "red",
+        "refused",
+        "panicked",
+        "not green",
+    ];
+    let said_in_lower_case = line.to_lowercase();
+    THE_WAYS_OF_SAYING_SOMETHING_FAILED
+        .iter()
+        .any(|way| said_in_lower_case.contains(way))
+}
+
 /// Whether the commit this one was built on is a RED, which is the only place a change that
 /// was demanded can be recorded on a branch.
 ///
@@ -440,14 +480,18 @@ fn the_change_that_was_never_asked_for(
 /// **The body and not the commit it was built on, and the reason is that a repair has no
 /// RED beside it**: it is a repair of a breakage that was already there, so the commit
 /// before it is whatever the breakage was repaired on top of and says nothing about what
-/// was failing. The body is the only place the evidence can be, which is why a body that
-/// describes a defect without naming the expectation is refused — the description is a
-/// claim about the past and the name of the expectation is the claim that is checkable.
+/// was failing. The body is the only place the evidence can be, and **what the body has to
+/// carry is which expectation was already failing** — the marker word is one way of writing
+/// that and a sentence naming the gate and saying it is failing is another, and the first
+/// version of this gate could tell only the first. It refused a real commit in this
+/// repository for saying "is red in CI" instead of writing the marker's word, which is a
+/// gate grading a writer's vocabulary rather than the fact being recorded.
 fn the_repair_that_names_no_red(commit: &ACommitInTheHistory) -> Option<&'static str> {
-    if the_body_names_a_red(&commit.its_body) {
+    let its_body = &commit.its_body;
+    if the_body_names_a_red(its_body) || the_body_says_what_was_failing(its_body) {
         return None;
     }
-    Some("the RED this repair answers, named in its own body")
+    Some("the expectation this repair answers, named in its own body")
 }
 
 /// What one refusal says: the commit, its subject, and the expectation never demanded.
@@ -1022,7 +1066,7 @@ fn a_repair_whose_body_names_no_red_is_refused() {
         "a repair with no RED in its body is one: {refused:?}"
     );
     assert!(
-        refused[0].contains("the RED this repair answers, named in its own body"),
+        refused[0].contains("the expectation this repair answers, named in its own body"),
         "and the refusal says where the evidence was supposed to be: {refused:?}"
     );
 }
@@ -1294,7 +1338,6 @@ fn every_change_is_a_red_then_a_green() {
     );
 }
 
-
 /// A repair that says what was already failing, in words, and carries no marker.
 ///
 /// **This is the body of a real commit in this repository's history** — `fix(ci): the
@@ -1302,6 +1345,9 @@ fn every_change_is_a_red_then_a_green() {
 /// for one word and the sentence recording the failure says "is red in CI" without writing
 /// the word the marker is. The rule was wrong and the commit was right, and the difference
 /// between those two sentences is the whole of what this gate was measuring.
+/// The gate's own name, written out, so a body that names it by name is read.
+const THE_GATE_STANDS_FOR: &str = "every_change_is_a_red_then_a_green";
+
 const THE_BODY_OF_A_REPAIR_THAT_SAYS_WHAT_WAS_FAILING: &str = "\
 `every_change_is_a_red_then_a_green` is red in CI, and the reason is in the workflow
 rather than in the gate: actions/checkout fetches one commit by default, so the history
