@@ -30,5 +30,6 @@ pub mod the_addresses;
 pub mod where_the_clone_of_a_work_item_lands;
 pub mod which_organisation_reasons;
 pub mod who_commissioned;
+pub mod why_cloning_the_repository_failed;
 pub mod work_item;
 pub mod work_item_id;
