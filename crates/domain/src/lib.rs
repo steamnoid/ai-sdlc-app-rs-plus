@@ -25,6 +25,7 @@ pub mod repository;
 pub mod role;
 pub mod stage;
 pub mod state_machine;
+pub mod the_addresses_of_a_repository;
 pub mod which_organisation_reasons;
 pub mod who_commissioned;
 pub mod work_item;
