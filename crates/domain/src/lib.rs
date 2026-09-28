@@ -10,6 +10,8 @@
 
 mod role;
 mod stage;
+mod work_item_id;
 
 pub use role::{ARoleThatNobodyNamed, EVERY_ROLE, Role};
 pub use stage::{AStageThatNobodyNamed, EVERY_STAGE, Stage};
+pub use work_item_id::{AWorkItemThatNamesNothing, WorkItemId};
