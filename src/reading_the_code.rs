@@ -5,7 +5,7 @@
 //! measures this was built. Every function here takes what it reads as an argument where it
 //! can, so a caller reads a file once and passes the text on.
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use crate::a_stretch_of_the_file::{AStretchOfTheFile, WhatIsWrittenThere};
 use crate::reading_the_checkout;
@@ -88,4 +88,19 @@ pub fn the_text_of_every_source_file() -> Vec<(PathBuf, String)> {
             (a_file, the_text)
         })
         .collect()
+}
+
+/// The `.rs` files under one directory and its subdirectories, in the order a reader meets
+/// them.
+///
+/// **The same walk as `every_source_file`, rooted somewhere else.** The domain is a crate of
+/// its own, and the gate that checks it needs the files under `crates/domain` rather than
+/// under the checkout — and a rule about the gates having one reader is a rule that a reader
+/// asked to start in a second place has to survive, rather than a rule that makes the second
+/// place into a second copy.
+pub fn the_rust_files_under(directory: &Path) -> Vec<PathBuf> {
+    let mut found = Vec::new();
+    collect_rust_files_under(directory, &mut found);
+    found.sort();
+    found
 }
