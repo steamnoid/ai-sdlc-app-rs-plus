@@ -14,7 +14,7 @@
 
 use aisdlc_gates::a_stretch_of_the_file::{AStretchOfTheFile, WhatIsWrittenThere};
 use aisdlc_gates::reading_the_checkout;
-use aisdlc_gates::reading_the_glossary::it_as_letters;
+use aisdlc_gates::reading_the_glossary::the_block_containing;
 use aisdlc_gates::scanning::HowTheFileIsWritten;
 
 /// The macros that say the work is not done, in the code.
@@ -22,9 +22,104 @@ const THE_MACROS_THAT_SAY_IT: [&str; 3] = ["todo!", "unimplemented!", "unreachab
 
 /// Every refusal in one file, given its name and its text.
 fn what_is_wrong_with(a_file_name: &str, the_code: &str) -> Vec<String> {
-    let _the_file_name_nobody_read = a_file_name;
-    let _the_code_nobody_read = the_code;
-    Vec::new()
+    let the_glossary = the_glossary_text();
+    let messages = the_panic_messages_in(the_code);
+    let mut found = Vec::new();
+    for (the_line, one_line) in the_lines_of_code(the_code) {
+        found.extend(the_refusal_of(
+            &one_line,
+            a_file_name,
+            the_line,
+            &the_glossary,
+            &messages,
+        ));
+    }
+    found
+}
+
+/// The refusal for one line, if it leaves something unfinished behind.
+fn the_refusal_of(
+    one_line: &str,
+    a_file_name: &str,
+    the_line: usize,
+    the_glossary: &str,
+    messages: &[(usize, String)],
+) -> Vec<String> {
+    let mut found = the_macros_this_line_says(one_line, a_file_name, the_line);
+    found.extend(the_refused_word_in_a_message(
+        a_file_name,
+        the_line,
+        the_glossary,
+        messages,
+    ));
+    found
+}
+
+/// Every `panic!` message in the code, as `(the line it is on, the message)`.
+///
+/// **Out of the string stretches and not out of the code**, because a walk that tells a string
+/// from the code around it hands the two over separately — and the message *is* the string.
+/// The first version read the code line and found `panic!(` and nothing else, because
+/// `"FIXME this is wrong"` was a stretch of its own that the line never contained.
+fn the_panic_messages_in(the_code: &str) -> Vec<(usize, String)> {
+    let mut found: Vec<(usize, String)> = Vec::new();
+    let mut a_panic_is_open_on: Option<usize> = None;
+    for stretch in HowTheFileIsWritten::of(the_code).stretches() {
+        let the_line = stretch.line_it_starts_on();
+        let is_code = stretch.kind() == WhatIsWrittenThere::Code;
+        if is_code && stretch.text().contains("panic!") {
+            a_panic_is_open_on = Some(the_line);
+            continue;
+        }
+        if a_panic_is_open_on.is_some() && stretch.kind() == WhatIsWrittenThere::AString {
+            found.push((the_line, stretch.text().to_string()));
+        }
+    }
+    found
+}
+
+/// The macros on this line that say the work is not done.
+fn the_macros_this_line_says(one_line: &str, a_file_name: &str, the_line: usize) -> Vec<String> {
+    THE_MACROS_THAT_SAY_IT
+        .iter()
+        .filter(|one_macro| one_line.contains(*one_macro))
+        .map(|one_macro| format!("{a_file_name} line {the_line} is a {one_macro}()"))
+        .collect()
+}
+
+/// The refused word this line's panic message carries, if it carries one.
+///
+/// **Only a message and not any string**, because a string that is not a message is a value
+/// and a value holding the word is an example, a fixture, or text shown to a person.
+fn the_refused_word_in_a_message(
+    a_file_name: &str,
+    the_line: usize,
+    the_glossary: &str,
+    messages: &[(usize, String)],
+) -> Vec<String> {
+    let refused = the_words_the_glossary_refuses(the_glossary);
+    let the_message = messages
+        .iter()
+        .filter(|(on, _)| *on == the_line)
+        .map(|(_, one)| one.to_lowercase())
+        .collect::<Vec<String>>()
+        .join(" ");
+    refused
+        .iter()
+        .filter(|one| the_message.contains(&one.to_lowercase()))
+        .map(|one| {
+            format!(
+                "{a_file_name} line {the_line} is a panic message carrying a refused word: {one}"
+            )
+        })
+        .collect()
+}
+
+/// The glossary's own text, read once by every function that needs it.
+fn the_glossary_text() -> String {
+    reading_the_checkout::the_text_at(
+        &reading_the_checkout::the_root_of_the_checkout().join("docs/domain-glossary.md"),
+    )
 }
 
 /// Every `.rs` file in this checkout, skipping what a build leaves behind.
@@ -57,7 +152,7 @@ fn collect_from(directory: &std::path::Path, found: &mut Vec<std::path::PathBuf>
 }
 
 #[test]
-fn no_placeholder_is_left_in_this_repository() {
+fn no_placeholder_is_left_in_the_code() {
     let mut found = Vec::new();
     for a_file in every_source_file() {
         let name = a_file.display().to_string();
@@ -137,7 +232,7 @@ fn the_words_are_read_out_of_the_glossary_and_not_restated() {
     );
 
     assert!(
-        the_words_the_glossary_refuses(&the_glossary).contains(&"todo".to_string()),
+        the_words_the_glossary_refuses(&the_glossary).contains(&"TODO".to_string()),
         "the block the guard reads is the one the document writes, and a copy of it in the gate would be green the day the document changed"
     );
 }
@@ -148,21 +243,30 @@ fn the_words_are_read_out_of_the_glossary_and_not_restated() {
 /// the day the document gained or lost a word — and this is the second time a rule in this
 /// repository has been unwritten and the third time a gate has found it.
 fn the_words_the_glossary_refuses(the_glossary: &str) -> Vec<String> {
-    aisdlc_gates::reading_the_glossary::the_block_containing(
-        the_glossary,
-        "work has decided not to",
-    )
-    .split_whitespace()
-    .map(|one| one.to_lowercase())
-    .collect()
+    let mut found: Vec<String> =
+        the_block_containing(the_glossary, "rather than the unfinished work")
+            .split_whitespace()
+            .map(str::to_string)
+            .collect();
+    found.sort();
+    found.dedup();
+    found
 }
 
-/// Every line of the code that carries code on it.
+/// Every line of the code that carries code on it, as `(the line, the line)`.
+///
+/// **Joined, because a line can arrive in pieces.** A string in the middle of it ends the
+/// code stretch and starts another on the same line — `panic!("FIXME")` is two code stretches
+/// and one string — and a reader that treated each stretch as a line reported one panic
+/// message twice. **This is the fifth reader in this repository to make that mistake**, and
+/// the joining is now written out in three files because three gates needed it and none of
+/// them knew the others had.
 fn the_lines_of_code(the_code: &str) -> Vec<(usize, String)> {
-    let mut found = Vec::new();
+    let mut found: Vec<(usize, String)> = Vec::new();
     for stretch in HowTheFileIsWritten::of(the_code).stretches() {
-        append_the_lines_of(&stretch, &mut found);
+        append_the_lines_of(stretch, &mut found);
     }
+    found.retain(|(_, one_line)| !one_line.trim().is_empty());
     found
 }
 
@@ -173,10 +277,15 @@ fn append_the_lines_of(a_stretch: &AStretchOfTheFile, found: &mut Vec<(usize, St
         return;
     }
     for (offset, one_line) in a_stretch.text().split('\n').enumerate() {
-        if one_line.trim().is_empty() {
+        let the_line = a_stretch.line_it_starts_on() + offset;
+        let Some(last) = found.last_mut() else {
+            found.push((the_line, one_line.to_string()));
+            continue;
+        };
+        if last.0 == the_line {
+            last.1.push_str(one_line);
             continue;
         }
-        let the_line = a_stretch.line_it_starts_on() + offset;
         found.push((the_line, one_line.to_string()));
     }
 }
