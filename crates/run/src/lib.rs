@@ -14,6 +14,16 @@
 //! the type and into a line of code.
 
 pub mod a_path_in_the_project;
+pub mod the_path_inside_the_project;
+
+/// The workspace this crate is in, which is the project the paths are read against.
+pub fn the_project_this_run_is_in() -> std::path::PathBuf {
+    std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .and_then(|the_workspace| the_workspace.parent())
+        .map(|the_root| the_root.to_path_buf())
+        .expect("a crate is inside a workspace")
+}
 
 use aisdlc_domain::agent_identifier::AgentIdentifier;
 use aisdlc_domain::approval::{AnArtifactVersion, Approval, ApprovalDecision, WhichArtifact};
