@@ -39,3 +39,12 @@ pub fn the_framework_picks_the_work_up(
         Some(the_agent_who_will_do_it),
     )
 }
+
+/// The agent takes the work item into its own hands.
+pub fn the_agent_takes_the_work_item_into_its_own_hands(
+    a_work_item: WorkItem,
+    _the_agent_taking_it: AgentIdentifier,
+) -> Result<WorkItem, StateMachineError> {
+    let _the_stage_it_must_reach = Stage::InProgressByAgent;
+    Ok(a_work_item)
+}

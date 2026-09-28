@@ -6,6 +6,11 @@
 //! will ever pick up — which is what twenty gates around a state nobody reaches looks like
 //! from the outside.
 //!
+//! **A second move lives in the same file**: the agent takes the work into its own hands, which
+//! is `AWAITING_AGENT_PICKUP -> IN_PROGRESS_BY_AGENT` and the only move out of the stage this
+//! file is about. It is here rather than in a file of its own because it is the other half of
+//! the same pickup, and a file per move would put two halves of one thing in two places.
+//!
 //! **The agent is named by the caller and not by the framework, and the stage requires one.**
 //! `AWAITING_AGENT_PICKUP` is one of the two stages an agent must be holding, so the move is
 //! made with the agent the caller says will do the work. This file's first version said
@@ -43,6 +48,10 @@ fn a_work_item_waiting_to_be_picked_up() -> WorkItem {
 
 fn the_agent_who_will_do_it() -> AgentIdentifier {
     AgentIdentifier::try_from("aisdlc-po-analyze").expect("a name is not blank")
+}
+
+fn a_different_agent() -> AgentIdentifier {
+    AgentIdentifier::try_from("aisdlc-qa-analyze").expect("a name is not blank")
 }
 
 #[test]
@@ -107,5 +116,68 @@ fn a_work_item_the_framework_may_not_pick_up_is_refused() {
     assert!(
         refusal.is_err(),
         "and it is refused rather than moved, because a work item already in front of an agent is not on the queue and picking it up again would be the framework pretending to be the queue"
+    );
+}
+
+#[test]
+fn the_agent_takes_the_work_item_into_its_own_hands() {
+    let in_front_of_the_agent = aisdlc_run::the_framework_picks_the_work_up(
+        a_work_item_waiting_to_be_picked_up(),
+        the_agent_who_will_do_it(),
+    )
+    .expect("a work item standing at `READY` may be picked up");
+
+    let started = aisdlc_run::the_agent_takes_the_work_item_into_its_own_hands(
+        in_front_of_the_agent,
+        the_agent_who_will_do_it(),
+    )
+    .expect("an agent may start work it has been handed");
+
+    assert_eq!(
+        started.the_stage_it_stands_at(),
+        Stage::InProgressByAgent,
+        "and that is the one move the table allows out of `AWAITING_AGENT_PICKUP`"
+    );
+}
+
+#[test]
+fn an_agent_may_not_start_work_it_was_not_handed() {
+    let in_front_of_another_agent = aisdlc_run::the_framework_picks_the_work_up(
+        a_work_item_waiting_to_be_picked_up(),
+        the_agent_who_will_do_it(),
+    )
+    .expect("a work item standing at `READY` may be picked up");
+
+    let refusal = aisdlc_run::the_agent_takes_the_work_item_into_its_own_hands(
+        in_front_of_another_agent,
+        a_different_agent(),
+    );
+
+    assert!(
+        refusal.is_err(),
+        "**the agent is the one named when the work was handed over**, so a second agent cannot begin work that is not its own — and this is the rule that would be worth a field to break if a stage only said who may hold a work item and not who does"
+    );
+}
+
+#[test]
+fn work_already_started_may_not_be_started_again() {
+    let started = aisdlc_run::the_agent_takes_the_work_item_into_its_own_hands(
+        aisdlc_run::the_framework_picks_the_work_up(
+            a_work_item_waiting_to_be_picked_up(),
+            the_agent_who_will_do_it(),
+        )
+        .expect("a work item standing at `READY` may be picked up"),
+        the_agent_who_will_do_it(),
+    )
+    .expect("an agent may start work it has been handed");
+
+    let refusal = aisdlc_run::the_agent_takes_the_work_item_into_its_own_hands(
+        started,
+        the_agent_who_will_do_it(),
+    );
+
+    assert!(
+        refusal.is_err(),
+        "and it is refused by the table rather than by a check here, because `IN_PROGRESS_BY_AGENT` is not among the moves out of itself"
     );
 }
