@@ -264,7 +264,7 @@ fn the_walk_reads_the_file_that_documents_it() {
 
 #[test]
 fn the_readers_find_this_checkout_and_read_a_file_in_it() {
-    let the_root = aisdlc_gates::scanning::the_root_of_the_checkout();
+    let the_root = aisdlc_gates::reading_the_checkout::the_root_of_the_checkout();
 
     assert!(
         the_root.join("crates/domain/Cargo.toml").is_file(),
@@ -272,7 +272,7 @@ fn the_readers_find_this_checkout_and_read_a_file_in_it() {
         the_root.display()
     );
     let the_manifest =
-        aisdlc_gates::scanning::the_text_at(&the_root.join("crates/domain/Cargo.toml"));
+        aisdlc_gates::reading_the_checkout::the_text_at(&the_root.join("crates/domain/Cargo.toml"));
     assert!(
         the_manifest.contains("aisdlc-domain"),
         "and the reader read the file it was pointed at rather than answering about a path: {the_manifest}"
@@ -281,9 +281,10 @@ fn the_readers_find_this_checkout_and_read_a_file_in_it() {
 
 #[test]
 fn a_file_that_cannot_be_read_is_a_failure_and_not_an_empty_one() {
-    let a_directory = aisdlc_gates::scanning::the_root_of_the_checkout().join("crates");
+    let a_directory = aisdlc_gates::reading_the_checkout::the_root_of_the_checkout().join("crates");
 
-    let result = std::panic::catch_unwind(|| aisdlc_gates::scanning::the_text_at(&a_directory));
+    let result =
+        std::panic::catch_unwind(|| aisdlc_gates::reading_the_checkout::the_text_at(&a_directory));
 
     assert!(
         result.is_err(),

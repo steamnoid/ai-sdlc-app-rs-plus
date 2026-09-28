@@ -14,7 +14,8 @@
 //! a table it had never opened, which is the exact failure a gate exists to prevent. A
 //! second file with the same reader in it would be that same defect once more.
 
-use aisdlc_gates::scanning::{self, HowTheFileIsWritten, WhatIsWrittenThere};
+use aisdlc_gates::reading_the_checkout;
+use aisdlc_gates::scanning::{HowTheFileIsWritten, WhatIsWrittenThere};
 
 const THE_GLOSSARY: &str = "docs/domain-glossary.md";
 const THE_HEADING_THE_STAGES_ARE_UNDER: &str = "## The stages";
@@ -149,7 +150,9 @@ fn the_section_under(the_document: &str, heading: &str) -> String {
 }
 
 fn the_text_of(wanted: &str) -> String {
-    scanning::the_text_at(&scanning::the_root_of_the_checkout().join(wanted))
+    reading_the_checkout::the_text_at(
+        &reading_the_checkout::the_root_of_the_checkout().join(wanted),
+    )
 }
 
 #[test]
