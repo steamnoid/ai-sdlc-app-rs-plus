@@ -22,3 +22,5 @@
 //! in a test binary is reported dead the moment the test that does not use it is compiled,
 //! and the only ways to stop that are `#[allow(dead_code)]`, which a gate in this repository
 //! refuses, or a copy.
+
+pub mod scanning;

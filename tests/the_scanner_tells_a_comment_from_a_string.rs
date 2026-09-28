@@ -9,7 +9,7 @@
 //! not use it is compiled, and the only ways to stop that are `#[allow(dead_code)]`, which a
 //! gate in this repository refuses, or a copy.
 
-use aisdlc_gates::scanning::{HowTheFileIsWritten, WhatIsWrittenThere};
+use aisdlc_gates::scanning::{AStretchOfTheFile, HowTheFileIsWritten, WhatIsWrittenThere};
 
 /// A source with a scheme in a string and a comment beside it.
 ///
@@ -20,21 +20,6 @@ const A_STRING_HOLDING_SLASHES_NEXT_TO_A_COMMENT: &str = r#"
 let address = "https://github.com/owner/name";
 // and this is a comment
 "#;
-
-/// The kinds a stretch of a `.rs` file can be.
-///
-/// **A closed set of five**, and it is closed because every gate in this repository rests on
-/// the claim that a span of characters in a source file is one of these five things and
-/// nothing else. A sixth would be a change to what a gate may assume, so it is a change here
-/// and nowhere else.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum WhatIsWrittenThere {
-    Code,
-    AComment,
-    AString,
-    ACharacter,
-    TheSpaceBetween,
-}
 
 #[test]
 fn a_slash_slash_inside_a_string_is_not_a_comment() {
@@ -67,12 +52,23 @@ fn a_code_stretch_is_one_line_and_not_one_character() {
         .stretches()
         .iter()
         .filter(|one| one.kind() == WhatIsWrittenThere::Code)
-        .map(|one| one.text())
+        .map(AStretchOfTheFile::text)
         .collect();
     assert_eq!(
         the_lines_of_code,
-        vec!["let one = 1; let two = 2;\n", "let three = 3;\n"],
+        vec!["let one = 1; let two = 2;", "let three = 3;"],
         "a stretch of code is the code of one line, so a place in a file is a line and an offset into it rather than one number"
+    );
+    let the_line_endings: Vec<&str> = read
+        .stretches()
+        .iter()
+        .filter(|one| one.kind() == WhatIsWrittenThere::TheSpaceBetween)
+        .map(AStretchOfTheFile::text)
+        .collect();
+    assert_eq!(
+        the_line_endings,
+        vec!["\n", "\n"],
+        "and a line ending belongs to the space between, because a stretch of code that carried its own ending could not be told from one that did not"
     );
 }
 
@@ -101,7 +97,7 @@ fn a_block_comment_that_nests_is_one_comment() {
         .stretches()
         .iter()
         .find(|one| one.text().contains("after"))
-        .map(|one| one.kind());
+        .map(AStretchOfTheFile::kind);
     assert_eq!(
         what_follows,
         Some(WhatIsWrittenThere::Code),
@@ -175,7 +171,10 @@ fn every_spelling_of_a_string_is_a_string() {
             .any(|one| one.kind() == WhatIsWrittenThere::AString);
         let holds_a_comment = read.is_there_a_comment_anywhere();
         assert!(holds_a_string, "{source:?} holds a string");
-        assert!(!holds_a_comment, "{source:?} holds a string and not a comment");
+        assert!(
+            !holds_a_comment,
+            "{source:?} holds a string and not a comment"
+        );
     }
 }
 
@@ -198,7 +197,7 @@ fn a_string_spanning_two_lines_keeps_the_line_after_it() {
         .stretches()
         .iter()
         .find(|one| one.text().contains("after"))
-        .map(|one| one.line_it_starts_on());
+        .map(AStretchOfTheFile::line_it_starts_on);
     assert_eq!(
         the_line_after,
         Some(3),
@@ -214,7 +213,7 @@ fn a_backslash_escape_is_not_a_line_ending() {
         .stretches()
         .iter()
         .find(|one| one.text().contains("after"))
-        .map(|one| one.line_it_starts_on());
+        .map(AStretchOfTheFile::line_it_starts_on);
     assert_eq!(
         the_line_after,
         Some(2),
@@ -231,4 +230,34 @@ fn a_file_with_nothing_in_it_is_no_stretches_at_all() {
             "{source:?} is white space and holds no comment"
         );
     }
+}
+
+#[test]
+fn the_walk_reads_the_file_that_documents_it() {
+    let the_file_holding_the_walk = concat!(env!("CARGO_MANIFEST_DIR"), "/src/scanning.rs");
+    let source = std::fs::read_to_string(the_file_holding_the_walk)
+        .expect("the file that holds the walk is a file that can be read");
+
+    let read = HowTheFileIsWritten::of(&source);
+    let mut what_was_found = Vec::new();
+    for stretch in read.stretches() {
+        if stretch.kind() != WhatIsWrittenThere::AComment {
+            continue;
+        }
+        what_was_found.push(stretch.text().to_string());
+    }
+
+    let not_documentation: Vec<&String> = what_was_found
+        .iter()
+        .filter(|one| !one.starts_with("///") && !one.starts_with("//!"))
+        .collect();
+    assert!(
+        not_documentation.is_empty(),
+        "the file that documents the walk holds a comment that is not documentation, and a walk that cannot be run against its own author is a walk nobody has checked: {not_documentation:?}"
+    );
+    assert!(
+        what_was_found.len() > 20,
+        "the walk found {} comments in the file that documents it, which is too few to be a file with this much documentation",
+        what_was_found.len()
+    );
 }
