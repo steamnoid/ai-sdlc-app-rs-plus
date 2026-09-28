@@ -6,6 +6,9 @@
 
 use std::fmt;
 
+/// The one slash that stands between an owner and a name.
+const THE_SLASH_BETWEEN_THE_TWO_HALVES: char = '/';
+
 /// A repository, and never a bare string.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Repository {
@@ -22,18 +25,24 @@ pub struct AHalfThatIdentifiesNothing(pub String);
 impl TryFrom<&str> for Repository {
     type Error = AHalfThatIdentifiesNothing;
 
-    fn try_from(_address: &str) -> Result<Self, Self::Error> {
+    fn try_from(address: &str) -> Result<Self, Self::Error> {
+        let halves: Vec<&str> = address.split(THE_SLASH_BETWEEN_THE_TWO_HALVES).collect();
+        if halves.len() != 2 {
+            return Err(AHalfThatIdentifiesNothing(address.to_string()));
+        }
+        if halves[0].trim().is_empty() || halves[1].trim().is_empty() {
+            return Err(AHalfThatIdentifiesNothing(address.to_string()));
+        }
         Ok(Repository {
-            owner: String::new(),
-            name: String::new(),
+            owner: halves[0].to_string(),
+            name: halves[1].to_string(),
         })
     }
 }
 
 impl fmt::Display for Repository {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let _the_two_halves_were_not_asked_about = self;
-        formatter.write_str("")
+        write!(formatter, "{}/{}", self.owner, self.name)
     }
 }
 

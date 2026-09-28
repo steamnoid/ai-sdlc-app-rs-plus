@@ -21,11 +21,13 @@ pub struct ARequestThatSaysNothing;
 impl TryFrom<(String, String)> for CommissionedRequest {
     type Error = ARequestThatSaysNothing;
 
-    fn try_from(_the_words: (String, String)) -> Result<Self, Self::Error> {
-        Ok(CommissionedRequest {
-            title: String::new(),
-            body: String::new(),
-        })
+    fn try_from(the_words: (String, String)) -> Result<Self, Self::Error> {
+        let (title, body) = the_words;
+        let says_nothing = title.trim().is_empty() && body.trim().is_empty();
+        if says_nothing {
+            return Err(ARequestThatSaysNothing);
+        }
+        Ok(CommissionedRequest { title, body })
     }
 }
 
