@@ -170,6 +170,18 @@ documentation guard has to read them. They are also the only ways into a `Stage`
 **`AnArtifactVersion`** — which version of an artifact somebody ruled on. Counts from one;
 there is no zeroth version of anything.
 
+**`AnArtifactVersionBelowOne`** — a version below one, which is not a version. It is a
+separate type and not a message on the version because a caller told "zero is not a version"
+has one question to ask, and a type of its own lets the compiler ask it at the door.
+
+**`AnApprovalThatNamesNothing`** — an approval whose artifact name is blank. A decision can
+never be recorded about nothing, so the blank is refused where the name enters.
+
+**`ADecisionThatNamesNobody`** — a ruling whose decider is blank. Distinct from the approval's
+refusal because the two are different doors: one is about what was ruled on and one is about
+who ruled. **A record naming nobody is not a record that is merely incomplete**, and the
+same refusal for both would have hidden which of the two was missing.
+
 ---
 
 ## Rules that a gate reads rather than a paragraph
