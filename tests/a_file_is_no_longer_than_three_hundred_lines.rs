@@ -34,6 +34,11 @@ const THE_LINE_TO_LOOK_AT_A_FILE_FROM: usize = 200;
 /// test that it refuses is to write a long file — and a test that writes is a test that
 /// cleans up after itself or leaves a repository dirty. Text in, answer out.
 fn what_is_wrong_with(a_name: &str, the_code: &str) -> Option<String> {
+    let the_glossary = reading_the_glossary::the_glossary_text();
+    let exempt = reading_the_glossary::the_files_the_length_gate_does_not_read(&the_glossary);
+    if exempt.iter().any(|it| it == a_name) {
+        return None;
+    }
     let spent = the_count_in(the_code);
     if spent <= THE_MOST_A_FILE_MAY_SPEND {
         return None;

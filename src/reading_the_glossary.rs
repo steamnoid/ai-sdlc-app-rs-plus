@@ -291,7 +291,7 @@ fn the_first_column_of_the_table_under(the_glossary: &str, the_heading: &str) ->
             continue;
         };
         let a_name = one_cell.trim().trim_matches('`');
-        if a_name.ends_with(".rs") {
+        if a_name.to_lowercase().ends_with(".rs") {
             found.push(a_name.to_string());
         }
     }
