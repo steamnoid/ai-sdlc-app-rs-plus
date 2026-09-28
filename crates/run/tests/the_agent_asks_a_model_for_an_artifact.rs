@@ -180,6 +180,76 @@ fn what_a_model_says_comes_back_as_an_answer_and_not_as_an_artifact() {
 }
 
 #[test]
+fn the_question_the_model_is_given_names_a_file_the_project_holds() {
+    let mut the_model = AModelThatAnswers::answering("whatever");
+    let mut the_project = AProjectHoldingOneReadme;
+    let the_work_item = a_work_item_this_agent_is_working_on();
+
+    let the_answer = aisdlc_run::the_agent_asks_a_model_about_the_project(
+        &mut the_model,
+        &mut the_project,
+        &the_work_item,
+        &the_artifact_being_asked_for(),
+        the_organisation_that_answers(),
+    )
+    .expect("a commissioned work item answers a request");
+
+    let the_question = the_answer.the_question_it_was_given();
+    assert!(
+        the_question.contains("README.md"),
+        "**a model asked a question with no repository in it is answering about a repository it has not seen** — and every slice in this repository asked a model about a work item while holding a port that reads the project and never once opening it"
+    );
+}
+
+#[test]
+fn a_project_holding_nothing_is_refused_before_the_model_is_asked() {
+    let mut the_model = AModelThatAnswers::answering("whatever");
+    let mut the_project = AProjectHoldingNothing;
+    let the_work_item = a_work_item_this_agent_is_working_on();
+
+    let refusal = aisdlc_run::the_agent_asks_a_model_about_the_project(
+        &mut the_model,
+        &mut the_project,
+        &the_work_item,
+        &the_artifact_being_asked_for(),
+        the_organisation_that_answers(),
+    );
+
+    assert!(
+        refusal.is_err(),
+        "**a model asked about a repository with nothing in it is answering about nothing** — and the call is spent, so the refusal has to come before it"
+    );
+    assert!(
+        the_model.the_questions_it_was_asked.is_empty(),
+        "and nothing was sent, because a refusal that spends a model call has paid for it"
+    );
+}
+
+/// A project holding one file, and a project holding none.
+struct AProjectHoldingOneReadme;
+struct AProjectHoldingNothing;
+
+impl aisdlc_run::TheProjectOnDisk for AProjectHoldingOneReadme {
+    fn what_is_in_it(&mut self) -> Vec<String> {
+        vec!["README.md".to_string()]
+    }
+
+    fn the_text_of(&mut self, _a_path: &aisdlc_run::ThePathInsideTheProject) -> Option<String> {
+        Some("# a readme".to_string())
+    }
+}
+
+impl aisdlc_run::TheProjectOnDisk for AProjectHoldingNothing {
+    fn what_is_in_it(&mut self) -> Vec<String> {
+        Vec::new()
+    }
+
+    fn the_text_of(&mut self, _a_path: &aisdlc_run::ThePathInsideTheProject) -> Option<String> {
+        None
+    }
+}
+
+#[test]
 fn the_answer_says_which_organisation_answered() {
     let mut the_model = AModelThatAnswers::answering("whatever");
     let the_work_item = a_work_item_this_agent_is_working_on();
