@@ -611,6 +611,43 @@ rather than standing in a source file, and the root one carries five `allow`s on
 domain is right about that and clippy is not. Reading it as a suppression would be the
 same error as reading a `.gitignore` line as a comment.
 
+**`APlaceholder`** — an unfinished thing left in the code: `todo!`, `unimplemented!`,
+`unreachable!`, a panic message saying the work was not done, and the words a person types
+when leaving something unfinished. **Refused, with no exceptions and no allowlist** — an
+allowlist is a list of the holes this repository has decided to live with, and this one has
+decided not to. A placeholder is an unfinished cycle, and an unfinished cycle is already
+visible in the history, so a placeholder gives it a second home in a line of code.
+
+**A refused word in a string is accepted and in a panic message is refused, and that is the
+whole difficulty.** A `panic!` is what a run does when it cannot go on, so a message saying
+the work was not done is that run announcing an unfinished cycle from inside code that looks
+finished — **the one place a placeholder can speak without passing either the comment gate
+or the history.** A string that is not a message is a value, and a value holding the word is
+an example, a fixture, or text shown to a person.
+
+**`ARuntimeReadOfTheEnvironment`** — a test reaching into the process's environment at **run
+time**: `var`, `var_os`, `vars`, `set_var`, `remove_var`, `temp_dir`. Refused, because the
+suite must be green with no network, no API key, no Docker and no model, and a test that
+needs a token means a boundary is wrong.
+
+**`env!` and `option_env!` are not one of these, and the exemption is load-bearing rather
+than theoretical.** They are macros the compiler expands at build time. `CARGO_MANIFEST_DIR`
+is set by cargo, carries no credential, and **seven gates in this repository reach the
+checkout through it** — so a rule drawn at the word `env` would refuse six of them through
+one line in the shared scanner. `std::env::current_dir` *is* a run-time read and is **not**
+refused: it carries no credential, and a list of every read in `std::env` is a list to keep
+in step with a standard library.
+
+**`temp_dir` is refused although it is about no credential at all.** The rule is drawn at the
+**reach** rather than at the danger, because a rule drawn at the danger is a list of dangerous
+things, and that list grows every time somebody remembers a new one.
+
+**`ADeclaredSecret`** — a credential the gate workflow hands to a step, whether a stored one
+referred to by a dot or a value pasted in as a literal. The rule is `secrets.` **with the
+dot**, and that is not a detail: this repository's own workflow contains a sentence explaining
+that the job has no stored credentials, and a rule drawn at the bare word would refuse the
+sentence recording the rule.
+
 **`HowTheFileIsWritten`** — a source file, taken apart into the stretches it is made of,
 each one knowing what it is and where it starts. It is a value rather than a service,
 because six gates ask the same two questions of it and the answer must not be six
