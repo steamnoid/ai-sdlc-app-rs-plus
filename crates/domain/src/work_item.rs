@@ -173,6 +173,15 @@ impl WorkItem {
         self.stage
     }
 
+    /// The name it is tracked by, and the only way anything outside this crate can read it.
+    ///
+    /// **A reader and not a writer**, which is why this is a method and not a public field:
+    /// asking which work item it is is something anything may do, and changing the name is
+    /// something only the state machine does.
+    pub fn the_work_item_id(&self) -> WorkItemId {
+        self.work_item_id.clone()
+    }
+
     /// The agent holding it, or nobody.
     pub fn the_agent_holding_it(&self) -> Option<AgentIdentifier> {
         self.agent.clone()

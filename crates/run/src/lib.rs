@@ -14,10 +14,11 @@
 //! the type and into a line of code.
 
 use aisdlc_domain::agent_identifier::AgentIdentifier;
-use aisdlc_domain::approval::WhichArtifact;
+use aisdlc_domain::approval::{AnArtifactVersion, Approval, ApprovalDecision, WhichArtifact};
 use aisdlc_domain::stage::Stage;
 use aisdlc_domain::state_machine::{StateMachineError, transition};
 use aisdlc_domain::work_item::WorkItem;
+use aisdlc_domain::work_item_id::WorkItemId;
 
 /// Takes a work item off the queue and puts it in front of an agent.
 ///
@@ -150,4 +151,121 @@ impl AnUnanswerableRequest {
             why_not: why_not.to_string(),
         }
     }
+}
+
+/// An agent presents what it produced, putting the work item at the gate.
+///
+/// **The move is the one the table allows, and the artifact is not part of it.** A work item is
+/// approved or refused at a gate, and which artifact is on the table is in the question — so
+/// carrying the artifact here would be a second record of it, and a second record is a second
+/// thing to keep in step with the first.
+pub fn the_agent_presents_what_it_produced(
+    a_work_item: WorkItem,
+    _the_agent_presenting: AgentIdentifier,
+    _which_artifact: &WhichArtifact,
+) -> Result<WorkItem, StateMachineError> {
+    transition(a_work_item, Stage::AwaitingHumanApproval, None)
+}
+
+/// The exact artifact and its version, put to somebody for a ruling.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ApprovalQuestion {
+    about_which_work_item: WorkItemId,
+    about_which_artifact: WhichArtifact,
+    about_which_version: AnArtifactVersion,
+}
+
+impl ApprovalQuestion {
+    /// Which work item this is about, read from the work item and never supplied.
+    pub fn about_which_work_item(&self) -> WorkItemId {
+        self.about_which_work_item.clone()
+    }
+
+    /// Which artifact, exactly.
+    pub fn about_which_artifact(&self) -> WhichArtifact {
+        self.about_which_artifact.clone()
+    }
+
+    /// Which version, exactly.
+    pub fn about_which_version(&self) -> AnArtifactVersion {
+        self.about_which_version
+    }
+}
+
+/// Somebody who rules on an exact artifact at an exact version.
+pub trait APersonToDecide {
+    /// The ruling this person gives about one question.
+    fn how_they_rule_on(&mut self, a_question: &ApprovalQuestion) -> ApprovalDecision;
+}
+
+/// A work item that is not standing at the gate.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct NotStandingAtTheGate {
+    the_stage_it_stands_at: Stage,
+}
+
+impl NotStandingAtTheGate {
+    /// Why this work item cannot be put to somebody, naming the stage it is standing at.
+    ///
+    /// **The stage's own `Display` and not a second list of names here.** A first version
+    /// wanted `Stage::as_str`, and adding it wrote the six stage names a second time in the one
+    /// file `the_specification_and_the_code_have_not_drifted_apart` reads them from — which that
+    /// gate caught. **`Stage` already knew its own name.**
+    pub fn why_it_could_not_be_asked(&self) -> String {
+        format!(
+            "a work item at {} is not standing at AWAITING_HUMAN_APPROVAL, and a finished one has nothing left to approve",
+            self.the_stage_it_stands_at
+        )
+    }
+
+    /// This refusal, for a work item standing somewhere else.
+    pub fn because(the_stage_it_stands_at: Stage) -> Self {
+        Self {
+            the_stage_it_stands_at,
+        }
+    }
+}
+
+/// The question put to somebody standing at the gate.
+pub fn the_question_put_to_somebody(
+    the_work_item: &WorkItem,
+    which_artifact: &WhichArtifact,
+    the_version: AnArtifactVersion,
+) -> Result<ApprovalQuestion, NotStandingAtTheGate> {
+    if the_work_item.the_stage_it_stands_at() != Stage::AwaitingHumanApproval {
+        return Err(NotStandingAtTheGate::because(
+            the_work_item.the_stage_it_stands_at(),
+        ));
+    }
+    Ok(ApprovalQuestion {
+        about_which_work_item: the_work_item.the_work_item_id(),
+        about_which_artifact: which_artifact.clone(),
+        about_which_version: the_version,
+    })
+}
+
+/// The gate records what the human decided.
+pub fn the_gate_records_what_the_human_decided(
+    the_person: &mut impl APersonToDecide,
+    a_question: &ApprovalQuestion,
+) -> Result<Approval, NotStandingAtTheGate> {
+    let a_ruling = the_person.how_they_rule_on(a_question);
+    Approval::what_the_ruling_left_behind(&a_ruling)
+        .ok_or(NotStandingAtTheGate::because(Stage::AwaitingHumanApproval))
+}
+
+/// The gate records what the human decided, refusing a work item not standing at it.
+pub fn the_gate_records_what_the_human_decided_at(
+    the_person: &mut impl APersonToDecide,
+    the_work_item: &WorkItem,
+    a_question: &ApprovalQuestion,
+) -> Result<Approval, NotStandingAtTheGate> {
+    if the_work_item.the_stage_it_stands_at() != Stage::AwaitingHumanApproval {
+        return Err(NotStandingAtTheGate::because(
+            the_work_item.the_stage_it_stands_at(),
+        ));
+    }
+    let a_ruling = the_person.how_they_rule_on(a_question);
+    Approval::what_the_ruling_left_behind(&a_ruling)
+        .ok_or(NotStandingAtTheGate::because(Stage::AwaitingHumanApproval))
 }
