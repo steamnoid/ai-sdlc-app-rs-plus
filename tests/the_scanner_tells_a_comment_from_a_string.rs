@@ -291,3 +291,71 @@ fn a_file_that_cannot_be_read_is_a_failure_and_not_an_empty_one() {
         "a directory is not a file, and a reader that answers about it has reported nothing at all"
     );
 }
+
+/// The two kinds of thing a person writes for a person to read, told apart.
+///
+/// **This repository allows `///` and `//!` and refuses `//`.** They are the same three
+/// characters at the start, and a walk that reported one thing for all of them could not
+/// judge a file against that rule — it would have to re-read the text to find out, which is
+/// the boundary it exists to hold.
+#[test]
+fn a_stretch_says_whether_it_documents_or_merely_comments() {
+    let the_code = "//! about the crate\\n// a thought\\n/// about the thing\\n/* a block */\\n";
+
+    let found: Vec<(usize, bool)> = HowTheFileIsWritten::of(the_code)
+        .stretches()
+        .iter()
+        .filter(|it| it.kind() == WhatIsWrittenThere::AComment)
+        .map(|it| (it.line_it_starts_on(), it.it_documents_something()))
+        .collect();
+
+    assert_eq!(
+        found,
+        vec![(1, true), (2, false), (3, true), (4, false)],
+        "documentation is a comment that says why, and a comment that says nothing about the code is the one this repository refuses"
+    );
+}
+
+#[test]
+fn a_stretch_that_is_not_a_comment_documents_nothing() {
+    let the_code = "let the_answer = 42;";
+
+    for stretch in HowTheFileIsWritten::of(the_code).stretches() {
+        assert!(
+            !stretch.it_documents_something(),
+            "a stretch of code is not documentation: {:?}",
+            stretch.text()
+        );
+    }
+}
+
+#[test]
+fn a_comment_closing_on_a_later_line_still_documents() {
+    let the_code = "//! one\\n//! two\\n//! three\\n";
+
+    let every_one_documents: Vec<bool> = HowTheFileIsWritten::of(the_code)
+        .stretches()
+        .iter()
+        .filter(|it| it.kind() == WhatIsWrittenThere::AComment)
+        .map(|it| it.it_documents_something())
+        .collect();
+
+    assert_eq!(
+        every_one_documents,
+        vec![true],
+        "the walk reads a run of `//!` as one comment, and one comment about the crate is documentation"
+    );
+}
+
+#[test]
+fn a_slash_inside_a_string_is_not_a_comment_and_documents_nothing() {
+    let the_code = "let the_path = \"src/lib.rs // not a comment\";";
+
+    for stretch in HowTheFileIsWritten::of(the_code).stretches() {
+        let is_a_comment = stretch.kind() == WhatIsWrittenThere::AComment;
+        assert!(
+            !(is_a_comment && stretch.it_documents_something()),
+            "a path inside a string is a string, and this repository does not refuse strings"
+        );
+    }
+}

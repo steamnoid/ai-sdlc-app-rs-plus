@@ -70,6 +70,15 @@ impl AStretchOfTheFile {
     pub fn line_it_starts_on(&self) -> usize {
         self.line_it_starts_on
     }
+
+    /// Whether this stretch is documentation — `///` or `//!` — rather than a comment.
+    ///
+    /// **False for anything that is not a comment at all**, so a caller can ask every
+    /// stretch and only the comments can answer yes.
+    pub fn it_documents_something(&self) -> bool {
+        let _the_stretch_was_not_read = self;
+        false
+    }
 }
 
 /// A source file, taken apart into the stretches it is made of, in the order it has them.
