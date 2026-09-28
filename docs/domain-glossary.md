@@ -839,7 +839,14 @@ Data      Info      Payload     Params   Result Item     Entity   Dto
 Cfg       Meta      Misc        Temp     Temp0   Foo     Bar      Whatever
 Adapter   Port      UseCase     Builder  Factory Runner   Executor Engine
 Service   Context   State       Status
+Repository
 ```
+
+**Words refused only when something precedes them:** `Repository`. A name that is exactly
+`Repository` is this system's public GitHub repository, which the glossary blesses; a name
+that *ends* on it is a persistence abstraction wearing a domain word, and the guard judges
+the last word to tell those two apart. **This line is what the guard reads**, so that a word
+added to the list above needs no change in code.
 
 **`Adapter`, `Port` and `UseCase` are on the list on purpose.** This repository is Clean
 Architecture, and those three are its own words for the things this glossary names
