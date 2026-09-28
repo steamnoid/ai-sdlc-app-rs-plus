@@ -328,6 +328,50 @@ mod the_glossary_blesses_every_type_the_domain_defines {
         );
     }
 
+    /// Every crate of the workspace, read as a reader would meet them.
+    fn every_crate_in_the_workspace() -> Vec<std::path::PathBuf> {
+        aisdlc_gates::reading_the_checkout::the_crates_under(
+            &reading_the_checkout::the_root_of_the_checkout().join("crates"),
+        )
+    }
+
+    /// Every refusal in one crate, or nothing if that crate holds no unblessed type.
+    fn what_is_wrong_with_a_whole_crate(a_crate: &std::path::Path) -> Vec<String> {
+        let mut found = Vec::new();
+        for a_file in aisdlc_gates::reading_the_code::the_rust_files_under(&a_crate.join("src")) {
+            found.extend(what_is_wrong_with(
+                &a_file.display().to_string(),
+                &reading_the_checkout::the_text_at(&a_file),
+            ));
+        }
+        found
+    }
+
+    /// Every crate of the workspace, and the gate's job is not done while one of them is unguarded.
+    ///
+    /// **The first assertion is what stops the second from passing for free.** A gate that read
+    /// no crate at all would report nothing unblessed and look perfect; so the first says how
+    /// many crates there are to read, and a crate nobody reads is a crate whose names nobody
+    /// chose — a crate added tomorrow is born unguarded.
+    #[test]
+    fn the_glossary_guards_every_crate_and_not_only_the_domain() {
+        let every_crate = every_crate_in_the_workspace();
+        let names_nobody_chose: Vec<String> = every_crate
+            .iter()
+            .flat_map(|a_crate| what_is_wrong_with_a_whole_crate(a_crate))
+            .collect();
+
+        assert!(
+            !every_crate.is_empty(),
+            "**because a gate that reads nothing passes everything** — and there are crates to read"
+        );
+        assert!(
+            names_nobody_chose.is_empty(),
+            "a type the glossary never heard of is a name nobody chose, in any of the {} crates: {names_nobody_chose:?}",
+            every_crate.len()
+        );
+    }
+
     #[test]
     fn a_type_the_glossary_blesses_is_accepted() {
         let the_code = "pub struct WorkItem {\n    one: u8,\n}\npub enum Stage {\n    Idle,\n}\n";
