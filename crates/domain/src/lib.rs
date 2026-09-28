@@ -23,6 +23,7 @@ pub mod commissioned_request;
 pub mod repository;
 pub mod role;
 pub mod stage;
+pub mod state_machine;
 pub mod who_commissioned;
 pub mod work_item;
 pub mod work_item_id;

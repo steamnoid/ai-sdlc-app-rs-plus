@@ -1,0 +1,93 @@
+//! Which moves are legal, and the one door a stage may be moved through.
+//!
+//! **The table is an exhaustive `match` and not a lookup**, so a seventh stage does not
+//! compile until the table has been completed. A table a stage could be missing from is a
+//! table that says a work item standing there has nowhere to go, silently.
+
+use std::fmt;
+
+use crate::agent_identifier::AgentIdentifier;
+use crate::stage::Stage;
+use crate::work_item::WorkItem;
+
+/// The stage machine refused, and why.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct StateMachineError {
+    /// The move that was asked for, in the words the specification uses.
+    pub why: String,
+}
+
+impl fmt::Display for StateMachineError {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter.write_str(&self.why)
+    }
+}
+
+impl std::error::Error for StateMachineError {}
+
+/// Every stage a work item standing at `from` may be moved to.
+///
+/// **Exhaustive on purpose.** A seventh stage has to be given its row here before anything
+/// in this crate compiles, which is the whole point: a stage nobody has thought about
+/// cannot quietly end up with nowhere to go.
+pub fn legal_transitions_from(from: Stage) -> &'static [Stage] {
+    match from {
+        Stage::Idle => &[Stage::AwaitingAgentPickup],
+        Stage::AwaitingAgentPickup => &[Stage::InProgressByAgent],
+        Stage::InProgressByAgent => &[Stage::AwaitingHumanApproval, Stage::AwaitingAgentPickup],
+        Stage::AwaitingHumanApproval => &[Stage::AwaitingAgentPickup, Stage::Done],
+        Stage::Ready => &[Stage::AwaitingAgentPickup],
+        Stage::Done => &[],
+    }
+}
+
+/// The one place a work item's stage is written, and the only one.
+fn moved_to(a_work_item: WorkItem, to: Stage, the_agent: Option<AgentIdentifier>) -> WorkItem {
+    let mut moved = a_work_item;
+    moved.stage = to;
+    moved.agent = the_agent;
+    moved
+}
+
+/// Move a work item to a legal next stage, and hand back the moved work item.
+///
+/// **The destination and the agent are two facts, checked against one rule.** The table
+/// says where it may go; the biconditional says who may hold it there; and neither is
+/// enough alone — which is why the caller states both and the machine refuses if they
+/// disagree.
+pub fn transition(
+    a_work_item: WorkItem,
+    to: Stage,
+    the_agent: Option<AgentIdentifier>,
+) -> Result<WorkItem, StateMachineError> {
+    if !legal_transitions_from(a_work_item.stage).contains(&to) {
+        return Err(StateMachineError {
+            why: format!("{} may not be moved to {to}", a_work_item.stage),
+        });
+    }
+    if the_agent.is_some() != to.an_agent_must_be_holding_it() {
+        return Err(StateMachineError {
+            why: format!("{to} does not take the agent it was given"),
+        });
+    }
+    Ok(moved_to(a_work_item, to, the_agent))
+}
+
+/// Assert that a work item satisfies the invariants of its own state.
+pub fn validate_state(a_work_item: &WorkItem) -> Result<(), StateMachineError> {
+    let one_is_holding = a_work_item.agent.is_some();
+    if one_is_holding != a_work_item.stage.an_agent_must_be_holding_it() {
+        return Err(StateMachineError {
+            why: format!(
+                "{} says the agent is {}",
+                a_work_item.stage,
+                if a_work_item.stage.an_agent_must_be_holding_it() {
+                    "absent"
+                } else {
+                    "present"
+                }
+            ),
+        });
+    }
+    Ok(())
+}
