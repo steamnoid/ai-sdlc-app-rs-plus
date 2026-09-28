@@ -26,7 +26,7 @@ fn there_are_exactly_five_roles() {
 
 #[test]
 fn every_role_is_named_once() {
-    let mut seen: Vec<String> = EVERY_ROLE.iter().map(|one| one.to_string()).collect();
+    let mut seen: Vec<String> = EVERY_ROLE.iter().map(ToString::to_string).collect();
     seen.sort();
     let before = seen.len();
     seen.dedup();
@@ -108,7 +108,7 @@ fn a_role_is_written_in_capitals_and_is_the_variant_a_reader_expects() {
 
 #[test]
 fn there_is_no_role_that_is_not_a_discipline() {
-    let the_names: Vec<String> = EVERY_ROLE.iter().map(|one| one.to_string()).collect();
+    let the_names: Vec<String> = EVERY_ROLE.iter().map(ToString::to_string).collect();
 
     assert!(
         !the_names.contains(&"AI".to_string()),

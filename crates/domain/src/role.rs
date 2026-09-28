@@ -46,8 +46,14 @@ pub struct ARoleThatNobodyNamed(pub String);
 impl fmt::Display for Role {
     /// Write the discipline the way the specification writes it, in capitals.
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let _the_role_was_not_asked_about = self;
-        formatter.write_str("PO")
+        let the_name = match self {
+            Role::Product => "PO",
+            Role::Development => "DEV",
+            Role::Quality => "QA",
+            Role::Security => "SEC",
+            Role::Architecture => "ARCH",
+        };
+        formatter.write_str(the_name)
     }
 }
 
@@ -56,8 +62,12 @@ impl TryFrom<&str> for Role {
 
     /// Read a discipline the way the specification writes it, in capitals.
     fn try_from(name: &str) -> Result<Self, Self::Error> {
-        let _the_name_nobody_read = name;
-        Ok(Role::Product)
+        for role in EVERY_ROLE {
+            if role.to_string() == name {
+                return Ok(role);
+            }
+        }
+        Err(ARoleThatNobodyNamed(name.to_string()))
     }
 }
 
