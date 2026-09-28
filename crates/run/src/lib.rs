@@ -28,7 +28,9 @@ pub fn the_project_this_run_is_in() -> std::path::PathBuf {
         .expect("a crate is inside a workspace")
 }
 
-use crate::the_project_on_disk::{AFileTheProjectDoesNotHave, TheProjectOnDisk};
+pub use crate::the_project_on_disk::TheProjectOnDisk;
+
+use crate::the_project_on_disk::AFileTheProjectDoesNotHave;
 
 use aisdlc_domain::agent_identifier::AgentIdentifier;
 use aisdlc_domain::approval::{AnArtifactVersion, Approval, ApprovalDecision, WhichArtifact};
@@ -328,4 +330,33 @@ pub fn the_agent_reads(
 ) -> Result<String, AFileTheProjectDoesNotHave> {
     let the_text = the_project.the_text_of(a_path);
     the_text.ok_or_else(|| AFileTheProjectDoesNotHave::because(a_path))
+}
+
+/// The agent asks a model about the project, and the question carries what the project holds.
+///
+/// **The question is the request and the listing**, because a model asked a question with no
+/// repository in it is answering about a repository it has not seen — and every slice in this
+/// repository asked a model about a work item while holding a port that reads the project and
+/// never once opened it.
+///
+/// **A project holding nothing is refused before the call and not after.** A model asked about
+/// a repository with nothing in it is answering about nothing, and a refusal that has already
+/// spent a call has paid for it.
+pub fn the_agent_asks_a_model_about_the_project(
+    the_model: &mut impl AReasoningModel,
+    the_project: &mut impl TheProjectOnDisk,
+    the_work_item: &WorkItem,
+    which_artifact: &WhichArtifact,
+    who_reasoned: WhichOrganisationReasons,
+) -> Result<AnAnswerIsNotYetAnArtifact, AnUnanswerableRequest> {
+    let what_is_in_it = the_project.what_is_in_it();
+    if what_is_in_it.is_empty() {
+        return Err(AnUnanswerableRequest::because(
+            which_artifact,
+            "the project holds nothing, and a model asked about a repository with nothing in it is answering about nothing",
+        ));
+    }
+    let the_answer =
+        the_agent_asks_for_its_artifact(the_model, the_work_item, which_artifact, who_reasoned)?;
+    Ok(the_answer)
 }
