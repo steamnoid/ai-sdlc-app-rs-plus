@@ -929,6 +929,47 @@ now, so the third one has to learn the word.
 
 ---
 
+## The rules and what holds each
+
+**One row per rule, and the middle column names the file whose `mod` holds it.** A rule with
+no row is a rule nobody is looking for, and this repository lost three of them by rewriting a
+table: the rules were named in it and nowhere else, and the row went when the table did.
+
+**A rule that is unbuilt says so, and a rule that is unbuilt and does not say so is refused.**
+A debt written down is a debt somebody can pick up; refusing the row would be refusing the only
+record of it. The two compiler rows are not tests — they are `#![forbid(unsafe_code)]` and
+`#![deny(missing_docs)]`, and the compiler is what holds them.
+
+| Rule | Held in | Built |
+|---|---|---|
+| No `unsafe` | `#![forbid(unsafe_code)]` — the compiler | with the crates |
+| Every public item documented | `#![deny(missing_docs)]` — the compiler | with the crates |
+| `the_scanner_tells_a_comment_from_a_string` | `readability_guards.rs` | with the scanner |
+| `a_file_is_no_longer_than_three_hundred_lines` | `readability_guards.rs` | with the first files |
+| `a_function_body_is_no_longer_than_twenty_lines` | `readability_guards.rs` | with the scanner |
+| `a_body_nests_no_deeper_than_two` | `readability_guards.rs` | with the scanner |
+| `the_code_carries_no_comments` | `readability_guards.rs` | with the scanner |
+| `no_allow_silences_a_lint` | `readability_guards.rs` | with the first `.rs` |
+| `no_placeholder_is_left_in_the_code` | `readability_guards.rs` | with the first `.rs` |
+| `a_name_is_never_generic_vocabulary` | `readability_guards.rs` | with the first types |
+| `a_synonym_is_never_used` | `readability_guards.rs` | with the first types |
+| `the_domain_depends_on_nothing` | `readability_guards.rs` | with the crates |
+| `a_name_the_gates_share_has_one_implementation` | `readability_guards.rs` | with the gates |
+| `no_test_reads_an_environment_variable` | `readability_guards.rs` | with the tests |
+| `the_specification_and_the_code_have_not_drifted_apart` | `documentation_guards.rs` | with the transition table |
+| `the_glossary_blesses_every_type_the_domain_defines` | `documentation_guards.rs` | with the first types |
+| `the_documentation_says_what_the_code_does` | `documentation_guards.rs` | with the first gate |
+| `the_gate_workflow_needs_no_secret` | `documentation_guards.rs` | with the workflow |
+| `the_stage_is_a_closed_set_of_six` | — | not built yet — with the domain |
+| `the_role_is_a_closed_set_of_five` | — | not built yet — with the domain |
+| `the_dependencies_point_inward` | — | not built yet — with the crates |
+| `every_third_party_crate_is_on_its_crate_allowlist` | — | not built yet — with `aisdlc-outside` |
+| `the_core_never_names_a_trait_object` | — | not built yet — with the domain |
+| `an_ignored_test_says_why_it_is_ignored` | — | not built yet — with the tests |
+| `every_change_is_a_red_then_a_green` | — | not built yet — with the history |
+
+---
+
 ## Naming rules at a glance
 
 1. **Spell it out.** No abbreviations: `work_item`, not `wi`.
