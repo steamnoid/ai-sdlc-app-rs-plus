@@ -107,7 +107,7 @@ fn no_file_in_this_repository_is_longer_than_it_may_be() {
 
 #[test]
 fn a_file_close_to_the_ceiling_is_named_and_not_refused() {
-    let close = (0..THE_LINE_TO_LOOK_AT_A_FILE_FROM + 1)
+    let close = (0..=THE_LINE_TO_LOOK_AT_A_FILE_FROM)
         .map(|one| format!("let the_{one} = {one};"))
         .collect::<Vec<String>>()
         .join("\n");
