@@ -12,8 +12,6 @@
 use aisdlc_domain::stage::{AStageThatNobodyNamed, EVERY_STAGE, Stage};
 
 #[test]
-#[test]
-#[test]
 fn there_are_exactly_six_stages() {
     assert_eq!(
         EVERY_STAGE.len(),
