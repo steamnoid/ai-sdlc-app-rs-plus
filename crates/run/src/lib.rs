@@ -12,3 +12,17 @@
 //! Nothing here may name an organisation, a filesystem or a runtime. Those are ports, and a
 //! use case that says `reqwest` instead of `AGitHubWeReadFrom` has moved a decision out of
 //! the type and into a line of code.
+
+use aisdlc_domain::agent_identifier::AgentIdentifier;
+use aisdlc_domain::stage::Stage;
+use aisdlc_domain::state_machine::{StateMachineError, transition};
+use aisdlc_domain::work_item::WorkItem;
+
+/// Takes a work item off the queue and puts it in front of an agent.
+pub fn the_framework_picks_the_work_up(
+    a_work_item: WorkItem,
+    _the_agent_who_will_do_it: AgentIdentifier,
+) -> Result<WorkItem, StateMachineError> {
+    let _the_stage_it_must_reach = Stage::AwaitingAgentPickup;
+    Ok(a_work_item)
+}
