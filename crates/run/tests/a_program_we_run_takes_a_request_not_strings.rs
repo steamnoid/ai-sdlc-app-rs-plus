@@ -69,9 +69,8 @@ fn there_is_no_shallow_clone_to_ask_for() {
 
     let the_request = WhatWeTellAProgramToDo::clone_the_repository(the_clone);
 
-    assert_eq!(
+    assert!(
         the_request.is_the_whole_history(),
-        true,
         "**the whole history and not a depth, because the type has no field for a depth** — the cheapest clone is a false economy paid at the first review, and a request that cannot express a shallow clone cannot be built into one by a later change"
     );
 }

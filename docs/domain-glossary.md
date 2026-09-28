@@ -337,6 +337,22 @@ with the developer's credentials and filesystem in reach. So the boundary goes a
 veto. The word is a security fact, not a slur, and it is in the glossary because the
 system has the fact and until now had no word for it.
 
+**`ARepositoryToClone`** — which repository, for which work item, and the directory derived
+from the two. **The directory is a field and not an argument**, because a derived place is
+recorded once and then depended upon; a caller that passed it could pass a different one twice
+and two runs of one work item would stop finding each other.
+
+**`WhatWeTellAProgramToDo`** — what a program is asked to do, named after what the caller wants
+and not as a command line. **A formatted line is where a value read out of a model becomes part
+of a command**, so there is nothing here to format. **The whole history and not a depth**: the
+request has no depth field, so there is nothing to pass one and nothing for a later change to
+have forgotten.
+
+**`WhichProgramWeRun`** and **`WhatTheProgramSaid`** — which of our own programs, and what it
+wrote and whether it worked. **`did_it_work` and not whether it looked happy**: a program that
+wrote a warning and returned zero did work, and a caller reading a return code as an outcome
+learns about the wrong thing.
+
 **`AProgramWeRun`** — a program we run ourselves, on the host, with our own arguments and
 our own inputs. Its `working_directory` is a convenience, not a promise that anything may
 be run there.

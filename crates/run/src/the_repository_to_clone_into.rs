@@ -25,13 +25,10 @@ impl ARepositoryToClone {
         for_which_work_item: WorkItemId,
         where_it_lands: PathBuf,
     ) -> Self {
-        let _which_repository = which_repository;
-        let _for_which_work_item = for_which_work_item;
-        let _where_it_lands = where_it_lands;
         ARepositoryToClone {
-            which_repository: Repository::try_from("nothing").expect("never reached"),
-            for_which_work_item: WorkItemId::try_from("nothing").expect("never reached"),
-            where_it_lands: PathBuf::new(),
+            which_repository,
+            for_which_work_item,
+            where_it_lands,
         }
     }
 

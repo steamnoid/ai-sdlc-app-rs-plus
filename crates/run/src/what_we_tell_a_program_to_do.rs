@@ -29,11 +29,11 @@ impl WhatWeTellAProgramToDo {
         WhatWeTellAProgramToDo::CloneTheRepository { the_clone_of }
     }
 
-    /// The address to fetch from, as a field and not as a formatted line.
-    pub fn fetch_from(&self) -> &str {
+    /// The address to fetch from, derived from the repository and not a formatted line.
+    pub fn fetch_from(&self) -> String {
         match self {
             WhatWeTellAProgramToDo::CloneTheRepository { the_clone_of } => {
-                "https://github.com/steamnoid/nothing.git"
+                the_clone_of.fetch_from()
             }
         }
     }
@@ -49,7 +49,6 @@ impl WhatWeTellAProgramToDo {
 
     /// The whole history, always, because the type has nowhere else to put a depth.
     pub fn is_the_whole_history(&self) -> bool {
-        let _the_clone_of = self;
-        false
+        matches!(self, WhatWeTellAProgramToDo::CloneTheRepository { .. })
     }
 }
