@@ -179,7 +179,7 @@ impl WorkItem {
     /// asking which work item it is is something anything may do, and changing the name is
     /// something only the state machine does.
     pub fn the_work_item_id(&self) -> WorkItemId {
-        WorkItemId::try_from("").expect("a name is not blank")
+        self.work_item_id.clone()
     }
 
     /// The agent holding it, or nobody.
