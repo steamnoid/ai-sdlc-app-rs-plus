@@ -1,15 +1,16 @@
 //! A commissioned request is what somebody asked for, in the words they used.
 //!
-//! **Text, not an address, and the second half of that sentence is the whole of what
-//! this type is.** A request derives nothing: no repository, no issue number, no URL, no
-//! `…/issues/N`. The implementation this domain was read from did derive that last one,
-//! from an owner and a number, **and the repository it was pointed at has no issues at
-//! all** — so every summary it produced was full of links to pages that do not exist, and
-//! a summary full of them is worse than a summary with none.
+//! **Text and not an address, and what this type does not have is most of what it is.** A
+//! request derives nothing: no repository, no issue number, no URL, no `…/issues/N`. The
+//! implementation this domain was read from derived that last one from an owner and a
+//! number, **and the repository it was pointed at has no issues at all** — so every
+//! summary it produced was full of links to pages that do not exist, and a summary full
+//! of them is worse than a summary with none.
 //!
-//! **Two `String`s and two arguments, and nothing is trimmed, lowercased or re-wrapped.**
-//! The words are the words: a title a person typed and a title a run reads back nine reads
-//! later are the same title, including the space somebody left at the end of it.
+//! **Two arguments and no single-string door, and nothing is trimmed, lowercased or
+//! re-wrapped.** A title and a body are two pieces of text and no one string is both of
+//! them, and the words are the words: a title a person typed and a title a run reads back
+//! nine reads later are the same title, the space somebody left at the end of it included.
 //!
 //! ## The refusal is narrow on purpose, and here is the question it leaves open
 //!
@@ -32,12 +33,8 @@ use aisdlc_domain::{ARequestThatSaysNothing, CommissionedRequest};
 /// the glossary. The first is two empty halves, and the other three are halves that are
 /// only whitespace: a run is asked what somebody meant, and whitespace is what somebody
 /// meant when they typed nothing.
-const THE_REQUESTS_THAT_SAY_NOTHING: [(&str, &str); 4] = [
-    ("", ""),
-    ("   ", ""),
-    ("", "\n\t"),
-    (" \t ", "  "),
-];
+const THE_REQUESTS_THAT_SAY_NOTHING: [(&str, &str); 4] =
+    [("", ""), ("   ", ""), ("", "\n\t"), (" \t ", "  ")];
 
 /// A title written the way a person writes one, with the spaces they left in it.
 const A_TITLE_AS_IT_WAS_TYPED: &str = "  Ship   the   Thing  ";
@@ -136,5 +133,12 @@ fn a_refused_request_comes_back_as_it_was_written() {
         refusal.the_body_written(),
         "\t",
         "and it quotes both halves, because which half was empty is the whole of the answer"
+    );
+    let said = refusal.to_string();
+    assert_eq!(
+        said, "a request with the title \"  \" and the body \"\\t\" says nothing",
+        "a reader debugging a run reads the written refusal and not the type of it, and the \
+         `Debug` form is what tells two blank halves apart: with a tab written as a tab, a \
+         title of spaces and a body of a tab are the same sentence"
     );
 }
