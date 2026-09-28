@@ -26,15 +26,18 @@
 //! `a_repair_whose_body_names_no_red_is_refused`.
 //!
 //! **The cost of this accommodation, stated rather than discovered: this gate is stricter
-//! than the repairs in this repository's own history.** Sixteen of the seventeen `fix`
-//! commits before this gate's own first commit describe the defect they repaired and none
-//! of them except one uses the word `RED`; `98ac80e` is the only one that does. A gate
-//! reading them would refuse sixteen of seventeen, every one of them legitimately, which
-//! is what "a gate that refused the repository's own history would be a gate that had to be
-//! disabled on day one" describes. They are all before the boundary below, so the verdict
-//! is unaffected, and what the gate creates is a convention rather than one it reads: from
-//! the next repair, the body says which RED it answers, and the refusal says so in the same
-//! sentence.
+//! than the repairs in this repository's own history.** Seventeen `fix` commits were
+//! written before this gate's own first commit, **sixteen of them describe the defect they
+//! repaired and name no `RED`** — `98ac80e` is the one that does. A gate reading them
+//! would refuse **nine** of the seventeen, every one of them legitimately, which is what
+//! "a gate that refused the repository's own history would be a gate that had to be
+//! disabled on day one" describes. Nine and not sixteen because the other seven are
+//! landings with two parents, which the rule accepts for being branches arriving, and one
+//! names its RED. All seventeen are before the boundary below, so the verdict is
+//! unaffected, and what the gate creates is a convention rather than one it reads: from the
+//! next repair, the body says which RED it answers, and the refusal says so in the same
+//! sentence. `the_judgement_bites_on_the_real_history_and_not_only_on_a_fixture` is where
+//! the nine are read out of this repository's own commits rather than out of a fixture.
 //!
 //! ## The second accommodation: a squashed commit carries the pair in its message
 //!
@@ -80,11 +83,14 @@
 //! of which is in this same log and is judged on its own, and the commits it brought in
 //! are exactly the commits that carry the pairs.
 //!
-//! `required_linear_history` is on for `main` — `gh api` says so, and it was turned on by
-//! `#1` — **and `main` still holds twenty merge commits**, which the setting does not reach
-//! backwards. So the reason a commit has more than one parent is asked for rather than
-//! assumed, and a squashed commit, a fast-forward and a merge commit are three answers to
-//! three different questions.
+//! `required_linear_history` is on for `main` — `gh api` says so, and `#1` is the commit
+//! that turned it on — **and `main` still holds twenty-one merge commits**, which a setting
+//! does not reach backwards. **Nine of those twenty-one are written `feat(…)` or `fix(…)`
+//! rather than `merge(…)`**, which is why the question is asked of the parents and not of
+//! the words: a gate that looked for the word `merge` would read a landing as a change
+//! without a RED and refuse nine legitimate landings. A squash and a fast-forward are the
+//! other two answers and both have one parent, which is the second reason the count is the
+//! question and the word is not.
 //!
 //! ## `docs` and `chore` need no RED, and here is what that costs
 //!
@@ -99,7 +105,7 @@
 //! change arriving in a commit labelled `docs`, and that is a reviewer's job.** The
 //! repository has two real instances of the size of the hole, and both are in the history
 //! before this gate's boundary: `e0ecff0` is a `docs` commit that added `pub mod
-//! scanning;` to `src/lib.rs` and sixteen lines of documentation, and `4fe1ec6` is a
+//! scanning;` to `src/lib.rs` beside sixteen lines of documentation, and `4fe1ec6` is a
 //! `chore` that wrote a thousand lines including three crates of Rust.
 //!
 //! What stops it, in descending order of what it is worth, and honestly labelled:
@@ -149,10 +155,10 @@
 //!   and it is the reason the two have to be argued about together.
 //! - **`fix` requires the word `RED`, and this repository's own repairs do not use it.**
 //!   Argued above, with the count.
-//! - **The two real-history assertions below are assertions about ancestors.** A `main`
-//!   rewritten by a squash would remove the branch pair and the squashed pair they name,
-//!   and the gate would then fail. **That failure is a fact and not a defect**, and it is
-//!   cheaper than a gate that agrees with a history it cannot see.
+//! - **The three assertions that read the real history are assertions about ancestors.** A
+//!   `main` rewritten by a squash would remove the branch pair, the squashed pair and the
+//!   eleven refusals they name, and the gate would then fail. **That failure is a fact and
+//!   not a defect**, and it is cheaper than a gate that agrees with a history it cannot see.
 //! - **A shallow checkout judges nothing.** `git log` in a checkout of `fetch-depth: 1`
 //!   returns one commit, this gate's own first commit is in it, and the walk stops at it
 //!   having judged nothing at all. `the_reading_reached_a_commit_that_was_built_on_another`
@@ -189,8 +195,11 @@ const WHAT_ENDS_A_COMMIT: &str = "\u{1e}";
 /// anything, because a walk that read nothing would refuse nothing and be green.
 const THE_FEWEST_COMMITS_A_HISTORY_MUST_HOLD: usize = 3;
 
+/// The one length a hash in this repository has, and the only one the reading accepts: a
+/// hash of any other length is a hash with something of git's own still in front of it.
+const THE_LENGTH_OF_A_HASH: [usize; 1] = [40];
+
 /// The word that names the kind no subject in this repository has ever named.
-///
 /// Empty rather than absent, so that it can be compared with a line like any other word
 /// and match none of them, which is what a `None` would have to be turned into by hand at
 /// every place it is asked about.
@@ -452,10 +461,14 @@ fn what_this_refusal_says(commit: &ACommitInTheHistory, the_expectation: &str) -
 /// Every change in the history that was written after this gate began and that no failing
 /// expectation was ever demanded for, one refusal per change.
 ///
-/// **The walk stops at `the_gate_began_at` and judges nothing older**, and it returns
-/// rather than falls off the end, because a history in which that commit is absent is a
-/// history this gate cannot place itself in — and `this_gate_is_in_the_history_it_read` is
-/// the assertion that says so out loud, rather than a green run agreeing with everything.
+/// **The walk stops at `the_gate_began_at` and judges nothing older**, which is the boundary
+/// that makes this a gate and not a rubric: those commits were written under no such rule,
+/// and a gate that went through them would report the whole of this repository's past as
+/// violations and be turned off. The stop is a `break` and the answer is what was found so
+/// far, so a history in which that commit is absent is judged in full — **which is why
+/// `this_gate_is_in_the_history_it_read` is a test and not a sentence**: a gate that cannot
+/// place itself in the history it read is a gate that has no standing to refuse any of it,
+/// and the way to say that is a red run rather than a green one.
 fn what_the_history_would_have_to_answer_for(
     the_whole_history: &[ACommitInTheHistory],
     the_gate_began_at: &str,
@@ -463,7 +476,7 @@ fn what_the_history_would_have_to_answer_for(
     let mut refused = vec![];
     for commit in the_whole_history {
         if commit.its_hash == the_gate_began_at {
-            return refused;
+            break;
         }
         let Some(the_expectation) =
             the_expectation_that_was_never_demanded(commit, the_whole_history)
@@ -500,10 +513,19 @@ fn git_wrote(asked: &[&str]) -> String {
 }
 
 /// One commit out of the four fields git wrote for it, over the two separators.
+///
+/// **The hash and the parents are trimmed and the body is not, and the reason is where git
+/// puts its own line ending.** `git log` writes a newline after each record, so the record
+/// after the first begins with a newline in front of its hash: splitting on the record
+/// separator alone gives `\n<hash>` for every commit but the newest. A hash carrying a
+/// newline matches no parent and no boundary, and a reading in which nothing matches is a
+/// reading that agrees with everything — **which is why `every_hash_the_reading_holds_is_a_hash`
+/// is a test and not a sentence.** The body keeps its line endings because a body is the
+/// one field whose whole is its own text, and a RED is found in it by words.
 fn the_commit_written_in(written: &str) -> ACommitInTheHistory {
     let mut fields = written.split(WHAT_DIVIDES_THE_FIELDS_OF_A_COMMIT);
-    let its_hash = fields.next().unwrap_or_default().to_string();
-    let the_commits_it_was_built_on = fields.next().unwrap_or_default().to_string();
+    let its_hash = fields.next().unwrap_or_default().trim().to_string();
+    let the_commits_it_was_built_on = fields.next().unwrap_or_default().trim().to_string();
     let its_subject = fields.next().unwrap_or_default().trim().to_string();
     let its_body = fields.next().unwrap_or_default().to_string();
 
@@ -586,10 +608,11 @@ fn a_cycle_the_real_branch_history_holds(
         .iter()
         .filter(|one| what_a_commit_is(&one.its_subject) == WhatACommitIs::ARedThatFails)
         .find_map(|a_red| {
-            let the_green_built_on_it = the_whole_history
-                .iter()
-                .find(|one| one.the_commit_it_was_built_on() == Some(a_red.its_hash.as_str()));
-            the_green_built_on_it.map(|the_green| the_green.its_subject.clone())
+            let the_green = the_whole_history.iter().find(|one| {
+                what_a_commit_is(&one.its_subject) == WhatACommitIs::AGreenThatHolds
+                    && one.the_commit_it_was_built_on() == Some(a_red.its_hash.as_str())
+            });
+            the_green.map(|the_green| the_green.its_subject.clone())
         })
 }
 
@@ -624,6 +647,30 @@ fn a_commit_named(
         its_body: its_body.to_string(),
     }
 }
+
+/// One record of a log, built out of the separator the format asks for, from four fields
+/// written the way git writes them for every commit but the newest: the first field still
+/// carrying the line ending git put after the record before it.
+///
+/// **This is the shape the reading's own defect had.** Splitting a log on the record
+/// separator and nothing else gives a hash of `<line ending><hash>` for all but the first
+/// commit, and such a hash is equal to no parent and to no boundary — so a GREEN on a RED
+/// was read as a GREEN on nothing, and the gate was green because it had matched nothing
+/// at all. Built out of the separator rather than written out so that the fixture and the
+/// reading cannot disagree about where the separator is.
+fn a_record_as_git_wrote_the_second_commit_and_later(its_fields: &[&str]) -> String {
+    its_fields.join(WHAT_DIVIDES_THE_FIELDS_OF_A_COMMIT)
+}
+
+/// The four fields `git log` writes for a commit, in the shape it writes them for every
+/// commit but the newest: the hash still carrying the line ending git put after the record
+/// before it, and the body still carrying the one git puts after this record.
+const THE_FIELDS_GIT_WROTE: [&str; 4] = [
+    "\n0123456789abcdef0123456789abcdef01234567",
+    "c0ffee00c0ffee00c0ffee00c0ffee00c0ffee00",
+    "feat(history): the history is read and judged",
+    "the body, and then the line ending git writes after it\n",
+];
 
 /// A history written as one line per commit — its name, its subject, its body, and the
 /// commit it was built on — newest first, which is the order `git log` hands them over in
@@ -719,16 +766,21 @@ const A_HISTORY_HOLDING_A_COMMIT_BETWEEN_THE_HALVES: [OneLineOfAFixtureHistory; 
     A_RED_BUILT_ON_NOTHING,
 ];
 
-/// A history holding a change written before this gate began, and the commit that added
-/// this gate, which is where the walk stops and judges nothing older.
+/// A history holding the commit that added this gate and a change written before it, newest
+/// first: the gate's own first commit, and then the change under it, which is the order a
+/// `git log` hands them over in and the order the walk reads them in.
+///
+/// The change under it is a `feat` with no RED under it anywhere, so a walk that judged it
+/// would refuse it — and refusing it would be reporting this repository's past as
+/// violations, which is the one outcome a boundary exists to prevent.
 const A_HISTORY_HOLDING_A_CHANGE_BEFORE_THE_GATE: [OneLineOfAFixtureHistory; 2] = [
+    (THE_GATE_BEGAN, THE_SUBJECT_OF_A_RED, "", ""),
     (
         "ancient",
         "feat(domain): a stage is a type, and the set is closed",
         "",
         "",
     ),
-    (THE_GATE_BEGAN, THE_SUBJECT_OF_A_RED, "", ""),
 ];
 
 /// The body a squash carries when a cycle went in as two commits: one line per commit, in
@@ -1035,6 +1087,69 @@ fn the_walk_read_the_history_before_it_judged_any_of_it() {
     );
 }
 
+/// The record `git` writes for every commit but the newest, read as one commit rather than
+/// as a hash with a line ending in front of it.
+///
+/// **This is the fixture the reading's own defect needed.** With the newline left in front
+/// of the hash, the hash is equal to no parent and to no boundary, so every pair in a
+/// history reads as a GREEN on nothing and the gate is green because it matched nothing.
+#[test]
+fn a_record_git_wrote_after_the_first_is_read_as_one_commit() {
+    let the_record = a_record_as_git_wrote_the_second_commit_and_later(&THE_FIELDS_GIT_WROTE);
+
+    let read = the_commit_written_in(&the_record);
+
+    assert_eq!(
+        read.its_hash, "0123456789abcdef0123456789abcdef01234567",
+        "the newline git writes after each record is not part of the hash of the next one"
+    );
+    assert_eq!(
+        read.the_commits_it_was_built_on, "c0ffee00c0ffee00c0ffee00c0ffee00c0ffee00",
+        "and it is not part of the parents either"
+    );
+    assert_eq!(
+        read.its_subject, "feat(history): the history is read and judged",
+        "and the subject is the subject"
+    );
+    assert!(
+        read.its_body
+            .starts_with("the body, and then the line ending"),
+        "while the body keeps its own line endings, because a body is the one field whose whole is its own text: {:?}",
+        read.its_body
+    );
+}
+
+/// **A gate that read a history of unmatchable hashes and found no violation would be green
+/// and would be a lie, and this one was for one run.** The reading gave every commit but the
+/// newest a hash with git's own line ending still in front of it, because the log is one
+/// string and git writes a newline after each record. A hash with a line ending in it is
+/// equal to no parent and to no boundary, so every pair in this repository read as a GREEN
+/// on nothing — and the gate was green, which is the whole of what this assertion exists to
+/// prevent. **The format the contract names is exactly the shape that carries the trap**,
+/// and it is named here so that the next reader of this file checks it rather than trusts
+/// it: `--format=%s%x00%b%x1e` divides the fields with a byte a subject cannot hold and
+/// ends the record with a byte a body does not carry, and the line ending between two
+/// records belongs to neither. The three fixtures are
+/// `a_record_git_wrote_after_the_first_is_read_as_one_commit`,
+/// `every_hash_the_reading_holds_is_a_hash`, and
+/// `the_real_branch_history_holds_a_red_and_a_green`, which is the one that would have
+/// caught it and did not exist when the reading was first written.
+#[test]
+fn every_hash_the_reading_holds_is_a_hash() {
+    let the_history = the_commits_this_checkout_holds();
+    let read_whole = the_history
+        .iter()
+        .filter(|one| THE_LENGTH_OF_A_HASH.contains(&one.its_hash.len()))
+        .filter(|one| one.its_hash.chars().all(|one| one.is_ascii_hexdigit()));
+
+    assert_eq!(
+        read_whole.count(),
+        the_history.len(),
+        "some of the {} hashes the reading holds are not hashes, and a hash that matches no parent matches no pair",
+        the_history.len()
+    );
+}
+
 /// **The one assertion that says the walk saw a chain at all.** A `git log` in a checkout
 /// of `fetch-depth: 1` returns the tip and nothing else, this gate's own first commit is
 /// in it, and the walk then stops at it having judged nothing. The fix is
@@ -1088,6 +1203,40 @@ fn the_real_branch_history_holds_a_red_and_a_green() {
         held.is_some(),
         "no commit in this history is a GREEN built on a RED. {}",
         how_this_history_was_read()
+    );
+}
+
+/// The judgement bites on the real history and not only on a fixture, which is the half of
+/// the proof a hand-built list of subjects cannot give.
+///
+/// **Judged from the root rather than from this gate's boundary, which is not what the gate
+/// does** — it is the only way to see a refusal in a history this gate has no standing to
+/// refuse. On the history of this checkout today that is **eleven refusals**: nine repairs
+/// whose bodies describe a defect without naming the RED they answer, one
+/// `feat(scanner)` built on a commit that was not a RED, and the squashed `#2`, whose
+/// message names both halves in its title and records one in its body. The number is not
+/// asserted and the empty list is, because eleven today and any number above none are both
+/// a gate that bites, and a test asserting eleven would be a test asserting a snapshot.
+#[test]
+fn the_judgement_bites_on_the_real_history_and_not_only_on_a_fixture() {
+    let the_history = the_commits_this_checkout_holds();
+    let the_root = the_history
+        .last()
+        .expect("the reading holds no commit at all, so there is no root to judge from");
+
+    let refused = what_the_history_would_have_to_answer_for(&the_history, &the_root.its_hash);
+
+    assert!(
+        !refused.is_empty(),
+        "judged from {} to the root, this history holds no violation at all, and a judgement          that has never refused a real commit is a judgement nobody has watched work",
+        the_root.its_hash
+    );
+    assert!(
+        the_history
+            .iter()
+            .any(|one| refused[0].starts_with(&one.its_hash)),
+        "and the first refusal names a commit the reading actually read: {}",
+        refused[0]
     );
 }
 
