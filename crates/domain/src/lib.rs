@@ -8,10 +8,12 @@
 //! repository, writing files, running tests and keeping state are all deterministic and
 //! all live outside this crate, behind a port.
 
+mod agent_identifier;
 mod role;
 mod stage;
 mod work_item_id;
 
+pub use agent_identifier::{AgentIdentifier, AnAgentThatIsNotAnIdentity};
 pub use role::{ARoleThatNobodyNamed, EVERY_ROLE, Role};
 pub use stage::{AStageThatNobodyNamed, EVERY_STAGE, Stage};
 pub use work_item_id::{AWorkItemThatNamesNothing, WorkItemId};
