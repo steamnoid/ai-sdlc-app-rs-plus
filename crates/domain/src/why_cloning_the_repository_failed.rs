@@ -73,10 +73,8 @@ pub fn why_cloning_the_repository_failed(
     which_way: WhichWayItFailed,
     what_git_said: &str,
 ) -> WhyCloningTheRepositoryFailed {
-    let _which_way = which_way;
-    let _what_git_said = what_git_said;
     WhyCloningTheRepositoryFailed {
-        which_way: WhichWayItFailed::GitIsUnhappy,
-        what_git_said: String::new(),
+        which_way,
+        what_git_said: what_git_said.to_string(),
     }
 }

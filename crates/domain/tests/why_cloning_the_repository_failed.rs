@@ -14,7 +14,7 @@
 //! does not describe would be writing the specification backwards.
 
 use aisdlc_domain::why_cloning_the_repository_failed::{
-    WhichWayItFailed, WhyCloningTheRepositoryFailed, why_cloning_the_repository_failed,
+    WhichWayItFailed, why_cloning_the_repository_failed,
 };
 
 #[test]
@@ -42,7 +42,7 @@ fn no_such_repository_carries_gits_own_words() {
 }
 
 #[test]
-fn git_being_unhappy_is_a_different_way_from_no_such_repository() {
+fn two_ways_that_feel_alike_are_not_the_same_way() {
     let not_there =
         why_cloning_the_repository_failed(WhichWayItFailed::NoSuchRepository, "not found");
     let unhappy = why_cloning_the_repository_failed(
