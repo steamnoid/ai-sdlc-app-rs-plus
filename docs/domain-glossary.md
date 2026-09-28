@@ -58,6 +58,17 @@ object. Its stage is never changed by assignment; `transition` is the only door.
 persisted or pointed at by an approval without one, so a blank one is refused where it
 enters.
 
+**A name this document lists is one concept and the code has one type for it.** A newtype
+over `String` with a constructor that refuses, a `TryFrom<&str>` and a `Display` — and
+**`Display` writes the name as written and nothing else**: no lowercasing, no trimming, no
+reformatting. A name a person typed and a name a run reads back are the same name, and a
+gate that compares them as strings would refuse a work item for a space somebody left in it
+at the end.
+
+**A blank means blank.** `""`, `"   "` and anything else that trims to nothing is refused,
+and **the name is refused, not the trimmed name** — a caller that sent `"  x  "` gets `"  x  "`
+back, because a name this system silently tidies is a name a lookup will miss.
+
 **`WhoCommissioned`** — the party that asked for the work. **Who asked** and **which
 discipline answers** are two questions in two fields. An `aisdlc-` identifier here means a
 policy asked on somebody's behalf, and the name is kept verbatim.
@@ -94,6 +105,25 @@ the discipline rather than the acronym, and that is a decision rather than a coi
 clippy accepts `PO` and `QA` and refuses `DEV`, so writing two of the five one way on the
 strength of a letter count is a spelling a reader has to look up. All five are written the
 same way because the reader should not have to know which is which.
+
+**`AHalfThatIdentifiesNothing`** — a repository that names an owner and no name, or a name
+and no owner. **A half carrying a slash is the other refusal**, and the two are one type
+because a caller told "that is not a repository" has the same question whichever half it
+left out.
+
+**`AWorkItemThatNamesNothing`** — a work item whose name is blank. A work item cannot be
+approved, persisted or pointed at by an approval without one.
+
+**`AWorkItemThatNamesNobody`** — a work item that says nobody asked for it. Work with no
+origin cannot be traced back to the request that started it.
+
+**`AnAgentThatIsNotAnIdentity`** — a string that only means "absent": `"none"`, `""` and
+`"   "`. **All three are refused, and the reason is the state machine**: it decides whether
+an agent is present by asking whether there is one, so a work item in `IN_PROGRESS_BY_AGENT`
+holding a blank agent would pass the biconditional while nobody was working on it.
+
+**`ARequestThatSaysNothing`** — a commissioned request with no title and no body. A request
+that says nothing was asked for.
 
 **`AStageThatNobodyNamed`**, **`ARoleThatNobodyNamed`** — a name that is not one of the
 closed set. They exist because a document names its stages and roles in capitals and the
