@@ -48,8 +48,7 @@ impl Stage {
     /// nobody is what this answer is for, and it is why the question is a method on `Stage`
     /// rather than a free function a caller could be handed the wrong stage for.
     pub fn an_agent_must_be_holding_it(self) -> bool {
-        let _the_stage_was_not_asked_about = self;
-        false
+        matches!(self, Stage::AwaitingAgentPickup | Stage::InProgressByAgent)
     }
 }
 
