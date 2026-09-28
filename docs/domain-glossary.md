@@ -246,6 +246,12 @@ is a bug.
 A birth is not an operation. `a_work_item_commissioned_for_an_agent` is the only way a
 work item enters the lifecycle and it adds no third verb.
 
+**`state_machine` is the module those two verbs live in, and it is blessed in full.** It
+carries `State`, which the stage table refuses, and a gate asks the blessing before it asks
+the words — **because the module is named after the two verbs it holds, and renaming it would
+be worse than carrying a refused word.** The alternative was `the_lifecycle`, and that is a
+word about a process rather than about the thing that refuses an illegal move.
+
 ---
 
 ## The three doors into a work item

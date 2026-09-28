@@ -113,7 +113,7 @@ fn a_commissioned_work_item_carries_who_asked_verbatim() {
 }
 
 #[test]
-fn the_entry_state_needs_no_agent_and_so_commissioning_cannot_be_refused() {
+fn the_entry_needs_no_agent_and_so_commissioning_cannot_be_refused() {
     assert!(
         !Stage::Ready.an_agent_must_be_holding_it(),
         "if READY ever began to need an agent this call would start failing, and a birth that can fail is a birth whose failure can be retried into a different stage"
