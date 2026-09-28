@@ -18,5 +18,7 @@
 //! The manifest's lack of a `[dependencies]` section is checked by a gate rather than trusted,
 //! because a manifest is text and text is edited.
 
+pub mod agent_identifier;
 pub mod role;
 pub mod stage;
+pub mod work_item_id;
