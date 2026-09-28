@@ -164,8 +164,7 @@ pub fn the_agent_presents_what_it_produced(
     _the_agent_presenting: AgentIdentifier,
     _which_artifact: &WhichArtifact,
 ) -> Result<WorkItem, StateMachineError> {
-    let _the_stage_it_must_reach = Stage::AwaitingHumanApproval;
-    Ok(a_work_item)
+    transition(a_work_item, Stage::AwaitingHumanApproval, None)
 }
 
 /// The exact artifact and its version, put to somebody for a ruling.
@@ -233,7 +232,11 @@ pub fn the_question_put_to_somebody(
     which_artifact: &WhichArtifact,
     the_version: AnArtifactVersion,
 ) -> Result<ApprovalQuestion, NotStandingAtTheGate> {
-    let _the_stage_it_stands_at = the_work_item.the_stage_it_stands_at();
+    if the_work_item.the_stage_it_stands_at() != Stage::AwaitingHumanApproval {
+        return Err(NotStandingAtTheGate::because(
+            the_work_item.the_stage_it_stands_at(),
+        ));
+    }
     Ok(ApprovalQuestion {
         about_which_work_item: the_work_item.the_work_item_id(),
         about_which_artifact: which_artifact.clone(),
@@ -246,8 +249,9 @@ pub fn the_gate_records_what_the_human_decided(
     the_person: &mut impl APersonToDecide,
     a_question: &ApprovalQuestion,
 ) -> Result<Approval, NotStandingAtTheGate> {
-    let _the_ruling = the_person.how_they_rule_on(a_question);
-    Err(NotStandingAtTheGate::because(Stage::AwaitingHumanApproval))
+    let a_ruling = the_person.how_they_rule_on(a_question);
+    Approval::what_the_ruling_left_behind(&a_ruling)
+        .ok_or(NotStandingAtTheGate::because(Stage::AwaitingHumanApproval))
 }
 
 /// The gate records what the human decided, refusing a work item not standing at it.
@@ -256,7 +260,12 @@ pub fn the_gate_records_what_the_human_decided_at(
     the_work_item: &WorkItem,
     a_question: &ApprovalQuestion,
 ) -> Result<Approval, NotStandingAtTheGate> {
-    let _the_stage_it_stands_at = the_work_item.the_stage_it_stands_at();
-    let _the_ruling = the_person.how_they_rule_on(a_question);
-    Err(NotStandingAtTheGate::because(Stage::AwaitingHumanApproval))
+    if the_work_item.the_stage_it_stands_at() != Stage::AwaitingHumanApproval {
+        return Err(NotStandingAtTheGate::because(
+            the_work_item.the_stage_it_stands_at(),
+        ));
+    }
+    let a_ruling = the_person.how_they_rule_on(a_question);
+    Approval::what_the_ruling_left_behind(&a_ruling)
+        .ok_or(NotStandingAtTheGate::because(Stage::AwaitingHumanApproval))
 }
