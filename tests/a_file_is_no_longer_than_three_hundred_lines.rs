@@ -17,6 +17,7 @@
 
 use aisdlc_gates::a_stretch_of_the_file::WhatIsWrittenThere;
 use aisdlc_gates::reading_the_checkout;
+use aisdlc_gates::reading_the_glossary;
 use aisdlc_gates::scanning::HowTheFileIsWritten;
 
 /// The most lines of code a file may spend.
@@ -88,6 +89,43 @@ fn collect_from(directory: &std::path::Path, found: &mut Vec<std::path::PathBuf>
             found.push(path);
         }
     }
+}
+
+#[test]
+fn a_file_the_glossary_exempts_is_not_refused() {
+    let a_very_long_file = "fn a() {}\n".repeat(400);
+
+    assert_eq!(
+        what_is_wrong_with("readability_guards.rs", &a_very_long_file),
+        None,
+        "the glossary exempts that file by name, and a gate carrying its own exceptions has exceptions nobody reads"
+    );
+}
+
+#[test]
+fn a_long_file_the_glossary_does_not_name_is_refused() {
+    let a_very_long_file = "fn a() {}\n".repeat(400);
+
+    assert!(
+        what_is_wrong_with("some_other_file.rs", &a_very_long_file).is_some(),
+        "the exemption is a list of two names, and anything not on it is still measured"
+    );
+}
+
+#[test]
+fn the_glossary_names_the_two_files_the_gates_live_in() {
+    let the_glossary = reading_the_glossary::the_glossary_text();
+
+    let exempt = reading_the_glossary::the_files_the_length_gate_does_not_read(&the_glossary);
+
+    assert_eq!(
+        exempt,
+        vec![
+            "readability_guards.rs".to_string(),
+            "documentation_guards.rs".to_string()
+        ],
+        "two files, named, with a reason each — and a reader that found none would let any file be too long"
+    );
 }
 
 #[test]

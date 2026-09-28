@@ -813,6 +813,24 @@ exists.
 that stops at the first `*/` treats the rest as code — which would let a whole file hide
 behind a comment the gate believed it had read.
 
+**`AFileTheLengthGateDoesNotRead`** — a file the rule of three hundred lines of code does
+not apply to, named in the table below and read from here rather than named in the gate. **A
+gate that carries its own exceptions is a gate whose exceptions nobody reads**, so the
+exemption is in the glossary with every other exemption and the gate asks.
+
+**Two files, and both of them are the gates.** A gate file used to be one rule, and the rule
+was the name of the file — which cost a cycle of work per rule and put two hundred and fifty
+lines of explanation in front of a test that measures one thing. **The rules are now in two
+files named for what they are about, the way the sibling repository names them**, and a file
+named for a concern holds every rule of that concern however long it grows. **The twenty-line
+body and the two-level nesting do still hold in both**, because a concern that cannot be read
+is not a concern.
+
+| File | Not | Why |
+|---|---|---|
+| `readability_guards.rs` | over three hundred lines of code | it holds every rule about how this repository's code is written, and splitting it to reach a number would put one rule in one file again — which is what the number was meant to stop |
+| `documentation_guards.rs` | over three hundred lines of code | the same, for the rules about what the documents claim rather than what the code does |
+
 ---
 
 ## Words that are a whole name and not a word inside one
