@@ -22,7 +22,13 @@ jobs:
     name: gate
     runs-on: ubuntu-latest
     steps:
+      # The history, not one commit. `every_change_is_a_red_then_a_green` reads it, and a
+      # shallow checkout is a gate that cannot see what it judges — which is a green tick
+      # from a test that proved nothing, which is the failure this whole repository exists to
+      # refuse. Fetching the whole history costs seconds and is the only honest setting.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Install the toolchain
         run: |
