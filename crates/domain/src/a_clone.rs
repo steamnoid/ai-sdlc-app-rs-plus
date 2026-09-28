@@ -44,7 +44,9 @@ impl TryFrom<&str> for TheCommit {
 
     /// Read a commit, refusing a blank.
     fn try_from(written: &str) -> Result<Self, Self::Error> {
-        let _the_refusal = ACommitThatNamesNothing(written.to_string());
+        if written.trim().is_empty() {
+            return Err(ACommitThatNamesNothing(written.to_string()));
+        }
         Ok(TheCommit(written.to_string()))
     }
 }
@@ -88,32 +90,33 @@ impl TryFrom<&str> for TheRef {
     /// **`HEAD` is a ref and not a branch**, and refusing it would be telling a caller to invent
     /// a branch name for a checkout that is on none.
     fn try_from(written: &str) -> Result<Self, Self::Error> {
-        let _the_refusal = ARefThatNamesNothing(written.to_string());
+        if written.trim().is_empty() {
+            return Err(ARefThatNamesNothing(written.to_string()));
+        }
         Ok(TheRef(written.to_string()))
     }
 }
 
 /// A checkout on disk, and what it is standing on.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct AClonedRepository {
+pub struct ACloneOnDisk {
     where_it_lands: PathBuf,
     the_commit: TheCommit,
     ref_name: TheRef,
 }
 
-impl AClonedRepository {
+impl ACloneOnDisk {
     /// The clone, with the commit and the ref `git` reported for it.
-    pub fn the_clone_at(
-        where_it_lands: PathBuf,
-        the_commit: TheCommit,
-        ref_name: TheRef,
-    ) -> Result<Self, ACloneThatStandsOnNothing> {
-        let _the_refusal = ACloneThatStandsOnNothing;
-        Ok(Self {
+    ///
+    /// **Not a `Result`.** A clone that was read out of a clone always has both, and a
+    /// `Result` here would be a door nobody has to go through — a failure a caller must handle
+    /// for a case that cannot happen is a failure a caller will eventually stop reading.
+    pub fn the_clone_at(where_it_lands: PathBuf, the_commit: TheCommit, ref_name: TheRef) -> Self {
+        Self {
             where_it_lands,
             the_commit,
             ref_name,
-        })
+        }
     }
 
     /// Where the clone is.
@@ -129,20 +132,5 @@ impl AClonedRepository {
     /// The ref it is standing on, read from the clone, and `HEAD` when it is on no branch.
     pub fn ref_name(&self) -> &TheRef {
         &self.ref_name
-    }
-}
-
-/// A clone that stands on no commit and no ref, which is not a clone.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ACloneThatStandsOnNothing;
-
-impl Error for ACloneThatStandsOnNothing {}
-
-impl fmt::Display for ACloneThatStandsOnNothing {
-    /// Write the refusal.
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        formatter.write_str(
-            "a clone reads its commit and its ref, and one that stands on neither is not a clone",
-        )
     }
 }

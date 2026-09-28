@@ -8,9 +8,7 @@
 //! detached ref leaves none behind, and the honest answer for a checkout on none is `HEAD`.
 //! **Naming the field `branch` would be a lie in precisely the case where the value matters.**
 
-use aisdlc_domain::a_cloned_repository::{
-    AClonedRepository, ARefThatNamesNothing, TheCommit, TheRef,
-};
+use aisdlc_domain::a_clone::{ACloneOnDisk, ARefThatNamesNothing, TheCommit, TheRef};
 use aisdlc_domain::repository::Repository;
 use aisdlc_domain::where_the_clone_of_a_work_item_lands::where_the_clone_of_a_work_item_lands;
 use aisdlc_domain::work_item_id::WorkItemId;
@@ -23,18 +21,17 @@ fn the_place() -> std::path::PathBuf {
     )
 }
 
-fn a_cloned_repository() -> AClonedRepository {
-    AClonedRepository::the_clone_at(
+fn a_clone() -> ACloneOnDisk {
+    ACloneOnDisk::the_clone_at(
         the_place(),
         TheCommit::try_from("3f1a9c4d2b8e7f6a5d4c3b2a1908f7e6d5c4b3a2").expect("a commit"),
         TheRef::try_from("main").expect("a ref"),
     )
-    .expect("a clone standing on a commit and a ref")
 }
 
 #[test]
-fn a_cloned_repository_says_where_it_is_and_what_it_stands_on() {
-    let the_clone = a_cloned_repository();
+fn a_clone_says_where_it_is_and_what_it_stands_on() {
+    let the_clone = a_clone();
 
     assert_eq!(the_clone.where_it_lands(), the_place());
     assert_eq!(
@@ -46,12 +43,11 @@ fn a_cloned_repository_says_where_it_is_and_what_it_stands_on() {
 
 #[test]
 fn a_checkout_on_no_branch_at_all_says_head() {
-    let detached = AClonedRepository::the_clone_at(
+    let detached = ACloneOnDisk::the_clone_at(
         the_place(),
         TheCommit::try_from("3f1a9c4d2b8e7f6a5d4c3b2a1908f7e6d5c4b3a2").expect("a commit"),
         TheRef::try_from("HEAD").expect("a checkout on no branch is at HEAD"),
-    )
-    .expect("a detached clone is a clone");
+    );
 
     assert_eq!(
         detached.ref_name().as_str(),
@@ -92,17 +88,12 @@ fn a_ref_that_names_nothing_says_what_was_written() {
 }
 
 #[test]
-fn a_cloned_repository_without_a_commit_or_a_ref_is_refused() {
-    let refusal = AClonedRepository::the_clone_at(
-        the_place(),
-        TheCommit::try_from("3f1a9c4d2b8e7f6a5d4c3b2a1908f7e6d5c4b3a2").expect("a commit"),
-        TheRef::try_from("main").expect("a ref"),
-    )
-    .expect("a clone standing on a commit and a ref");
+fn a_clone_read_out_of_a_clone_needs_no_way_of_failing() {
+    let the_clone = a_clone();
 
     assert_eq!(
-        refusal.where_it_lands(),
+        the_clone.where_it_lands(),
         the_place(),
-        "and it is a value and not a `Result` in the happy path, because a clone read from a clone always has both"
+        "**because a clone read out of a clone always has both** — a `Result` here is a door nobody has to go through, and a failure a caller must handle for a case that cannot happen is a failure a caller will stop reading"
     );
 }
