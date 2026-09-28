@@ -19,19 +19,23 @@ use crate::work_item_id::WorkItemId;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct WorkItem {
     /// The name it is tracked by.
-    work_item_id: WorkItemId,
+    pub(crate) work_item_id: WorkItemId,
     /// Whoever asked for it.
-    who_commissioned: WhoCommissioned,
+    pub(crate) who_commissioned: WhoCommissioned,
     /// What it is worked on.
-    repository: Repository,
+    pub(crate) repository: Repository,
     /// The discipline accountable for the result.
-    role: Role,
+    pub(crate) role: Role,
     /// Where it stands, and only `transition` may move it.
-    stage: Stage,
+    ///
+    /// **`pub(crate)` and not `pub`**: the hazard was a *boundary* assigning fields, and a
+    /// checkpoint is built outside this crate. Inside it, the state machine is the only
+    /// thing that may move a stage, and it is the only thing that needs to write here.
+    pub(crate) stage: Stage,
     /// The agent holding it, or nobody.
-    agent: Option<AgentIdentifier>,
+    pub(crate) agent: Option<AgentIdentifier>,
     /// What was asked for, once somebody has said it.
-    the_request: Option<CommissionedRequest>,
+    pub(crate) the_request: Option<CommissionedRequest>,
 }
 
 /// The door said no.
