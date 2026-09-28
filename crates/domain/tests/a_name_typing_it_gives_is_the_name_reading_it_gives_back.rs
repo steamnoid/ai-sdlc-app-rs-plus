@@ -26,7 +26,11 @@ fn a_name_typing_it_gives_is_the_name_reading_it_gives_back() {
         "aisdlc-po-analyze",
         "a name a person typed and a name a run reads back are the same name"
     );
-    assert_eq!(name.to_string(), name.the_name_as_written());
+    assert_eq!(
+        name.to_string(),
+        "aisdlc-po-analyze",
+        "and there is no second way to read a name: the accessor and the Display are one thing, and two would be two spellings"
+    );
 }
 
 #[test]

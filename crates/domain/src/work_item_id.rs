@@ -24,18 +24,13 @@ pub struct WorkItemId(pub String);
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AWorkItemThatNamesNothing(pub String);
 
-impl WorkItemId {
-    /// The name as it was written, spaces and capitals included.
-    pub fn the_name_as_written(&self) -> &str {
-        &self.0
-    }
-}
-
 impl TryFrom<&str> for WorkItemId {
     type Error = AWorkItemThatNamesNothing;
 
     fn try_from(name: &str) -> Result<Self, Self::Error> {
-        let _the_name_nobody_refused = name;
+        if name.trim().is_empty() {
+            return Err(AWorkItemThatNamesNothing(name.to_string()));
+        }
         Ok(WorkItemId(name.to_string()))
     }
 }

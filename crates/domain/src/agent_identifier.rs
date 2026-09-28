@@ -7,6 +7,14 @@
 
 use std::fmt;
 
+/// The one word that means "no agent" without being an agent.
+///
+/// **Refused as written and not by its letters.** `NONE` is a name, because the glossary
+/// reserves one word and a reader who refused both spellings would be refusing a name
+/// somebody may legitimately choose — with a rule the glossary does not carry. A word is a
+/// word; `none-of-the-above` and `nonesuch` identify people.
+const THE_WORD_THAT_MEANS_ABSENT: &str = "none";
+
 /// The name an agent answers to, and never a bare string.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct AgentIdentifier(pub String);
@@ -19,7 +27,9 @@ impl TryFrom<&str> for AgentIdentifier {
     type Error = AnAgentThatIsNotAnIdentity;
 
     fn try_from(name: &str) -> Result<Self, Self::Error> {
-        let _the_name_nobody_read = name;
+        if name.trim().is_empty() || name == THE_WORD_THAT_MEANS_ABSENT {
+            return Err(AnAgentThatIsNotAnIdentity(name.to_string()));
+        }
         Ok(AgentIdentifier(name.to_string()))
     }
 }
