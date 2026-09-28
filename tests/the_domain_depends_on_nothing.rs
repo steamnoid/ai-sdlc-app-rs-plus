@@ -22,7 +22,11 @@ const ITS_SOURCE: &str = "crates/domain/src";
 /// **A section with nothing in it is accepted**, because the rule is about what the domain
 /// depends on and not about how its manifest is arranged: an empty heading is a promise
 /// nobody has been asked to keep.
-const THE_SECTIONS_THE_DOMAIN_MAY_NOT_FILL: [&str; 2] = ["[dependencies]", "[dev-dependencies]"];
+///
+/// **The names carry no brackets**, because the brackets are the manifest's delimiters and
+/// not part of the name — a reader that compared `[dependencies]` against the section it
+/// just read would never match anything, and a gate that never matches is green forever.
+const THE_SECTIONS_THE_DOMAIN_MAY_NOT_FILL: [&str; 2] = ["dependencies", "dev-dependencies"];
 
 /// The five modules of the standard library that can touch the world.
 ///
@@ -41,9 +45,10 @@ const THE_PATH_EACH_REACH_STANDS_AT: &str = "std::";
 
 /// What a manifest and its sources break, named so a reader can act on the finding.
 fn what_is_wrong_with(manifest: &str, the_source: &str) -> Vec<String> {
-    let _the_manifest_nobody_read = manifest;
-    let _the_source_nobody_read = the_source;
-    Vec::new()
+    let mut what_broke = Vec::new();
+    what_broke.extend(the_sections_that_are_filled(manifest));
+    what_broke.extend(the_reaches_in_the_code(the_source));
+    what_broke
 }
 
 /// The sections a manifest carries an entry in, with the entry quoted back.
@@ -54,44 +59,48 @@ fn what_is_wrong_with(manifest: &str, the_source: &str) -> Vec<String> {
 /// version of this gate, found only because the first one was looked for on purpose.
 fn the_sections_that_are_filled(manifest: &str) -> Vec<String> {
     let mut found = Vec::new();
-    let mut the_section_standing: Option<String> = None;
+    let mut the_section_standing = String::new();
     for line in manifest.lines() {
         if let Some(name) = the_section_a_line_opens(line) {
-            the_section_standing = Some(name);
+            the_section_standing = name;
             continue;
         }
-        let Some(section) = &the_section_standing else {
-            continue;
-        };
-        if !THE_SECTIONS_THE_DOMAIN_MAY_NOT_FILL.contains(&section.as_str()) {
-            continue;
-        }
-        if line.trim_start().starts_with('#') {
-            continue;
-        }
-        if line.trim().is_empty() {
-            continue;
-        }
-        found.push(format!("{section} carries an entry: {}", line.trim()));
+        found.extend(the_entry_standing_in(&the_section_standing, line));
     }
     found
 }
 
+/// The refusal for one line, if the line is an entry in a section the domain may not fill.
+///
+/// **Any** section header closes the one before it, whether or not the gate cares about it —
+/// a reader that only noticed the two forbidden names would carry `[dependencies]`'s
+/// emptiness into `[package]` and report the manifest's own name as a dependency.
+fn the_entry_standing_in(the_section: &str, line: &str) -> Vec<String> {
+    if !THE_SECTIONS_THE_DOMAIN_MAY_NOT_FILL.contains(&the_section) {
+        return Vec::new();
+    }
+    if line.trim_start().starts_with('#') || line.trim().is_empty() {
+        return Vec::new();
+    }
+    vec![format!("{the_section} carries an entry: {}", line.trim())]
+}
+
 /// The name of the section a manifest line opens, or nothing if it opens none.
 ///
-/// The closing bracket is taken off, so `[dependencies]` and `[dependencies.serde]` are
+/// **Every** section is named, and not only the two the gate refuses: a section this reader
+/// did not recognise is a section it cannot close, and the next entry would be read as
+/// belonging to the last section it did recognise.
+///
+/// The table name is taken off, so `[dependencies]` and `[dependencies.serde]` are
 /// recognised as the same section and a reader does not have to know the two spellings.
 fn the_section_a_line_opens(line: &str) -> Option<String> {
     let trimmed = line.trim();
-    if !trimmed.starts_with('[') {
+    if !trimmed.starts_with('[') || !trimmed.ends_with(']') {
         return None;
     }
     let the_name = trimmed.trim_start_matches('[').trim_end_matches(']');
     let without_the_table = the_name.split('.').next().unwrap_or(the_name);
-    THE_SECTIONS_THE_DOMAIN_MAY_NOT_FILL
-        .iter()
-        .find(|section| section.trim_matches(['[', ']']) == without_the_table)
-        .map(|section| (*section).to_string())
+    Some(without_the_table.to_string())
 }
 
 /// The reaches the domain's code makes, read out of the code and not out of its prose.
@@ -111,15 +120,19 @@ fn the_reaches_in_the_code(the_source: &str) -> Vec<String> {
 }
 
 /// The reach one stretch of code makes, if any.
-fn the_reaches_in(one_line: &str, on_line: usize) -> Vec<String> {
+fn the_reaches_in(the_line_of_code: &str, the_line_number: usize) -> Vec<String> {
     let mut found = Vec::new();
     for module in THE_MODULES_THAT_REACH_THE_WORLD {
         let the_path = format!("{THE_PATH_EACH_REACH_STANDS_AT}{module}");
-        if one_line.contains(&the_path) {
-            found.push(format!("line {on_line} reaches for {the_path}"));
+        if the_line_of_code.contains(&the_path) {
+            found.push(format!("line {the_line_number} reaches for {the_path}"));
         }
-        if one_line.contains(&format!("{THE_PATH_EACH_REACH_STANDS_AT}{{")) {
-            found.extend(the_module_in_a_group(module, one_line, on_line));
+        if the_line_of_code.contains(&format!("{THE_PATH_EACH_REACH_STANDS_AT}{{")) {
+            found.extend(the_module_in_a_group(
+                module,
+                the_line_of_code,
+                the_line_number,
+            ));
         }
     }
     found
@@ -130,15 +143,19 @@ fn the_reaches_in(one_line: &str, on_line: usize) -> Vec<String> {
 /// The group's own spellings vary — `use  std::{`, `pub use std::{` — and a checker that
 /// knows one spelling is the same defect again, so the group is found by the two words
 /// before the brace.
-fn the_module_in_a_group(module: &str, one_line: &str, on_line: usize) -> Vec<String> {
-    if !one_line.contains(module) {
+fn the_module_in_a_group(
+    module: &str,
+    the_line_of_code: &str,
+    the_line_number: usize,
+) -> Vec<String> {
+    if !the_line_of_code.contains(module) {
         return Vec::new();
     }
-    if !one_line.contains("use std::{") && !one_line.contains("use  std::{") {
+    if !the_line_of_code.contains("use std::{") && !the_line_of_code.contains("use  std::{") {
         return Vec::new();
     }
     vec![format!(
-        "line {on_line} names {module} in a group of modules"
+        "line {the_line_number} names {module} in a group of modules"
     )]
 }
 
@@ -146,7 +163,7 @@ fn the_module_in_a_group(module: &str, one_line: &str, on_line: usize) -> Vec<St
 fn a_manifest_with_a_dependency_is_refused() {
     let manifest = "[package]\nname = \"x\"\n\n[dependencies]\nserde = \"1\"\n";
 
-    let what_broke = what_is_wrong_with(&manifest, "");
+    let what_broke = what_is_wrong_with(manifest, "");
 
     assert_eq!(
         what_broke.len(),
@@ -163,7 +180,7 @@ fn a_manifest_with_a_dependency_is_refused() {
 fn a_manifest_with_a_dev_dependency_is_refused() {
     let manifest = "[dev-dependencies]\nregex = \"1\"\n";
 
-    let what_broke = what_is_wrong_with(&manifest, "");
+    let what_broke = what_is_wrong_with(manifest, "");
 
     assert_eq!(
         what_broke.len(),
@@ -174,9 +191,9 @@ fn a_manifest_with_a_dev_dependency_is_refused() {
 
 #[test]
 fn a_manifest_with_a_table_header_dependency_is_refused() {
-    let manifest = format!("[dependencies.serde]\nversion = \"1\"\n");
+    let manifest = "[dependencies.serde]\nversion = \"1\"\n";
 
-    let what_broke = what_is_wrong_with(&manifest, "");
+    let what_broke = what_is_wrong_with(manifest, "");
 
     assert_eq!(
         what_broke.len(),
@@ -271,10 +288,13 @@ fn the_reaches_of_the_real_domain_are_read() {
         "the domain reaches for something, and the rule every boundary here rests on is not a sentence: {what_broke:?}"
     );
     assert!(
-        the_source.contains("pub struct")
-            || the_source.contains("pub enum")
-            || the_source.is_empty(),
-        "and the gate read the files it was pointed at"
+        !the_source.is_empty(),
+        "the gate read no source at all, which is a pass it has not earned"
+    );
+    let read = HowTheFileIsWritten::of(&the_source);
+    assert!(
+        !read.stretches().is_empty(),
+        "and the walk made stretches of it rather than answering about an empty string"
     );
 }
 
