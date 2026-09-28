@@ -432,7 +432,7 @@ mod a_file_is_no_longer_than_three_hundred_lines {
     /// test that it refuses is to write a long file — and a test that writes is a test that
     /// cleans up after itself or leaves a repository dirty. Text in, answer out.
     fn what_is_wrong_with(a_name: &str, the_code: &str) -> Option<String> {
-        let the_glossary = reading_the_glossary::the_glossary_text();
+        let the_glossary = aisdlc_gates::reading_the_glossary::the_glossary_text();
         let exempt = reading_the_glossary::the_files_the_length_gate_does_not_read(&the_glossary);
         let the_bare_name = a_name.rsplit('/').next().unwrap_or(a_name);
         if exempt.iter().any(|it| it == the_bare_name) {
@@ -488,7 +488,7 @@ mod a_file_is_no_longer_than_three_hundred_lines {
 
     #[test]
     fn the_glossary_names_the_two_files_the_gates_live_in() {
-        let the_glossary = reading_the_glossary::the_glossary_text();
+        let the_glossary = aisdlc_gates::reading_the_glossary::the_glossary_text();
 
         let exempt = reading_the_glossary::the_files_the_length_gate_does_not_read(&the_glossary);
 
@@ -1372,7 +1372,7 @@ mod no_placeholder_is_left_in_the_code {
     use aisdlc_gates::a_stretch_of_the_file::WhatIsWrittenThere;
     use aisdlc_gates::reading_the_checkout;
     use aisdlc_gates::reading_the_code::{every_source_file, the_lines_of_code};
-    use aisdlc_gates::reading_the_glossary::the_block_containing;
+
     use aisdlc_gates::scanning::HowTheFileIsWritten;
 
     /// The macros that say the work is not done, in the code.
@@ -1380,7 +1380,7 @@ mod no_placeholder_is_left_in_the_code {
 
     /// Every refusal in one file, given its name and its text.
     fn what_is_wrong_with(a_file_name: &str, the_code: &str) -> Vec<String> {
-        let the_glossary = the_glossary_text();
+        let the_glossary = aisdlc_gates::reading_the_glossary::the_glossary_text();
         let messages = the_panic_messages_in(the_code);
         let mut found = Vec::new();
         for (the_line, one_line) in the_lines_of_code(the_code) {
@@ -1459,7 +1459,7 @@ mod no_placeholder_is_left_in_the_code {
         the_glossary: &str,
         messages: &[(usize, String)],
     ) -> Vec<String> {
-        let refused = the_words_the_glossary_refuses(the_glossary);
+        let refused = the_words_the_placeholder_gate_refuses(the_glossary);
         let the_message = messages
             .iter()
             .filter(|(on, _)| *on == the_line)
@@ -1477,11 +1477,16 @@ mod no_placeholder_is_left_in_the_code {
         .collect()
     }
 
-    /// The glossary's own text, read once by every function that needs it.
-    fn the_glossary_text() -> String {
-        reading_the_checkout::the_text_at(
-            &reading_the_checkout::the_root_of_the_checkout().join("docs/domain-glossary.md"),
-        )
+    /// The words the placeholder gate refuses, from the block the glossary holds them in.
+    ///
+    /// **Its own reader and not the vocabulary gate's.** Two gates read two blocks of the same
+    /// document, and one function named after the document would have been one function about
+    /// two lists — which is the divergence this repository paid for once already.
+    fn the_words_the_placeholder_gate_refuses(the_glossary: &str) -> Vec<String> {
+        aisdlc_gates::reading_the_glossary::the_block_containing(the_glossary, "APlaceholder")
+            .split_whitespace()
+            .map(std::string::ToString::to_string)
+            .collect()
     }
 
     #[test]
@@ -1566,25 +1571,9 @@ mod no_placeholder_is_left_in_the_code {
         );
 
         assert!(
-            the_words_the_glossary_refuses(&the_glossary).contains(&"TODO".to_string()),
+            the_words_the_placeholder_gate_refuses(&the_glossary).contains(&"TODO".to_string()),
             "the block the guard reads is the one the document writes, and a copy of it in the gate would be green the day the document changed"
         );
-    }
-
-    /// The words the glossary refuses, read out of the block it writes them in.
-    ///
-    /// **Out of the block and not out of a list here**, because a copy in the gate would be green
-    /// the day the document gained or lost a word — and this is the second time a rule in this
-    /// repository has been unwritten and the third time a gate has found it.
-    fn the_words_the_glossary_refuses(the_glossary: &str) -> Vec<String> {
-        let mut found: Vec<String> =
-            the_block_containing(the_glossary, "rather than the unfinished work")
-                .split_whitespace()
-                .map(str::to_string)
-                .collect();
-        found.sort();
-        found.dedup();
-        found
     }
 }
 
@@ -1609,7 +1598,7 @@ mod a_name_is_never_generic_vocabulary {
     use aisdlc_gates::reading_the_code::{every_source_file, the_lines_of_code};
     use aisdlc_gates::reading_the_glossary::{
         it_as_letters, the_glossary_text, the_last_word_of, the_word_under,
-        the_words_the_glossary_refuses,
+        the_words_the_vocabulary_gate_refuses,
     };
 
     /// Every refusal in one file, given its name and its text.
@@ -1627,7 +1616,7 @@ mod a_name_is_never_generic_vocabulary {
 
     /// The banned word this name ends on, unless the glossary blesses it here.
     fn the_banned_word_one_name_ends_on(one_name: &str) -> Option<String> {
-        let refused = the_words_the_glossary_refuses(&the_glossary_text());
+        let refused = the_words_the_vocabulary_gate_refuses(&the_glossary_text());
         let word = refused
             .iter()
             .find(|one| a_name_ends_on(&it_as_letters(one), one_name))?;
@@ -1818,14 +1807,13 @@ mod a_synonym_is_never_used {
     use aisdlc_gates::reading_the_checkout;
     use aisdlc_gates::reading_the_code::{every_source_file, the_lines_of_code};
     use aisdlc_gates::reading_the_glossary::{
-        it_as_letters, the_blessed_names, the_glossary_spelling_of, the_glossary_text,
-        the_refused_as_letters, the_words_of, the_words_refused_anywhere,
-        the_words_refused_only_as_whole_names,
+        it_as_letters, the_blessed_names, the_glossary_spelling_of, the_refused_as_letters,
+        the_words_of, the_words_refused_anywhere, the_words_refused_only_as_whole_names,
     };
 
     /// Every refusal in one file, given its name and its text.
     fn what_is_wrong_with(a_file_name: &str, the_code: &str) -> Vec<String> {
-        let the_glossary = the_glossary_text();
+        let the_glossary = aisdlc_gates::reading_the_glossary::the_glossary_text();
         let mut found = Vec::new();
         for one_name in the_names_the_vocabulary_is_looked_for_in(the_code) {
             found.extend(the_refusal_of_a_name_the_glossary_refuses(
@@ -1964,7 +1952,7 @@ mod a_synonym_is_never_used {
 
     #[test]
     fn the_glossary_was_read_and_not_assumed() {
-        let the_glossary = the_glossary_text();
+        let the_glossary = aisdlc_gates::reading_the_glossary::the_glossary_text();
         let the_refused_anywhere = the_words_refused_anywhere(&the_glossary);
         let the_whole_names_only = the_words_refused_only_as_whole_names(&the_glossary);
 
@@ -2394,12 +2382,29 @@ mod a_name_the_gates_share_has_one_implementation {
         found
     }
 
+    /// What a line that declares a function begins with, or nothing if it declares no
+    /// function.
+    ///
+    /// **A public one as well as a private one**, because a public name is the one two crates
+    /// can both reach for. The reader looked only for `fn ` at the start of a line, so
+    /// `pub fn the_glossary_text` in the library and `fn the_glossary_text` in a gate were two
+    /// implementations of one name and the rule found neither.
+    fn the_start_of_a_declaration(one_line: &str) -> Option<&str> {
+        let trimmed = one_line.trim();
+        for the_prefix in ["pub fn ", "pub(crate) fn ", "fn "] {
+            if let Some(the_rest) = trimmed.strip_prefix(the_prefix) {
+                return Some(the_rest);
+            }
+        }
+        None
+    }
+
     /// The name a line declares a function under, or nothing if it declares no function.
     ///
     /// **Through the scanner**, so a `fn` inside a string is a fixture and not a definition —
     /// a gate that cannot tell a definition from a quotation is a gate that counts the word.
     fn the_name_declared_on(one_line: &str) -> Option<String> {
-        let after_fn = one_line.trim().strip_prefix("fn ")?;
+        let after_fn = the_start_of_a_declaration(one_line)?;
         if !after_fn.contains('(') {
             return None;
         }
@@ -2520,6 +2525,160 @@ mod a_name_the_gates_share_has_one_implementation {
                     .to_string()
             ),
             "and it is refused with the count, because 'also duplicated somewhere' is not a place a reader can act on"
+        );
+    }
+}
+
+mod no_test_reads_an_environment_variable {
+    //! No test reads the environment at run time.
+    //!
+    //! **A test that needs a token means a boundary is wrong.** The suite has to be green with
+    //! no network, no API key, no Docker and no model, and a test that passes only when a
+    //! credential happens to be exported is a green tick that says nothing about the software.
+    //!
+    //! **The words come from the glossary rather than from here.** A gate carrying its own list
+    //! has a list that drifts from the sentence explaining it, and the two are read by different
+    //! people — the glossary by whoever is about to break the rule, the gate by nobody.
+
+    use aisdlc_gates::reading_the_checkout;
+    use aisdlc_gates::reading_the_code::{every_source_file, the_lines_of_code};
+    use aisdlc_gates::reading_the_glossary::the_block_containing;
+
+    /// The words the glossary refuses, and the glossary is where they are written down.
+    fn the_environment_reads_the_glossary_refuses() -> Vec<String> {
+        let the_glossary = aisdlc_gates::reading_the_glossary::the_glossary_text();
+        the_block_containing(&the_glossary, "ARuntimeReadOfTheEnvironment")
+            .split_whitespace()
+            .map(std::string::ToString::to_string)
+            .collect()
+    }
+
+    /// The refusal for one line, or nothing when the line reaches for nothing.
+    ///
+    /// **A word with a bracket after it and not the bare word.** `remove_var` and `var` are
+    /// both refused and `var` is a prefix of nothing here, but `temp_dir` is a suffix of
+    /// `std::env::temp_dir` and the call is `env::temp_dir()` — so the reader looks for the
+    /// word followed by a bracket, and **a line naming `env!` or `option_env!` has no bracket
+    /// after `env`** and is not refused, which is the exemption the glossary insists is
+    /// load-bearing rather than theoretical.
+    fn what_is_wrong_with(one_line: &str, the_refused: &[String]) -> Option<String> {
+        for a_word in the_refused {
+            if the_line_calls(one_line, a_word) {
+                return Some(format!("reads the environment at run time: {a_word}"));
+            }
+        }
+        None
+    }
+
+    /// Whether a line calls the function a word names.
+    fn the_line_calls(one_line: &str, a_word: &str) -> bool {
+        let mut found = false;
+        for (_, one_line_of_code) in the_lines_of_code(one_line) {
+            if one_line_of_code.contains(&format!("{a_word}(")) {
+                found = true;
+            }
+        }
+        found
+    }
+
+    /// Every refusal in one file's tests, as `(its line, the reason)`.
+    fn what_is_wrong_in(the_code: &str, the_refused: &[String]) -> Vec<String> {
+        let mut found = Vec::new();
+        for (a_line, one_line) in the_lines_of_code(the_code) {
+            if let Some(why) = what_is_wrong_with(&one_line, the_refused) {
+                found.push(format!("line {a_line} {why}"));
+            }
+        }
+        found
+    }
+
+    /// The files the rule reads: the gates' own and the domain's tests.
+    fn the_test_files() -> Vec<std::path::PathBuf> {
+        let the_root = reading_the_checkout::the_root_of_the_checkout();
+        every_source_file()
+            .into_iter()
+            .filter(|a_file| a_file.starts_with(the_root.join("tests")))
+            .filter(|a_file| a_file.starts_with(the_root.join("crates")))
+            .chain(
+                every_source_file()
+                    .into_iter()
+                    .filter(|a_file| a_file.parent() == Some(the_root.join("tests").as_path())),
+            )
+            .collect()
+    }
+
+    #[test]
+    fn no_test_reads_the_environment() {
+        let the_refused = the_environment_reads_the_glossary_refuses();
+        let mut found = Vec::new();
+        for a_file in the_test_files() {
+            let the_text = reading_the_checkout::the_text_at(&a_file);
+            let refusals = what_is_wrong_in(&the_text, &the_refused);
+            found.extend(
+                refusals
+                    .into_iter()
+                    .map(|why| format!("{} {why}", a_file.display())),
+            );
+        }
+
+        assert!(
+            found.is_empty(),
+            "the suite must be green with no credential, and a test that needs one is a boundary in the wrong place: {found:?}"
+        );
+    }
+
+    #[test]
+    fn a_line_reaching_for_a_variable_is_refused() {
+        let refused = vec!["var".to_string()];
+
+        assert_eq!(
+            what_is_wrong_with("let the_token = std::env::var(\"GITHUB_TOKEN\");", &refused),
+            Some("reads the environment at run time: var".to_string()),
+            "and it names the call, because 'somewhere in a line of the tests' is not a place a reader can act on"
+        );
+    }
+
+    #[test]
+    fn a_line_reaching_for_a_temporary_directory_is_refused() {
+        let refused = vec!["temp_dir".to_string()];
+
+        assert_eq!(
+            what_is_wrong_with("let where = std::env::temp_dir();", &refused),
+            Some("reads the environment at run time: temp_dir".to_string()),
+            "although it carries no credential at all, because the rule is drawn at the reach rather than at the danger"
+        );
+    }
+
+    #[test]
+    fn a_line_expanding_a_macro_at_build_time_is_accepted() {
+        let refused = vec!["var".to_string(), "temp_dir".to_string()];
+
+        assert_eq!(
+            what_is_wrong_with("let the_root = env!(\"CARGO_MANIFEST_DIR\");", &refused),
+            None,
+            "`env!` and `option_env!` are macros the compiler expands before the test runs, and seven gates reach the checkout through `CARGO_MANIFEST_DIR`"
+        );
+    }
+
+    #[test]
+    fn a_line_reading_the_current_directory_is_accepted() {
+        let refused = the_environment_reads_the_glossary_refuses();
+
+        assert_eq!(
+            what_is_wrong_with("let here = std::env::current_dir();", &refused),
+            None,
+            "it is a run-time read and it is not refused: it carries no credential, and a list of every read in `std::env` is a list to keep in step with a standard library"
+        );
+    }
+
+    #[test]
+    fn the_glossary_names_the_six_reads() {
+        let refused = the_environment_reads_the_glossary_refuses();
+
+        assert_eq!(
+            refused,
+            vec!["var", "var_os", "vars", "set_var", "remove_var", "temp_dir"],
+            "six words in the glossary's own block, and a reader that found none would let every test reach for a credential"
         );
     }
 }

@@ -235,7 +235,7 @@ pub fn the_words_refused_only_as_whole_names(the_glossary: &str) -> Vec<String> 
 /// the first word of the list, so anchoring on it found the block's own contents and then
 /// read on to the next fence in the document — the gate compared every name in the repository
 /// against half of `docs/domain-glossary.md` and reported "the" and "of" as banned words.
-pub fn the_words_the_glossary_refuses(the_glossary: &str) -> Vec<String> {
+pub fn the_words_the_vocabulary_gate_refuses(the_glossary: &str) -> Vec<String> {
     the_block_containing(the_glossary, "is genuinely the right idea")
         .split_whitespace()
         .filter(|word| !word.starts_with('`') && *word != "<Domain>")
