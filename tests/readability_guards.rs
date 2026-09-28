@@ -2803,3 +2803,35 @@ mod an_ignored_test_says_why_it_is_ignored {
         );
     }
 }
+
+mod the_core_never_names_a_trait_object {
+    //! Nothing in the core names a trait object.
+    //!
+    //! **A `dyn` is a promise that the concrete type behind a value can be replaced, and in the
+    //! core that promise buys nothing.** The domain's types are the specification: a work item
+    //! is a work item, a stage is a stage, and a value that is "some stage" is a value nobody
+    //! can say anything definite about. The rule is drawn at the word rather than at the
+    //! dispatch, because a list of the dispatches this repository does not need is a list
+    //! somebody has to keep in step with a language.
+    //!
+    //! **The core is the domain and the gates.** Both are where a decision has to be visible in
+    //! the source: a domain rule reads its input as the domain type it means, and a gate reads a
+    //! file as a file.
+
+    /// The refusal for one line, or nothing when the line names no trait object.
+    fn what_is_wrong_with(one_line: &str) -> Option<String> {
+        let _the_line_nobody_read = one_line;
+        None
+    }
+
+    #[test]
+    fn a_line_naming_a_trait_object_is_refused() {
+        let a_trait_object = "    let a_stage: Box<dyn Stage> = Box::new(the_stage);";
+
+        assert_eq!(
+            what_is_wrong_with(a_trait_object),
+            Some("names a trait object: dyn".to_string()),
+            "and it quotes the word, because 'somewhere in the core' is not a place a reader can act on"
+        );
+    }
+}
