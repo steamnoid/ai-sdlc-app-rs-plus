@@ -48,11 +48,21 @@ feat(<scope>): <the behaviour that now holds>
 ```
 
 The RED commit is expected to leave the suite red and is paired with the very next commit.
-A GREEN with no preceding RED on the branch is a RULE 0 violation, and
-`every_change_is_a_red_then_a_green` reads the history to say so.
+A GREEN with no preceding RED on the branch is a RULE 0 violation, and **nothing checks the
+history**: `every_change_is_a_red_then_a_green` was in the gate table and is not a rule any more,
+because a rule that reads the commit log to police the process that writes the log is a rule about
+the shape of the work and not about the work. **The pairing is checked by the reviewer reading
+the two commits, and by a branch that does not compile between them.**
 
 Stage the files the cycle is about, not everything. `git add -A` with a cycle still open
 sweeps the *next* cycle's files into this one.
+
+**A commit is an index, not an essay.** The subject says what changed; the body says what now
+holds and what the rule found, and nothing else. **This repository ran 38 commits and 22 072 words
+of commit message over 9 126 lines of code — 2.4 words of prose per line of code**, written by a
+process that had already stopped measuring whether the work existed. Anything longer than that
+belongs in the glossary, where a reader goes looking for the reason, or in a `///` above the code
+it explains, where a reader going *to* that code will actually meet it.
 
 ## 0.3 Forbidden
 
