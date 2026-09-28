@@ -39,3 +39,21 @@ pub fn the_framework_picks_the_work_up(
         Some(the_agent_who_will_do_it),
     )
 }
+
+/// The agent takes the work item into its own hands.
+///
+/// **The move is refused for a second agent, and nothing here checks.** `transition` reads the
+/// agent already holding the work item and the one named in the move, and `held_by` is the door
+/// that refuses a substitution — so this passes both and lets the domain answer. A framework
+/// that compared the two itself would be a second place where the rule lives, and the rule
+/// already has a home.
+pub fn the_agent_takes_the_work_item_into_its_own_hands(
+    a_work_item: WorkItem,
+    the_agent_taking_it: AgentIdentifier,
+) -> Result<WorkItem, StateMachineError> {
+    transition(
+        a_work_item,
+        Stage::InProgressByAgent,
+        Some(the_agent_taking_it),
+    )
+}
