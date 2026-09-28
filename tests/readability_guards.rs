@@ -2477,6 +2477,22 @@ mod a_name_the_gates_share_has_one_implementation {
     ];
 
     #[test]
+    fn the_gate_reads_the_domain_and_not_only_itself() {
+        let the_files = the_files_the_gates_are_written_in();
+
+        let reads_the_domain = the_files.iter().any(|a_file| {
+            a_file
+                .to_string_lossy()
+                .contains("crates/domain/src/stage.rs")
+        });
+
+        assert!(
+            reads_the_domain,
+            "**a duplicate written in the domain is invisible to this gate**, and one was: a `Stage::as_str` added beside the `Display` that already named every stage, caught by the drift gate and not by the rule whose whole subject is a name having one implementation. The rule is about names; the domain is where the names are."
+        );
+    }
+
+    #[test]
     fn no_name_in_the_gates_is_written_twice() {
         let refusals = the_names_written_more_than_once();
 
