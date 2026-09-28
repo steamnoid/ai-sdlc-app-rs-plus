@@ -2437,24 +2437,34 @@ mod a_name_the_gates_share_has_one_implementation {
             .collect()
     }
 
-    /// The files the gates are written in, and not the whole checkout.
+    /// The files this rule reads: the gates and the shared library, and no crate.
     ///
-    /// **The domain writes `fmt` and `try_from` and a rule about the gates must not refuse
-    /// them.** A first version read every `.rs` in the checkout and reported fourteen names,
-    /// five of them the domain's own, and a rule that measures the wrong thing is worse than no
-    /// rule at all, because it is believed.
+    /// **Widened to `crates/` once, and reverted, with the numbers.** The reason it was tried
+    /// is worth keeping: a `Stage::as_str` was written in the domain beside the `Display` that
+    /// already named every stage, and **the gate whose entire subject is a name having one
+    /// implementation did not see it.** `the_specification_and_the_code_have_not_drifted_apart`
+    /// did, because the six stage names were written a second time in the one file it reads
+    /// them from.
+    ///
+    /// **Widened, it found nineteen names and not one of them was a real duplicate.** Nine were
+    /// `fmt` and `try_from` — one implementation of a trait per type, which is what implementing
+    /// a trait *is*. Seven were test helpers written per file, like `a_work_item`. The rest were
+    /// methods on two different types: `because`, `answering`, `standing_at`. **Silencing
+    /// nineteen legitimate names with nineteen exceptions is a list that only rots**, and a rule
+    /// that reports nothing real has stopped being a rule.
+    ///
+    /// **So the gate is asked a narrower question on purpose**, and the name that has two
+    /// implementations in a crate is caught by whichever rule owns the thing both copies
+    /// describe — the drift gate, for a name the specification already lists.
     fn the_files_the_gates_are_written_in() -> Vec<PathBuf> {
         let the_root = reading_the_checkout::the_root_of_the_checkout();
-        let mut found = vec![
-            the_root.join("tests").join("readability_guards.rs"),
-            the_root.join("tests").join("documentation_guards.rs"),
-        ];
-        found.extend(
-            every_source_file()
-                .into_iter()
-                .filter(|a_file| a_file.starts_with(the_root.join("src"))),
-        );
-        found
+        let the_gates = the_root.join("tests");
+        every_source_file()
+            .into_iter()
+            .filter(|a_file| {
+                a_file.starts_with(&the_gates) || a_file.starts_with(the_root.join("src"))
+            })
+            .collect()
     }
 
     /// Whether a name is one each gate may write for itself, because it judges its own rule.
@@ -2475,6 +2485,19 @@ mod a_name_the_gates_share_has_one_implementation {
         "new",
         "of_one_line",
     ];
+
+    #[test]
+    fn a_name_the_gates_hold_together_is_the_one_this_rule_measures() {
+        let the_files = the_files_the_gates_are_written_in();
+        let reads_the_domain = the_files
+            .iter()
+            .any(|it| it.to_string_lossy().contains("crates/"));
+
+        assert!(
+            !reads_the_domain,
+            "**nineteen names, none of them a real duplicate** — nine were a trait implemented once per type, seven were per-file test helpers, and silencing them all would be a list that only rots. A name with two implementations inside a crate is caught by the rule that owns the thing both copies describe."
+        );
+    }
 
     #[test]
     fn no_name_in_the_gates_is_written_twice() {
