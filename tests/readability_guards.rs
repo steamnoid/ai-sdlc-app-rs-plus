@@ -2803,3 +2803,123 @@ mod an_ignored_test_says_why_it_is_ignored {
         );
     }
 }
+
+mod the_core_never_names_a_trait_object {
+    //! Nothing in the core names a trait object.
+    //!
+    //! **A `dyn` is a promise that the concrete type behind a value can be replaced, and in the
+    //! core that promise buys nothing.** The domain's types are the specification: a work item
+    //! is a work item, a stage is a stage, and a value that is "some stage" is a value nobody
+    //! can say anything definite about. The rule is drawn at the word rather than at the
+    //! dispatch, because a list of the dispatches this repository does not need is a list
+    //! somebody has to keep in step with a language.
+    //!
+    //! **The core is the domain and the gates.** Both are where a decision has to be visible in
+    //! the source: a domain rule reads its input as the domain type it means, and a gate reads a
+    //! file as a file.
+
+    use aisdlc_gates::reading_the_checkout;
+    use aisdlc_gates::reading_the_code::{every_source_file, the_lines_of_code};
+
+    /// The refusal for one line, or nothing when the line names no trait object.
+    ///
+    /// **`dyn` as a whole word and not a substring.** `dynamic` is a word and `dyn` is not in
+    /// it, and a reader drawing the rule at the three letters would refuse a variable named
+    /// after a thing that is dynamic — which is a word, not a trait object.
+    fn what_is_wrong_with(one_line: &str) -> Option<String> {
+        let names_one = the_words_in(one_line);
+        if !names_one.iter().any(|one| one == "dyn") {
+            return None;
+        }
+        Some("names a trait object: dyn".to_string())
+    }
+
+    /// The words one line of code carries.
+    ///
+    /// **Split on every character that is not part of a name and not on the whitespace.** A
+    /// reader that split on whitespace saw `Box<dyn` as one word, found no `dyn` in it, and
+    /// accepted the very line the rule is about — **a rule that cannot see the word it refuses
+    /// is a rule that has not been shown its own subject.**
+    fn the_words_in(one_line: &str) -> Vec<String> {
+        one_line
+            .split(|c: char| !c.is_alphanumeric() && c != '_')
+            .filter(|one| !one.is_empty())
+            .map(ToString::to_string)
+            .collect()
+    }
+
+    /// Every refusal in one file, with the line it stands on.
+    fn what_is_wrong_in_a_core_file(the_code: &str) -> Vec<String> {
+        let mut found = Vec::new();
+        for (a_line, one_line) in the_lines_of_code(the_code) {
+            let why = what_is_wrong_with(&one_line);
+            found.extend(why.map(|one| format!("line {a_line} {one}")));
+        }
+        found
+    }
+
+    /// The files that are the core: the domain and the gates.
+    fn the_files_that_are_the_core() -> Vec<std::path::PathBuf> {
+        let the_root = reading_the_checkout::the_root_of_the_checkout();
+        let the_domain = the_root.join("crates").join("domain");
+        let mut found = every_source_file()
+            .into_iter()
+            .filter(|a_file| a_file.starts_with(&the_domain))
+            .collect::<Vec<std::path::PathBuf>>();
+        found.push(the_root.join("tests").join("readability_guards.rs"));
+        found.push(the_root.join("tests").join("documentation_guards.rs"));
+        found
+    }
+
+    #[test]
+    fn a_line_naming_a_trait_object_is_refused() {
+        let a_trait_object = "    let a_stage: Box<dyn Stage> = Box::new(the_stage);";
+
+        assert_eq!(
+            what_is_wrong_with(a_trait_object),
+            Some("names a trait object: dyn".to_string()),
+            "and it quotes the word, because 'somewhere in the core' is not a place a reader can act on"
+        );
+    }
+
+    #[test]
+    fn a_line_naming_the_concrete_type_is_accepted() {
+        let a_concrete_type = "    let a_stage: Stage = Stage::Ready;";
+
+        assert_eq!(
+            what_is_wrong_with(a_concrete_type),
+            None,
+            "a stage is a stage, and a value that is exactly its own type is a value a reader can say something definite about"
+        );
+    }
+
+    #[test]
+    fn a_line_naming_a_word_that_merely_starts_with_those_letters_is_accepted() {
+        let a_word_about_motion = "    let the_dynamic_one = measure();";
+
+        assert_eq!(
+            what_is_wrong_with(a_word_about_motion),
+            None,
+            "`dynamic` is a word and `dyn` is not in it, and a reader drawing the rule at the three letters would refuse a name"
+        );
+    }
+
+    #[test]
+    fn no_trait_object_is_named_anywhere_in_the_core() {
+        let mut found = Vec::new();
+        for a_file in the_files_that_are_the_core() {
+            let the_text = reading_the_checkout::the_text_at(&a_file);
+            let refusals = what_is_wrong_in_a_core_file(&the_text);
+            found.extend(
+                refusals
+                    .into_iter()
+                    .map(|why| format!("{} {why}", a_file.display())),
+            );
+        }
+
+        assert!(
+            found.is_empty(),
+            "the domain's types are the specification, and a value that is some stage is a value nobody can say anything definite about: {found:?}"
+        );
+    }
+}
