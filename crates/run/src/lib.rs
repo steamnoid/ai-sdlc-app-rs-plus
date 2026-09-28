@@ -14,8 +14,11 @@
 //! the type and into a line of code.
 
 pub mod a_path_in_the_project;
+pub mod a_program_we_run;
 pub mod the_path_inside_the_project;
 pub mod the_project_on_disk;
+pub mod the_repository_to_clone_into;
+pub mod what_we_tell_a_program_to_do;
 
 pub use the_path_inside_the_project::ThePathInsideTheProject;
 
