@@ -13,15 +13,19 @@
 //! every comment in it is one it would have refused, and the walk that tells a `///` from a
 //! `//` is the walk this repository reads itself with.
 
-use aisdlc_gates::a_stretch_of_the_file::WhatIsWrittenThere;
+use aisdlc_gates::a_stretch_of_the_file::{AStretchOfTheFile, WhatIsWrittenThere};
 use aisdlc_gates::reading_the_checkout;
 use aisdlc_gates::scanning::HowTheFileIsWritten;
 
 /// Every source file's refusals, given its name and its text.
 fn what_is_wrong_with(a_name: &str, the_code: &str) -> Vec<String> {
-    let _the_name_nobody_read = a_name;
-    let _the_code_nobody_read = the_code;
-    Vec::new()
+    let mut found = Vec::new();
+    for stretch in HowTheFileIsWritten::of(the_code).stretches() {
+        for line in stretch.the_lines_that_only_comment() {
+            found.push(format!("{a_name} line {line} carries a comment"));
+        }
+    }
+    found
 }
 
 /// Every `.rs` file in this checkout, skipping the ones a build leaves behind.
@@ -87,8 +91,11 @@ fn a_block_comment_is_refused_and_named() {
 
     assert_eq!(
         what_is_wrong_with("a_file.rs", what_it_said),
-        vec!["a_file.rs line 1 carries a comment".to_string()],
-        "a block comment is refused for the same reason and no softer one, and the line it starts on is the line a reader looks at first"
+        vec![
+            "a_file.rs line 1 carries a comment".to_string(),
+            "a_file.rs line 2 carries a comment".to_string(),
+        ],
+        "a block comment is refused for the same reason and no softer one, and both of its lines are named because both are ones a reader has to look at"
     );
 }
 
@@ -135,7 +142,7 @@ fn the_walk_was_actually_read() {
     let found: Vec<usize> = HowTheFileIsWritten::of("// a comment\n")
         .stretches()
         .iter()
-        .flat_map(|it| it.the_lines_that_only_comment())
+        .flat_map(AStretchOfTheFile::the_lines_that_only_comment)
         .collect();
 
     assert_eq!(
