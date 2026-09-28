@@ -486,7 +486,15 @@ quoting the input back, because a name this system silently tidies is a name a l
 **The same sentence keeps `WorkItemId` from trimming**, and one sentence serving two types is a
 sentence that was worth writing once.
 
-**`CloningTheRepositoryFailed`** — four ways, and the last two are this system's own
+**`WhichWayItFailed`** and **`WhyCloningTheRepositoryFailed`** — the four ways, and the
+refusal in one of them carrying whatever git said. **Four and not three**, and the fourth was
+named here only inside the second one's description, as the thing a caller has to tell apart
+from *no such repository* and from *git is not installed*: **`GitIsUnhappy`**, which is git
+refusing for a reason this system does not name. **A closed set of four and not a free
+string**, because a refusal whose name is a `String` is a refusal the caller cannot match
+against anything.
+
+**`WhyCloningTheRepositoryFailed`** — four ways, and the last two are this system's own
 findings. *The destination already holds something* is a refusal on principle: a run
 resumes, the directory is derived, and **a refusal that arrives after the damage is not a
 refusal**. *The repository is not there* quotes git's own words inside ours, because the
