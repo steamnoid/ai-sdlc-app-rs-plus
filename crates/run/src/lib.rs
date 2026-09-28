@@ -269,3 +269,12 @@ pub fn the_gate_records_what_the_human_decided_at(
     Approval::what_the_ruling_left_behind(&a_ruling)
         .ok_or(NotStandingAtTheGate::because(Stage::AwaitingHumanApproval))
 }
+
+/// A run closes a work item, holding the record of somebody's ruling.
+pub fn the_run_closes_the_work_item(
+    a_work_item: WorkItem,
+    _the_record_of_a_ruling: &Approval,
+) -> Result<WorkItem, StateMachineError> {
+    let _the_stage_it_must_reach = Stage::Done;
+    Ok(a_work_item)
+}
