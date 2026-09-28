@@ -732,6 +732,15 @@ allowlist is a list of the holes this repository has decided to live with, and t
 decided not to. A placeholder is an unfinished cycle, and an unfinished cycle is already
 visible in the history, so a placeholder gives it a second home in a line of code.
 
+**The words, as a block and not as a paragraph, because the guard reads the block and this
+paragraph says why it is short.** `later`, `for now` and `temporary` are ordinary English and
+this repository's own prose uses two of them; a gate that refused them inside a panic message
+would be refusing the language rather than the unfinished work.
+
+```text
+TODO   FIXME   XXX   HACK   not done
+```
+
 **A refused word in a string is accepted and in a panic message is refused, and that is the
 whole difficulty.** A `panic!` is what a run does when it cannot go on, so a message saying
 the work was not done is that run announcing an unfinished cycle from inside code that looks

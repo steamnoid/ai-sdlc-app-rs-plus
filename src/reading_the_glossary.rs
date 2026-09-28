@@ -56,18 +56,30 @@ pub fn the_words_of(one_name: &str) -> Vec<String> {
 /// **The word and not a line prefix.** A reader that took the lines starting with `Manager`
 /// missed a word appended on a line of its own — and a word appended on its own line is
 /// exactly how this glossary's list grew.
+///
+/// **Between the fences and not up to the first one.** Three readers in this repository made
+/// the same mistake: they stopped at the opening fence and returned nothing, having found the
+/// block they were looking for and never looked inside it. One of them reported an empty list
+/// rather than an error, so the gate built on it refused nothing and said so in a green run.
 pub fn the_block_containing(the_glossary: &str, the_word: &str) -> String {
-    let mut collecting = false;
+    let mut looking = false;
+    let mut inside = false;
     let mut the_block = Vec::new();
     for one_line in the_glossary.lines() {
-        if !collecting {
-            collecting = one_line.contains(the_word);
+        if !looking {
+            looking = one_line.contains(the_word);
             continue;
         }
-        if one_line.trim_start().starts_with("```") {
+        if !inside && one_line.trim_start().starts_with("```") {
+            inside = true;
+            continue;
+        }
+        if inside && one_line.trim_start().starts_with("```") {
             break;
         }
-        the_block.push(one_line);
+        if inside {
+            the_block.push(one_line);
+        }
     }
     the_block.join(" ")
 }
@@ -200,7 +212,7 @@ pub fn the_words_refused_only_as_whole_names(the_glossary: &str) -> Vec<String> 
     let mut inside = false;
     for one_line in the_glossary.lines() {
         if !looking {
-            looking = one_line.contains("ordinary English");
+            looking = one_line.contains("Six of the words in the");
             continue;
         }
         if !inside && one_line.trim_start().starts_with("```") {
@@ -218,8 +230,13 @@ pub fn the_words_refused_only_as_whole_names(the_glossary: &str) -> Vec<String> 
 }
 
 /// The words the generic-vocabulary gate refuses, from the block that holds them.
+///
+/// **The anchor is the paragraph before the block and not a word inside it.** `Manager` is
+/// the first word of the list, so anchoring on it found the block's own contents and then
+/// read on to the next fence in the document — the gate compared every name in the repository
+/// against half of `docs/domain-glossary.md` and reported "the" and "of" as banned words.
 pub fn the_words_the_glossary_refuses(the_glossary: &str) -> Vec<String> {
-    the_block_containing(the_glossary, "Manager")
+    the_block_containing(the_glossary, "is genuinely the right idea")
         .split_whitespace()
         .filter(|word| !word.starts_with('`') && *word != "<Domain>")
         .map(str::to_string)
