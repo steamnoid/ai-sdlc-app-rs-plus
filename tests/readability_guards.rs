@@ -2682,3 +2682,34 @@ mod no_test_reads_an_environment_variable {
         );
     }
 }
+
+mod an_ignored_test_says_why_it_is_ignored {
+    //! Every ignored test says why it is ignored.
+    //!
+    //! **A skipped test is a test that is not run, and a skipped test nobody can explain is a
+    //! hole in the suite with a green tick over it.** The suite has to be green with no
+    //! network, no API key, no Docker and no model, so a test that needs one of those cannot
+    //! run by default — and the way to say so is `#[ignore = "why"]`, which is code.
+    //!
+    //! **The reason goes in the attribute and not in a comment beside it.** A comment saying
+    //! why a test is ignored would be refused by the rule that this repository leaves no
+    //! comments — so the only place a reason can live is a place the compiler reads, and a
+    //! reason in the source is a reason a reader cannot lose by deleting a line above it.
+
+    /// The refusal for one ignored test, or nothing when it says why.
+    fn what_is_wrong_with(one_line: &str) -> Option<String> {
+        let _the_line_nobody_read = one_line;
+        None
+    }
+
+    #[test]
+    fn an_ignored_test_saying_nothing_is_refused() {
+        let a_bare_ignore = "    #[ignore]";
+
+        assert_eq!(
+            what_is_wrong_with(a_bare_ignore),
+            Some("is ignored and says no reason".to_string()),
+            "and it quotes nothing, because there is nothing to quote — which is the finding"
+        );
+    }
+}
