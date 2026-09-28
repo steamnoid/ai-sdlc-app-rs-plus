@@ -265,3 +265,35 @@ pub fn the_blessed_names(the_glossary: &str) -> Vec<String> {
     found.dedup();
     found
 }
+
+/// The files the rule of three hundred lines of code does not apply to.
+///
+/// **Read from the glossary and not named in the gate**, because a gate that carries its own
+/// exceptions has exceptions nobody reads, and this repository declares every other exemption
+/// in the one place a reader goes looking for them.
+pub fn the_files_the_length_gate_does_not_read(the_glossary: &str) -> Vec<String> {
+    the_first_column_of_the_table_under(the_glossary, "AFileTheLengthGateDoesNotRead")
+}
+
+/// The first column of the table under a heading, without its header and separator rows.
+fn the_first_column_of_the_table_under(the_glossary: &str, the_heading: &str) -> Vec<String> {
+    let mut found = Vec::new();
+    let mut inside = false;
+    for one_line in the_glossary.lines() {
+        if one_line.contains(the_heading) {
+            inside = true;
+            continue;
+        }
+        if !inside || !one_line.trim_start().starts_with('|') {
+            continue;
+        }
+        let Some(one_cell) = one_line.split('|').nth(1) else {
+            continue;
+        };
+        let a_name = one_cell.trim().trim_matches('`');
+        if a_name.to_lowercase().ends_with(".rs") {
+            found.push(a_name.to_string());
+        }
+    }
+    found
+}
