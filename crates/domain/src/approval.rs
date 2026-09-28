@@ -9,6 +9,13 @@
 
 use std::fmt;
 
+/// The prefix an agent is named with, and the only one that may not rule.
+///
+/// **`autopilot:` is a different namespace on purpose.** A policy sharing this one would be
+/// refused along with the agents it is defined in contrast to, and an autopilot that may
+/// approve every gate could then not rule at all.
+const THE_PREFIX_AN_AGENT_IS_NAMED_WITH: &str = "aisdlc-";
+
 /// Which artifact a decision was about, and never a bare string.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct WhichArtifact(pub String);
@@ -173,7 +180,9 @@ impl ApprovalDecision {
         approved: bool,
         decided_by: WhoDecided,
     ) -> Result<Self, AgentDecidedError> {
-        let _the_decider_was_not_asked_about = &decided_by;
+        if decided_by.0.starts_with(THE_PREFIX_AN_AGENT_IS_NAMED_WITH) {
+            return Err(AgentDecidedError(decided_by.0));
+        }
         Ok(ApprovalDecision {
             work_item_id,
             which_artifact,
@@ -187,7 +196,9 @@ impl ApprovalDecision {
 impl Approval {
     /// What an affirmative ruling left behind, and nothing at all after a refusal.
     pub fn what_the_ruling_left_behind(a_ruling: &ApprovalDecision) -> Option<Self> {
-        let _the_ruling_was_not_read = a_ruling;
+        if !a_ruling.approved {
+            return None;
+        }
         Some(Approval {
             work_item_id: a_ruling.work_item_id.clone(),
             which_artifact: a_ruling.which_artifact.clone(),

@@ -114,8 +114,7 @@ fn a_person_and_a_policy_may_both_rule() {
         assert_eq!(
             ruling.decided_by.to_string(),
             who.to_string(),
-            "{} ruled and the record says so verbatim: a person and a policy are both real deciders",
-            who
+            "{who} ruled and the record says so verbatim: a person and a policy are both real deciders"
         );
     }
 }
