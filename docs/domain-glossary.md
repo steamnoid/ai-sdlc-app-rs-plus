@@ -753,6 +753,16 @@ time**: `var`, `var_os`, `vars`, `set_var`, `remove_var`, `temp_dir`. Refused, b
 suite must be green with no network, no API key, no Docker and no model, and a test that
 needs a token means a boundary is wrong.
 
+**The words, as a block and not as a paragraph, because the guard reads the block and this
+paragraph says why it is a list of six.** Each one is a way a test can come to depend on
+something the machine happens to have, and the list is drawn at the reach rather than at the
+danger — so it grows only when somebody adds a way of reaching, which is the one thing they
+have to know in order to add one.
+
+```text
+var   var_os   vars   set_var   remove_var   temp_dir
+```
+
 **`env!` and `option_env!` are not one of these, and the exemption is load-bearing rather
 than theoretical.** They are macros the compiler expands at build time. `CARGO_MANIFEST_DIR`
 is set by cargo, carries no credential, and **seven gates in this repository reach the
