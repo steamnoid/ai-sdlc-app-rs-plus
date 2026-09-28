@@ -9,17 +9,17 @@
 //! exists to answer.
 
 use aisdlc_domain::repository::Repository;
-use aisdlc_domain::the_addresses_of_a_repository::{
+use aisdlc_domain::the_addresses::{
     Addresses, the_address_of, the_clone_url_of, the_push_address_of, the_read_address_of,
 };
 
-fn the_repository() -> Repository {
+fn the_addressed() -> Repository {
     Repository::try_from("steamnoid/ai-sdlc-app-rs-plus").expect("two halves")
 }
 
 #[test]
 fn the_address_a_person_reads_has_no_git_on_the_end() {
-    let the_address = the_address_of(&the_repository());
+    let the_address = the_address_of(&the_addressed());
 
     assert_eq!(
         the_address, "https://github.com/steamnoid/ai-sdlc-app-rs-plus",
@@ -29,7 +29,7 @@ fn the_address_a_person_reads_has_no_git_on_the_end() {
 
 #[test]
 fn the_address_git_fetches_from_is_the_same_string_with_git_on_the_end() {
-    let the_address = the_clone_url_of(&the_repository());
+    let the_address = the_clone_url_of(&the_addressed());
 
     assert_eq!(
         the_address, "https://github.com/steamnoid/ai-sdlc-app-rs-plus.git",
@@ -39,7 +39,7 @@ fn the_address_git_fetches_from_is_the_same_string_with_git_on_the_end() {
 
 #[test]
 fn the_address_written_to_is_a_different_place_again() {
-    let the_address = the_push_address_of(&the_repository());
+    let the_address = the_push_address_of(&the_addressed());
 
     assert_eq!(
         the_address, "git@github.com:steamnoid/ai-sdlc-app-rs-plus.git",
@@ -49,9 +49,8 @@ fn the_address_written_to_is_a_different_place_again() {
 
 #[test]
 fn the_read_address_carries_the_ref_it_was_given() {
-    let at_a_pull_request =
-        the_read_address_of(&the_repository(), "refs/pull/42/head", "README.md");
-    let at_the_default = the_read_address_of(&the_repository(), "main", "README.md");
+    let at_a_pull_request = the_read_address_of(&the_addressed(), "refs/pull/42/head", "README.md");
+    let at_the_default = the_read_address_of(&the_addressed(), "main", "README.md");
 
     assert_eq!(
         at_a_pull_request,
@@ -66,16 +65,16 @@ fn the_read_address_carries_the_ref_it_was_given() {
 
 #[test]
 fn a_clone_has_two_addresses_and_only_one_of_them_is_writable() {
-    let the_addresses = Addresses::of(&the_repository());
+    let the_addresses = Addresses::of(&the_addressed());
 
     assert_eq!(
         the_addresses.fetch_from,
-        the_clone_url_of(&the_repository()),
+        the_clone_url_of(&the_addressed()),
         "**`git clone` sets `origin` and nothing else**"
     );
     assert_eq!(
         the_addresses.origin_of_the_code,
-        the_address_of(&the_repository()),
+        the_address_of(&the_addressed()),
         "**so without the second, a reader running `git remote -v` months later cannot tell a fork from a mystery** — and this system's own copy is a fork"
     );
 }
