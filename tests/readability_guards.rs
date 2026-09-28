@@ -2682,3 +2682,124 @@ mod no_test_reads_an_environment_variable {
         );
     }
 }
+
+mod an_ignored_test_says_why_it_is_ignored {
+    //! Every ignored test says why it is ignored.
+    //!
+    //! **A skipped test is a test that is not run, and a skipped test nobody can explain is a
+    //! hole in the suite with a green tick over it.** The suite has to be green with no
+    //! network, no API key, no Docker and no model, so a test that needs one of those cannot
+    //! run by default — and the way to say so is `#[ignore = "why"]`, which is code.
+    //!
+    //! **The reason goes in the attribute and not in a comment beside it.** A comment saying
+    //! why a test is ignored would be refused by the rule that this repository leaves no
+    //! comments — so the only place a reason can live is a place the compiler reads, and a
+    //! reason in the source is a reason a reader cannot lose by deleting a line above it.
+
+    use aisdlc_gates::reading_the_checkout;
+    use aisdlc_gates::reading_the_code::{every_source_file, the_lines_of_code};
+
+    /// The refusal for one ignored test, or nothing when it says why.
+    ///
+    /// **`#[ignore = "…"]` and not a bare `#[ignore]`.** The whole form is in the code, so a
+    /// reader who deletes the comment above the test has not lost the reason, and a reader
+    /// who greps for `#[ignore` finds the reason next to the skip rather than a line above it.
+    fn what_is_wrong_with(one_line: &str) -> Option<String> {
+        let the_attribute = the_attribute_on(one_line);
+        if !the_attribute.starts_with("ignore") {
+            return None;
+        }
+        if the_attribute.contains('=') {
+            return None;
+        }
+        Some("is ignored and says no reason".to_string())
+    }
+
+    /// The attribute a line declares, and nothing when it declares none.
+    ///
+    /// **`ignore` at the start and not the whole line.** A first version refused any attribute
+    /// carrying no `=`, which refused `#[test]`, `#[derive(Debug)]` and every other decoration
+    /// in the repository — **a rule about skipped tests that refuses `#[test]` is a rule with
+    /// the word wrong in it.**
+    fn the_attribute_on(one_line: &str) -> String {
+        let trimmed = one_line.trim();
+        if !trimmed.starts_with("#[") {
+            return String::new();
+        }
+        trimmed.trim_end_matches(']').replace("#[", "")
+    }
+
+    /// Every refusal in one file, with the line it stands on.
+    fn what_is_wrong_in_a_file(the_code: &str) -> Vec<String> {
+        let mut found = Vec::new();
+        for (a_line, one_line) in the_lines_of_code(the_code) {
+            let why = what_is_wrong_with(&one_line);
+            found.extend(why.map(|one| format!("line {a_line} {one}")));
+        }
+        found
+    }
+
+    /// The files the rule reads: every `.rs` in this checkout.
+    fn every_file_a_test_can_live_in() -> Vec<std::path::PathBuf> {
+        every_source_file()
+    }
+
+    #[test]
+    fn an_ignored_test_saying_nothing_is_refused() {
+        let a_bare_ignore = "    #[ignore]";
+
+        assert_eq!(
+            what_is_wrong_with(a_bare_ignore),
+            Some("is ignored and says no reason".to_string()),
+            "and it quotes nothing, because there is nothing to quote — which is the finding"
+        );
+    }
+
+    #[test]
+    fn an_ignored_test_saying_why_is_accepted() {
+        let a_reason = "    #[ignore = \"needs a Docker daemon, and the container tier is one\"]";
+
+        assert_eq!(
+            what_is_wrong_with(a_reason),
+            None,
+            "the reason is in the code, where a reader cannot lose it by deleting a line above"
+        );
+    }
+
+    #[test]
+    fn a_line_declaring_no_attribute_is_accepted() {
+        assert_eq!(
+            what_is_wrong_with("    #[test]"),
+            None,
+            "a test that runs is not a test that is skipped, whatever else it declares"
+        );
+    }
+
+    #[test]
+    fn an_attribute_that_is_not_ignore_is_accepted() {
+        assert_eq!(
+            what_is_wrong_with("    #[derive(Debug, Clone)]"),
+            None,
+            "the rule is about being skipped and not about being decorated"
+        );
+    }
+
+    #[test]
+    fn no_test_is_ignored_without_a_reason() {
+        let mut found = Vec::new();
+        for a_file in every_file_a_test_can_live_in() {
+            let the_text = reading_the_checkout::the_text_at(&a_file);
+            let refusals = what_is_wrong_in_a_file(&the_text);
+            found.extend(
+                refusals
+                    .into_iter()
+                    .map(|why| format!("{} {why}", a_file.display())),
+            );
+        }
+
+        assert!(
+            found.is_empty(),
+            "a skipped test nobody can explain is a hole in the suite with a green tick over it: {found:?}"
+        );
+    }
+}

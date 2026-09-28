@@ -929,6 +929,14 @@ now, so the third one has to learn the word.
 
 ---
 
+**`#[ignore = "…"]` and not a bare `#[ignore]`.** A skipped test is a test that is not
+run, and a skipped test nobody can explain is a hole in the suite with a green tick over it. The
+reason goes in the attribute rather than in a comment beside it, **because a comment saying why
+a test is ignored would be refused by the rule that this repository leaves no comments** — so
+the only place a reason can live is a place the compiler reads, and a reason in the source is a
+reason a reader cannot lose by deleting the line above it. `#[test]` and `#[derive(…)]` are not
+ignores, and a rule drawn at "any attribute without an `=`" refused both.
+
 ## The rules and what holds each
 
 **One row per rule, and the middle column names the file whose `mod` holds it.** A rule with
@@ -965,7 +973,7 @@ record of it. The two compiler rows are not tests — they are `#![forbid(unsafe
 | `the_dependencies_point_inward` | — | not built yet — with the crates |
 | `every_third_party_crate_is_on_its_crate_allowlist` | — | not built yet — with `aisdlc-outside` |
 | `the_core_never_names_a_trait_object` | — | not built yet — with the domain |
-| `an_ignored_test_says_why_it_is_ignored` | — | not built yet — with the tests |
+| `an_ignored_test_says_why_it_is_ignored` | `readability_guards.rs` | with the tests |
 | `every_change_is_a_red_then_a_green` | — | not built yet — with the history |
 
 ---
