@@ -25,5 +25,6 @@
 
 pub mod a_stretch_of_the_file;
 pub mod reading_the_checkout;
+pub mod reading_the_code;
 pub mod reading_the_glossary;
 pub mod scanning;
