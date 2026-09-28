@@ -842,11 +842,19 @@ Service   Context   State       Status
 Repository
 ```
 
-**Words refused only when something precedes them:** `Repository`. A name that is exactly
-`Repository` is this system's public GitHub repository, which the glossary blesses; a name
-that *ends* on it is a persistence abstraction wearing a domain word, and the guard judges
-the last word to tell those two apart. **This line is what the guard reads**, so that a word
-added to the list above needs no change in code.
+**Two lists, because the two exemptions mean opposite things, and the guard reads both.**
+
+**Blessed as a whole name, refused as a compound's ending:** `Repository`. A name that is
+exactly `Repository` is this system's public GitHub repository; a name that *ends* on it —
+`AWorkRepository`, `GitHubRepository` — is a persistence abstraction wearing a domain word.
+
+**Refused alone, blessed as a compound's ending:** `Item`. `Item` on its own says nothing
+about what the thing is, and `WorkItem` is the first-class object this glossary names in §The
+core nouns. **A list that refused both would have refused the domain's own central type on its
+first line**, and a rule that cannot be run against its own author is a rule nobody checked.
+
+**Both lines are what the guard reads**, so a word added to the list above needs no change in
+code, and blessing one is a visible act rather than a comment.
 
 **`Adapter`, `Port` and `UseCase` are on the list on purpose.** This repository is Clean
 Architecture, and those three are its own words for the things this glossary names

@@ -56,7 +56,7 @@ fn a_ruling_by(decided_by: WhoDecided, approved: bool) -> ApprovalDecision {
 }
 
 #[test]
-fn an_agent_may_not_rule_on_its_own_result() {
+fn an_agent_may_not_rule_on_its_own() {
     for agent in ["aisdlc-dev-impl", "aisdlc-po-analyze", "aisdlc-approval"] {
         let who = WhoDecided::try_from(agent).expect("a name is not blank");
 
