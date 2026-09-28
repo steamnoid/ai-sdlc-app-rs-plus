@@ -172,6 +172,22 @@ there is no zeroth version of anything.
 
 ---
 
+## Rules that a gate reads rather than a paragraph
+
+**`a_body_nests_no_deeper_than_two` counts every brace and not only the control flow.**
+`AGENTS.md` §1.6 is about control flow, and a struct literal is not control flow — so the
+strictest honest reading of the document and the mechanical reading the gate implements are
+not the same rule. The mechanical one was kept, and the difference is paid for in the code:
+`StateMachineError::for_a_move_the_table_refuses` and `AnUncheckedWorkItem::because` exist
+because `return Err(SomeError { why: format!(…) })` is three levels deep, and **a named
+constructor is better code whether or not a gate is watching.**
+
+**The cost is stated so the next reader can disagree with it.** Counting every brace refuses
+a struct literal written inside a branch, and a reader who finds that too strict has one
+place to change: this paragraph, and the two lines of the gate that count braces.
+
+---
+
 ## The stages
 
 The closed set. `Stage` is an enum; a stage is never a bare string, and it is written

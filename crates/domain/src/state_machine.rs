@@ -17,6 +17,22 @@ pub struct StateMachineError {
     pub why: String,
 }
 
+impl StateMachineError {
+    /// A move the table has no row for.
+    pub fn for_a_move_the_table_refuses(from: Stage, to: Stage) -> Self {
+        StateMachineError {
+            why: format!("{from} may not be moved to {to}"),
+        }
+    }
+
+    /// An agent given to a stage that does not carry one.
+    pub fn for_an_agent_the_destination_refuses(to: Stage) -> Self {
+        StateMachineError {
+            why: format!("{to} does not take the agent it was given"),
+        }
+    }
+}
+
 impl fmt::Display for StateMachineError {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         formatter.write_str(&self.why)
@@ -61,14 +77,13 @@ pub fn transition(
     the_agent: Option<AgentIdentifier>,
 ) -> Result<WorkItem, StateMachineError> {
     if !legal_transitions_from(a_work_item.stage).contains(&to) {
-        return Err(StateMachineError {
-            why: format!("{} may not be moved to {to}", a_work_item.stage),
-        });
+        return Err(StateMachineError::for_a_move_the_table_refuses(
+            a_work_item.stage,
+            to,
+        ));
     }
     if the_agent.is_some() != to.an_agent_must_be_holding_it() {
-        return Err(StateMachineError {
-            why: format!("{to} does not take the agent it was given"),
-        });
+        return Err(StateMachineError::for_an_agent_the_destination_refuses(to));
     }
     Ok(moved_to(a_work_item, to, the_agent))
 }
@@ -76,18 +91,21 @@ pub fn transition(
 /// Assert that a work item satisfies the invariants of its own state.
 pub fn validate_state(a_work_item: &WorkItem) -> Result<(), StateMachineError> {
     let one_is_holding = a_work_item.agent.is_some();
-    if one_is_holding != a_work_item.stage.an_agent_must_be_holding_it() {
-        return Err(StateMachineError {
-            why: format!(
-                "{} says the agent is {}",
-                a_work_item.stage,
-                if a_work_item.stage.an_agent_must_be_holding_it() {
-                    "absent"
-                } else {
-                    "present"
-                }
-            ),
-        });
+    if one_is_holding == a_work_item.stage.an_agent_must_be_holding_it() {
+        return Ok(());
     }
-    Ok(())
+    let the_stage = a_work_item.stage;
+    let the_agent_the_stage_claims = the_agent_the_stage_claims(the_stage);
+    Err(StateMachineError {
+        why: format!("{the_stage} says the agent is {the_agent_the_stage_claims}"),
+    })
+}
+
+/// What the stage says about the agent, in the two words a reader needs.
+fn the_agent_the_stage_claims(a_stage: Stage) -> &'static str {
+    if a_stage.an_agent_must_be_holding_it() {
+        "absent"
+    } else {
+        "present"
+    }
 }

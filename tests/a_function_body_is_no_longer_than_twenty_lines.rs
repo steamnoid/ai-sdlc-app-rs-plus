@@ -82,10 +82,18 @@ impl AReading {
             self.where_a_function_began = None;
             return self.a_body.take();
         }
-        if let Some(body) = self.a_body.as_mut().filter(|_| !began_a_body) {
+        self.count_this_line(began_a_body);
+        None
+    }
+
+    /// Add this line to the body it is inside, if it is a line of one.
+    fn count_this_line(&mut self, began_a_body: bool) {
+        if began_a_body {
+            return;
+        }
+        if let Some(body) = self.a_body.as_mut() {
             body.1 += 1;
         }
-        None
     }
 
     /// Note a `fn` on this line, if there was not one already being followed.
@@ -117,22 +125,27 @@ fn the_lines_of_code(the_code: &str) -> Vec<(usize, String)> {
         if stretch.kind() != WhatIsWrittenThere::Code {
             continue;
         }
-        for (offset, one_line) in stretch.text().split('\n').enumerate() {
-            let the_line = stretch.line_it_starts_on() + offset;
-            let continues_the_last = found
-                .last()
-                .is_some_and(|(it_is_on, _)| *it_is_on == the_line);
-            if continues_the_last {
-                if let Some(last) = found.last_mut() {
-                    last.1.push_str(one_line);
-                }
-                continue;
-            }
-            found.push((the_line, one_line.to_string()));
-        }
+        append_the_lines_of(stretch, &mut found);
     }
     found.retain(|(_, one_line)| !one_line.trim().is_empty());
     found
+}
+
+/// Add one stretch's lines, joining a line the walk cut in two.
+///
+/// **A line can arrive in pieces**, because a string in the middle of it ends the code
+/// stretch and starts another on the same line — `format!("{} …", x)` is two pieces, and
+/// treating them as two lines counts the line twice and its braces as two levels.
+fn append_the_lines_of(a_stretch: &AStretchOfTheFile, found: &mut Vec<(usize, String)>) {
+    for (offset, one_line) in a_stretch.text().split('\n').enumerate() {
+        let the_line = a_stretch.line_it_starts_on() + offset;
+        let continues_the_last = found.last().is_some_and(|(on, _)| *on == the_line);
+        let Some(last) = found.last_mut().filter(|_| continues_the_last) else {
+            found.push((the_line, one_line.to_string()));
+            continue;
+        };
+        last.1.push_str(one_line);
+    }
 }
 
 /// Every `.rs` file in this checkout, skipping what a build leaves behind.

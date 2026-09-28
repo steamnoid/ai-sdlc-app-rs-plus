@@ -54,6 +54,15 @@ impl fmt::Display for AnUncheckedWorkItem {
     }
 }
 
+impl AnUncheckedWorkItem {
+    /// The door said no, and says what about which stage.
+    pub fn because(the_stage: Stage, why_about_the_stage: &str) -> Self {
+        AnUncheckedWorkItem {
+            why: format!("{the_stage} {why_about_the_stage}"),
+        }
+    }
+}
+
 impl std::error::Error for AnUncheckedWorkItem {}
 
 impl WorkItem {
@@ -69,9 +78,10 @@ impl WorkItem {
     ) -> Result<Self, AnUncheckedWorkItem> {
         let needs_an_agent = the_stage.an_agent_must_be_holding_it();
         if needs_an_agent {
-            return Err(AnUncheckedWorkItem {
-                why: format!("{the_stage} needs an agent and this door holds nobody"),
-            });
+            return Err(AnUncheckedWorkItem::because(
+                the_stage,
+                "needs an agent and this door holds nobody",
+            ));
         }
         Ok(WorkItem {
             work_item_id,
@@ -102,9 +112,10 @@ impl WorkItem {
     ) -> Result<Self, AnUncheckedWorkItem> {
         let no_agent_may_hold = !the_stage.an_agent_must_be_holding_it();
         if no_agent_may_hold {
-            return Err(AnUncheckedWorkItem {
-                why: format!("{the_stage} is a stage no agent may hold"),
-            });
+            return Err(AnUncheckedWorkItem::because(
+                the_stage,
+                "is a stage no agent may hold",
+            ));
         }
         Ok(WorkItem {
             work_item_id,

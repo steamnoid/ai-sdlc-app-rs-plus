@@ -12,7 +12,7 @@
 //! that counted their nesting would refuse every type in the domain for being a field of a
 //! field.
 
-use aisdlc_gates::a_stretch_of_the_file::WhatIsWrittenThere;
+use aisdlc_gates::a_stretch_of_the_file::{AStretchOfTheFile, WhatIsWrittenThere};
 use aisdlc_gates::reading_the_checkout;
 use aisdlc_gates::scanning::HowTheFileIsWritten;
 
@@ -69,7 +69,7 @@ impl AReading {
             return Vec::new();
         }
         let mut found = Vec::new();
-        if self.inside_a_function && one_line.trim() != "}" {
+        if self.inside_a_function && !closes_a_body(one_line) {
             found.push((the_line, self.how_deep));
         }
         self.how_deep = self.how_deep.saturating_add(one_line.matches('{').count());
@@ -114,22 +114,27 @@ fn the_lines_of_code(the_code: &str) -> Vec<(usize, String)> {
         if stretch.kind() != WhatIsWrittenThere::Code {
             continue;
         }
-        for (offset, one_line) in stretch.text().split('\n').enumerate() {
-            let the_line = stretch.line_it_starts_on() + offset;
-            let continues_the_last = found
-                .last()
-                .is_some_and(|(it_is_on, _)| *it_is_on == the_line);
-            if continues_the_last {
-                if let Some(last) = found.last_mut() {
-                    last.1.push_str(one_line);
-                }
-                continue;
-            }
-            found.push((the_line, one_line.to_string()));
-        }
+        append_the_lines_of(stretch, &mut found);
     }
     found.retain(|(_, one_line)| !one_line.trim().is_empty());
     found
+}
+
+/// Add one stretch's lines, joining a line the walk cut in two.
+///
+/// **A line can arrive in pieces**, because a string in the middle of it ends the code
+/// stretch and starts another on the same line — `format!("{} …", x)` is two pieces, and
+/// treating them as two lines counts the line twice and its braces as two levels.
+fn append_the_lines_of(a_stretch: &AStretchOfTheFile, found: &mut Vec<(usize, String)>) {
+    for (offset, one_line) in a_stretch.text().split('\n').enumerate() {
+        let the_line = a_stretch.line_it_starts_on() + offset;
+        let continues_the_last = found.last().is_some_and(|(on, _)| *on == the_line);
+        let Some(last) = found.last_mut().filter(|_| continues_the_last) else {
+            found.push((the_line, one_line.to_string()));
+            continue;
+        };
+        last.1.push_str(one_line);
+    }
 }
 
 #[test]
@@ -214,4 +219,12 @@ fn a_whole_function_on_one_line_is_not_three_deep() {
         Vec::<String>::new(),
         "three levels on one line is a line a reader cannot hold anyway, and this rule is about statements sitting deep — a separate rule about a body spending its lines is what catches this"
     );
+}
+
+/// Whether a line is only closing what the lines above it opened.
+///
+/// **A line that closes is not a statement in the block it closes**, and counting it would
+/// report every function's last line as a statement sitting at the body's own depth.
+fn closes_a_body(one_line: &str) -> bool {
+    one_line.trim() == "}"
 }

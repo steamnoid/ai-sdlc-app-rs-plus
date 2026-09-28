@@ -164,16 +164,34 @@ impl<'a> WhereTheReadingHasGotTo<'a> {
             if self.the_bytes[self.at..].starts_with(b"/*") {
                 how_deep += 1;
                 self.take(2);
-            } else if self.the_bytes[self.at..].starts_with(b"*/") {
-                how_deep -= 1;
-                self.take(2);
-                if how_deep == 0 {
-                    return;
-                }
-            } else {
-                self.take(1);
+                continue;
             }
+            if self.closed_a_block(&mut how_deep) {
+                return;
+            }
+            self.take(1);
         }
+    }
+
+    /// Whether the bytes at the walk's position close the block being read.
+    fn closes_a_block(&self) -> bool {
+        self.the_bytes[self.at..].starts_with(b"*/")
+    }
+
+    /// Take the end of a block comment, and say whether that ended the block being read.
+    ///
+    /// **A question and not an instruction**, because the walk cannot be stopped from inside
+    /// a method: a `return` in a method returns from the method, and the walk would carry on
+    /// past the end of the comment it had just finished reading. An earlier version had this
+    /// method return, and the walk read to the end of the file.
+    fn closed_a_block(&mut self, how_deep: &mut usize) -> bool {
+        if !self.closes_a_block() {
+            return false;
+        }
+        *how_deep -= 1;
+        let the_block_ended = *how_deep == 0;
+        self.take(2);
+        the_block_ended
     }
 
     /// Walk to the end of the line, taking the line ending with it so the next stretch is
