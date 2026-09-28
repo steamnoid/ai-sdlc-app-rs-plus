@@ -2327,3 +2327,41 @@ mod the_domain_depends_on_nothing {
         here.join(wanted)
     }
 }
+
+mod a_name_the_gates_share_has_one_implementation {
+    //! A name the gates share has one implementation.
+    //!
+    //! **A name that means two things is a name nobody can change**, because every caller is
+    //! holding the other meaning and the compiler cannot tell two readings of a word apart.
+    //! This repository had seven functions called `the_lines_of_code` in the seven files that
+    //! read the source, and **five returned `(usize, String)` while two returned `String`** — so
+    //! the same call gave a different answer depending on which file asked, and nothing said so
+    //! until the copies were made to agree with each other.
+    //!
+    //! **Duplication that has not diverged is a cost. Duplication that has is a defect**, and
+    //! the distance between the two is one line added in one place.
+
+    /// The refusal for one name, or nothing when the gates agree about what it means.
+    fn what_is_wrong_with(one_name: &str, the_copies: &[String]) -> Option<String> {
+        let _the_name_nobody_read = one_name;
+        let _the_copies_nobody_read = the_copies;
+        None
+    }
+
+    #[test]
+    fn a_name_written_twice_the_same_way_is_refused() {
+        let the_copies = vec![
+            "a_file.rs line 1".to_string(),
+            "a_file.rs line 1".to_string(),
+        ];
+
+        assert_eq!(
+            what_is_wrong_with("the_lines_of_code", &the_copies),
+            Some(
+                "the_lines_of_code is written in 2 places, and all of them are the same"
+                    .to_string()
+            ),
+            "and it is refused with the count, because 'also duplicated somewhere' is not a place a reader can act on"
+        );
+    }
+}
