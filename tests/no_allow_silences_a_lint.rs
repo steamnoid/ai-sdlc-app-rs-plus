@@ -24,9 +24,37 @@ const THE_ATTRIBUTES_THAT_SILENCE: [&str; 2] = ["#[allow(", "#[expect("];
 
 /// Every refusal in one file, given its name and its text.
 fn what_is_wrong_with(a_file_name: &str, the_code: &str) -> Vec<String> {
-    let _the_file_name_nobody_read = a_file_name;
-    let _the_code_nobody_read = the_code;
-    Vec::new()
+    let mut found = Vec::new();
+    for (the_line, one_line) in the_lines_of_code(the_code) {
+        found.extend(the_suppressions_in(&one_line, a_file_name, the_line));
+    }
+    found
+}
+
+/// The suppressions on one line, quoted as they are written.
+fn the_suppressions_in(one_line: &str, a_file_name: &str, the_line: usize) -> Vec<String> {
+    THE_ATTRIBUTES_THAT_SILENCE
+        .iter()
+        .filter(|one| one_line.contains(*one))
+        .map(|one| {
+            let as_written = the_attribute_as_written(one_line, one);
+            format!("{a_file_name} line {the_line} silences something: {as_written}")
+        })
+        .collect()
+}
+
+/// The whole attribute on a line, closing bracket included.
+///
+/// **In the code and not out of the text**, because a line holds several attributes and a
+/// reader told "something on line 4" cannot tell which one. An unclosed bracket is taken to
+/// the end of the line, because a file that does not compile is not a file this gate decides.
+fn the_attribute_as_written(one_line: &str, the_attribute: &str) -> String {
+    let from_the_attribute = &one_line[one_line.find(the_attribute).unwrap_or(0)..];
+    let the_closing = from_the_attribute.find(']').map(|it| it + 1);
+    match the_closing {
+        Some(where_it_closes) => from_the_attribute[..where_it_closes].to_string(),
+        None => from_the_attribute.trim_end().to_string(),
+    }
 }
 
 /// Every `.rs` file in this checkout, skipping what a build leaves behind.
@@ -144,7 +172,7 @@ fn the_two_attributes_are_the_ones_written() {
 fn the_lines_of_code(the_code: &str) -> Vec<(usize, String)> {
     let mut found: Vec<(usize, String)> = Vec::new();
     for stretch in HowTheFileIsWritten::of(the_code).stretches() {
-        append_the_lines_of(&stretch, &mut found);
+        append_the_lines_of(stretch, &mut found);
     }
     found.retain(|(_, one_line)| !one_line.trim().is_empty());
     found
