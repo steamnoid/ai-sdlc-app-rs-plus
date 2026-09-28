@@ -2523,3 +2523,33 @@ mod a_name_the_gates_share_has_one_implementation {
         );
     }
 }
+
+mod no_test_reads_an_environment_variable {
+    //! No test reads the environment at run time.
+    //!
+    //! **A test that needs a token means a boundary is wrong.** The suite has to be green with
+    //! no network, no API key, no Docker and no model, and a test that passes only when a
+    //! credential happens to be exported is a green tick that says nothing about the software.
+    //!
+    //! **The words come from the glossary rather than from here.** A gate carrying its own list
+    //! has a list that drifts from the sentence explaining it, and the two are read by different
+    //! people — the glossary by whoever is about to break the rule, the gate by nobody.
+
+    /// The refusal for one line, or nothing when the line reaches for nothing.
+    fn what_is_wrong_with(one_line: &str, the_refused: &[String]) -> Option<String> {
+        let _the_line_nobody_read = one_line;
+        let _the_refused_nobody_read = the_refused;
+        None
+    }
+
+    #[test]
+    fn a_line_reaching_for_a_variable_is_refused() {
+        let refused = vec!["var".to_string()];
+
+        assert_eq!(
+            what_is_wrong_with("let the_token = std::env::var(\"GITHUB_TOKEN\");", &refused),
+            Some("reads the environment at run time: var".to_string()),
+            "and it names the call, because 'somewhere in a line of the tests' is not a place a reader can act on"
+        );
+    }
+}
