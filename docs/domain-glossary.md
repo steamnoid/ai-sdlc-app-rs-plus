@@ -689,6 +689,12 @@ rests on the claim that a span of characters in a `.rs` file is one of five thin
 nothing else. A sixth kind would be a change to what a gate is allowed to assume, so it is
 a change here and nowhere else.
 
+**`WhereTheReadingHasGotTo`** — how far along a source file the reading has come: the byte
+it is standing on and the line it is standing in. **It is a type and not four arguments to
+a function**, and the reason is the count: a walk that has to pass a position and a line and
+a collection to every step is a walk whose steps cannot be read one at a time, and 1.2 says a
+function that needs a comment explaining its second half is two functions.
+
 **`AStretchOfTheFile`** — a run of characters that are all the same kind of thing: code, a
 comment, a string, a character, or the space between. It carries the line it starts on,
 because a gate that says "there is a comment somewhere" is a gate nobody can act on.
