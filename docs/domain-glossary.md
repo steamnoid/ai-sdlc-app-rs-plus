@@ -537,6 +537,22 @@ quoting the input back, because a name this system silently tidies is a name a l
 **The same sentence keeps `WorkItemId` from trimming**, and one sentence serving two types is a
 sentence that was worth writing once.
 
+**`the_run_makes_a_checkout`** and not `the_run_clones_a_repository`, **because a name ending on
+`Repository` is a persistence abstraction wearing a domain word** — and this system already calls a
+clone a checkout in `ACloneOnDisk`, so the name that was refused is not the one that describes
+it. **Three questions in order, and each can stop the next**: whether anything stands at the
+destination, whether git copied the repository, what the copy stands on.
+
+**`WhetherAnythingStandsThere`** — whether anything at all stands at a directory, asked
+**before** anything is written there. **A question and not a thing returned**, because the answer
+is a yes or a no. **A separate port rather than a check inside `AProgramWeRun`**, so the decision
+to clone at all is made by the use case and not by the adapter that copies files: an adapter that
+could refuse on its own is an adapter holding a decision it has no business holding.
+
+**`HowCloningWent`** — the clone and the reason, one of which is always nothing. **`DONE` and not
+`Result` at the boundary**, because a caller asks *which way it failed* as often as it asks *the
+clone*, and a `Result` read the second way would throw the reason away.
+
 **`WhichWayItFailed`** and **`WhyCloningTheRepositoryFailed`** — the four ways, and the
 refusal in one of them carrying whatever git said. **Four and not three**, and the fourth was
 named here only inside the second one's description, as the thing a caller has to tell apart

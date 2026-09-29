@@ -21,6 +21,16 @@ pub enum WhatWeTellAProgramToDo {
         /// Which repository, and the directory derived from it and its work item.
         the_clone_of: ARepositoryToClone,
     },
+    /// Read the commit a clone is standing on.
+    TheCommitItStandsOn {
+        /// Which clone, and where it landed.
+        the_clone_of: ARepositoryToClone,
+    },
+    /// Read the ref a clone is standing on, which may be a branch and may be `HEAD`.
+    TheRefItStandsOn {
+        /// Which clone, and where it landed.
+        the_clone_of: ARepositoryToClone,
+    },
 }
 
 impl WhatWeTellAProgramToDo {
@@ -29,22 +39,57 @@ impl WhatWeTellAProgramToDo {
         WhatWeTellAProgramToDo::CloneTheRepository { the_clone_of }
     }
 
+    /// Which commit the clone at this place is standing on.
+    pub fn the_commit_it_stands_on(the_clone_of: ARepositoryToClone) -> Self {
+        WhatWeTellAProgramToDo::TheCommitItStandsOn { the_clone_of }
+    }
+
+    /// Which ref the clone at this place is standing on, which may be `HEAD`.
+    pub fn the_ref_it_stands_on(the_clone_of: ARepositoryToClone) -> Self {
+        WhatWeTellAProgramToDo::TheRefItStandsOn { the_clone_of }
+    }
+
     /// The address to fetch from, derived from the repository and not a formatted line.
     pub fn fetch_from(&self) -> String {
         match self {
-            WhatWeTellAProgramToDo::CloneTheRepository { the_clone_of } => {
+            WhatWeTellAProgramToDo::CloneTheRepository { the_clone_of }
+            | WhatWeTellAProgramToDo::TheCommitItStandsOn { the_clone_of }
+            | WhatWeTellAProgramToDo::TheRefItStandsOn { the_clone_of } => {
                 the_clone_of.fetch_from()
             }
         }
     }
 
+    /// Which clone the question is about, when this request is about a clone already made.
+    pub fn the_clone_it_is_about(&self) -> Option<&ARepositoryToClone> {
+        match self {
+            WhatWeTellAProgramToDo::CloneTheRepository { the_clone_of }
+            | WhatWeTellAProgramToDo::TheCommitItStandsOn { the_clone_of }
+            | WhatWeTellAProgramToDo::TheRefItStandsOn { the_clone_of } => Some(the_clone_of),
+        }
+    }
+
+    /// This request, read as a question about the commit a clone stands on.
+    pub fn is_the_commit_of_the_clone(&self) -> Option<&ARepositoryToClone> {
+        match self {
+            WhatWeTellAProgramToDo::TheCommitItStandsOn { the_clone_of } => Some(the_clone_of),
+            _ => None,
+        }
+    }
+
+    /// This request, read as a question about the ref a clone stands on.
+    pub fn is_the_ref_of_the_clone(&self) -> Option<&ARepositoryToClone> {
+        match self {
+            WhatWeTellAProgramToDo::TheRefItStandsOn { the_clone_of } => Some(the_clone_of),
+            _ => None,
+        }
+    }
+
     /// Where the clone lands.
     pub fn where_it_lands(&self) -> &Path {
-        match self {
-            WhatWeTellAProgramToDo::CloneTheRepository { the_clone_of } => {
-                the_clone_of.where_it_lands()
-            }
-        }
+        self.the_clone_it_is_about()
+            .expect("every request this system can make is about a clone")
+            .where_it_lands()
     }
 
     /// The whole history, always, because the type has nowhere else to put a depth.
