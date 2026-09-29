@@ -43,6 +43,19 @@ pub fn the_arguments_of(what_it_is_asked_to_do: &WhatWeTellAProgramToDo) -> Vec<
             the_clone_of.fetch_from(),
             the_clone_of.where_it_lands().display().to_string(),
         ],
+        WhatWeTellAProgramToDo::TheCommitItStandsOn { the_clone_of } => vec![
+            "-C".to_string(),
+            the_clone_of.where_it_lands().display().to_string(),
+            "rev-parse".to_string(),
+            "HEAD".to_string(),
+        ],
+        WhatWeTellAProgramToDo::TheRefItStandsOn { the_clone_of } => vec![
+            "-C".to_string(),
+            the_clone_of.where_it_lands().display().to_string(),
+            "rev-parse".to_string(),
+            "--abbrev-ref".to_string(),
+            "HEAD".to_string(),
+        ],
     }
 }
 
