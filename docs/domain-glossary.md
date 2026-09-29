@@ -304,7 +304,7 @@ make it choose which one to ask.
 
 **A port is a question the domain cannot answer by itself.** It is declared in
 `aisdlc-run` and implemented in `aisdlc-outside`, and the direction is one-way: the
-adapters know the ports, the ports know nothing about the adapters. There are nine, and
+adapters know the ports, the ports know nothing about the adapters. There are ten, and
 two of the splits are not inventions — they are lines this domain had already drawn.
 
 | Port | Asks | Implemented by |
@@ -319,6 +319,19 @@ two of the splits are not inventions — they are lines this domain had already 
 | `ARecordOfARun` | to remember a run, and to read it back | a SQLite table |
 | `APersonToDecide` | to rule on an exact artifact | a person, or a policy on their behalf |
 | `WhetherAnythingStandsThere` | whether anything stands at a directory, before anything is written there | the real filesystem |
+
+**The third column says what would answer each port, and only three of them answer anything
+today**: `TheProjectAsItIsOnDisk`, `TheProgramAsItRuns` and `WhetherAnythingStandsOnDisk`. The
+other seven have a name for the thing that answers them and nothing behind the name, and **a
+column that reads as a fact while seven of its ten rows are intentions is a table that has
+rotted in the way the rule table next to it is checked not to.**
+
+**"There are ten" was "There are nine" a moment ago, in the sentence introducing a table of ten
+rows.** A count claimed in prose beside a table is a second copy of a fact the table already
+holds, and a second copy is a copy that drifts — this one did. **No gate is built for it, and the
+number says why**: this sentence is the only one in this document that claims a count, and it is
+the one being fixed, so a gate would have one caller and no caller after the cycle. The fix is the
+sentence; the gate would have been the thing #48 removed, rebuilt.
 
 ### Why reading and writing GitHub are two ports
 
