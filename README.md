@@ -12,12 +12,12 @@ against, and a name that is not in it does not enter the source.
 | | |
 |---|---|
 | [`AGENTS.md`](AGENTS.md) | three rules, the layout, the commands |
-| [`docs/domain-glossary.md`](docs/domain-glossary.md) | every name, the rule each one protects, and the table of all nineteen |
+| [`docs/domain-glossary.md`](docs/domain-glossary.md) | every name, **and the table of every rule with the module that holds it** |
 | [`crates/domain`](crates/domain) | the state machine and every type, with **no `[dependencies]` section at all** |
 | [`crates/run`](crates/run) | the use cases, and the ports — **and nothing that names a filesystem, a process, a clock or a network** |
-| [`crates/outside`](crates/outside) | the three real implementations, and the only crate a gate lets reach the world |
+| [`crates/outside`](crates/outside) | the real implementations, and **the only crate a gate lets reach the world** |
 | [`src/`](src) | the walk every gate reads the source with |
-| [`tests/`](tests) | the nineteen gates, in two files named for what they are about |
+| [`tests/`](tests) | the gates, in two files named for what they are about |
 | [`scripts/gate`](scripts/gate) | the one command, and the check `main` requires |
 
 **330 tests.** The domain is complete: the six stages, the five roles, the exhaustive
@@ -43,7 +43,7 @@ table in the glossary, because a gate holds that one.
 3. **RULE 2 — the code mirrors the domain.** One concept, one name, everywhere — in
    production and in tests — and the name is one the glossary blesses.
 
-**A rule with no gate is a wish.** All nineteen are listed in the glossary's table of rules
+**A rule with no gate is a wish.** Every one is listed in the glossary's table of rules
 with the file whose `mod` holds each one, and the gate that holds the table refuses a rule
 nobody holds and a module no row names — **in both directions**, because a table checked only
 for what it claims is a table a rule can be deleted from without anyone noticing. Three rules
@@ -62,12 +62,10 @@ aisdlc-gates   ──►  (nobody)       reads the crates; never calls them
 Nothing.
 
 Everything the domain cannot answer by itself is a **port**: a trait declared in `aisdlc-run`
-and implemented in `aisdlc-outside`. The glossary names ten and says why each is separate.
-**Five of them have a caller and three have a real implementation behind them** — `TheProjectOnDisk`,
-`AProgramWeRun` and `WhetherAnythingStandsThere`, which are the only three places a filesystem, a
-process or a real directory is touched. The other five do not yet, and a port with no
-implementation behind it is not a port — it is a trait nobody calls, so each arrives with the
-first use case that needs it.
+and implemented in `aisdlc-outside`. The glossary names each one and says why it is separate, and the same table says which of them
+answer anything today. **A port with no implementation behind it is not a port** — it is a trait
+nobody calls, so each arrives with the first use case that needs it, and the ones still waiting
+are named in the glossary rather than counted here.
 
 **The port table is not checked for completeness, and it was wrong until this file was read
 against the code.** A port with a caller and a real implementation had been left out of it for
