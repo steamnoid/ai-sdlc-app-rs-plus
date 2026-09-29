@@ -114,8 +114,9 @@ impl WhatWeTellAProgramToDo {
             .where_it_lands()
     }
 
-    /// The whole history, always, because the type has nowhere else to put a depth.
-    pub fn is_the_whole_history(&self) -> bool {
-        matches!(self, WhatWeTellAProgramToDo::CloneTheRepository { .. })
+    /// How much history this request carries, and nothing at all when it asks about no clone.
+    pub fn how_much_history_it_carries(&self) -> Option<bool> {
+        let _ = self;
+        None
     }
 }
