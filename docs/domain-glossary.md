@@ -573,6 +573,21 @@ value and **not as a setting read inside a use case**. A use case that reads its
 has moved a decision out of a type and into a line of code, and the line is somewhere a reader has
 to find. **Two values and not a bool**, so a call site says which thing is being set.
 
+**`where_a_deployment_put_its_model`** — where a deployment said its model is, **or the variable
+it left unset.** The first real run fell back to `http://localhost:11434` because nobody had read
+`LLM_ENDPOINT`, and the message that came back was *Failed to connect to localhost port 11434* — **a
+fallback is a lie with a position**, the same rule that stopped the board from storing a column, and
+this is the place that used to have one. A guess that is wrong costs the same time as a refusal and
+says less.
+
+**`TheEnvironment` reads four names, and the two that were missing are how a model gets asked at
+all** — `LLM_ENDPOINT` and `LLM_MODEL` joined the flag and the key. A reader closed to two names
+described a deployment that had not finished being configured.
+
+**`curl` is told `-s`, because a program that narrates is a program whose narration can be mistaken
+for what it found.** The first real run came back with a transfer table where the model's words
+should have been, and the refusal quoted a percentage.
+
 **`the_ruling_a_model_gave`** — the ruling, out of the answer its endpoint wrapped it in. **The
 envelope is the endpoint's and the ruling is not**: a model asked to say one word answers with JSON
 around that word, and a reader that wants the whole answer to *be* the word decides no model can

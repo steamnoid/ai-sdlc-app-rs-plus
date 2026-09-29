@@ -20,42 +20,50 @@ use aisdlc_run::a_model_is_asked_how_it_rules::{
     WhereAModelIs, the_model_is_asked_how_it_rules_on,
 };
 
+/// Where a deployment said its model is, and the reason when it did not say.
+fn what_a_deployment_named(what_it_was_told: &TheEnvironment) -> Result<WhereAModelIs, String> {
+    WhereAModelIs::where_a_deployment_put_its_model(
+        what_it_was_told.the_variable_a_deployment_set("LLM_ENDPOINT"),
+        what_it_was_told.the_variable_a_deployment_set("LLM_MODEL"),
+    )
+}
+
 /// This deployment, or the reason there is nothing to ask.
 fn a_deployment_that_may_ask_a_model() -> Option<(TheProgramAsItRuns, WhereAModelIs)> {
     let what_the_process_was_told = TheEnvironment::reading_what_the_process_was_told();
     let how_it_is_set_up = how_this_deployment_is_set_up(&what_the_process_was_told);
-    let the_credential = how_it_is_set_up.the_credential().cloned();
     if !how_it_is_set_up.may_a_model_rule().may_be_asked() {
-        eprintln!(
-            "SKIPPED: AISDLC_A_MODEL_RULES_HERE is not 'yes' on this deployment, and a model that \
-             may not rule is a model this system will not ask"
-        );
+        eprintln!("SKIPPED: AISDLC_A_MODEL_RULES_HERE is not 'yes' here");
         return None;
     }
-    let Some(the_credential) = the_credential else {
+    let Some(the_credential) = how_it_is_set_up.the_credential().cloned() else {
         eprintln!("SKIPPED: the flag is on and OPENAI_API_KEY is not set, so nothing was asked");
         return None;
     };
-    let where_the_model_is = WhereAModelIs::where_a_deployment_put_its_model(
-        what_the_process_was_told.the_variable_a_deployment_set("LLM_ENDPOINT"),
-        what_the_process_was_told.the_variable_a_deployment_set("LLM_MODEL"),
-    );
-    let where_the_model_is = match where_the_model_is {
-        Ok(where_it_is) => where_it_is,
-        Err(why_not) => {
-            eprintln!("SKIPPED: {why_not}");
-            return None;
-        }
+    let named = what_a_deployment_named(&what_the_process_was_told);
+    let Ok(where_the_model_is) = named else {
+        eprintln!(
+            "SKIPPED: {}",
+            named.expect_err("nothing was found, so this ran")
+        );
+        return None;
     };
-    Some((
-        TheProgramAsItRuns::as_it_is_on_this_host(Some(the_credential)),
-        where_the_model_is,
-    ))
+    let the_program = TheProgramAsItRuns::as_it_is_on_this_host(Some(the_credential));
+    Some((the_program, where_the_model_is))
 }
 
 /// The name a real model's ruling is recorded under, and never a person's.
 fn the_model_that_ruled() -> WhoDecided {
     WhoDecided::try_from("a model: the configured one").expect("a name")
+}
+
+/// The one word the model said, as this system read it back out of its own answer.
+fn what_the_model_said(the_ruling: &aisdlc_domain::approval::ApprovalDecision) -> &'static str {
+    if the_ruling.approved {
+        "APPROVED"
+    } else {
+        "REFUSED"
+    }
 }
 
 fn a_question_about_one_requirement() -> aisdlc_run::ApprovalQuestion {
@@ -96,11 +104,7 @@ fn a_real_model_rulings_is_read_out_of_its_own_answer() {
     eprintln!(
         "the real model at {} said {}",
         where_the_model_is.the_endpoint,
-        if the_ruling.approved {
-            "APPROVED"
-        } else {
-            "REFUSED"
-        }
+        what_the_model_said(&the_ruling)
     );
     assert!(
         the_ruling.decided_by == the_model_that_ruled(),

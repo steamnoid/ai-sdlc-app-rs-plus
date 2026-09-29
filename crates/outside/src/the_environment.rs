@@ -10,9 +10,15 @@
 
 use std::collections::BTreeMap;
 
-/// The two variables this system reads, and the only two.
+/// The four variables this system reads, and the only four.
+///
+/// **Four and not two, because the two that were missing are how a model gets asked at all** — and
+/// the first real run had no way to read them, so a test filled the gap with a number and `curl`
+/// answered *Failed to connect to localhost port 11434*.
 const THE_FLAG_THAT_LETS_A_MODEL_RULE: &str = "AISDLC_A_MODEL_RULES_HERE";
 const THE_KEY_A_MODEL_ANSWERS_WITH: &str = "OPENAI_API_KEY";
+const WHERE_A_MODEL_ANSWERS: &str = "LLM_ENDPOINT";
+const WHICH_MODEL_ANSWERS_THERE: &str = "LLM_MODEL";
 
 /// What a process was told, kept whole so that a name can be asked for by name.
 #[derive(Clone, PartialEq, Eq)]
@@ -29,6 +35,8 @@ impl TheEnvironment {
         for a_name in [
             THE_FLAG_THAT_LETS_A_MODEL_RULE,
             THE_KEY_A_MODEL_ANSWERS_WITH,
+            WHERE_A_MODEL_ANSWERS,
+            WHICH_MODEL_ANSWERS_THERE,
         ] {
             if let Ok(what_it_said) = std::env::var(a_name) {
                 what_it_held.insert(a_name.to_string(), what_it_said);
