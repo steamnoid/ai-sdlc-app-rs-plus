@@ -594,6 +594,21 @@ and then ignores the flag has already paid for a ruling nobody authorised. **The
 honest answer until a person turns it on**, rather than a decision this system made on a human's
 behalf — and the whole of what the flag buys is a model that may be asked, nothing more.
 
+**`HowThisDeploymentIsSetUp`** — the flag and the key of one deployment, read together. **Two
+readers are two places to be consistent, and what they must agree about is one decision**: a model
+asked for and not reachable is a run that cannot answer anybody. So a deployment that typed `yes`
+and supplied nothing is **refused naming both halves at once**, rather than failing at the far end
+in words this system did not write — **because a caller reading only *it is off* goes and sets the
+flag again, and a caller reading only *there is no key* sets a key on a deployment that never
+asked for a model.**
+
+**It is a thing runs print, log and put in a commit message**, and it holds a credential behind a
+value that prints as `a credential` and has no `Debug`. The test proves the summary carries no key
+**and still says what this deployment can do**, because a summary that says nothing is the same as
+no summary.
+
+**`ASetupThatAsksForAModelItCannotReach`** — that refusal, naming the word the operator typed.
+
 **`ACredential`** — a key a deployment supplied, **which prints as the words "a credential" and
 never as itself, and has no `Debug` at all.** A derived `Debug` is one `{:?}` away from a log and a
 derived `Display` is one `{}` away from an error message, and **adding either was tried twice in one

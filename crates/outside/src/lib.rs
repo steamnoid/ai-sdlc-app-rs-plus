@@ -10,6 +10,7 @@
 //! is written against. A change here changes what the world does; a change anywhere else
 //! changes what the system asks for.
 
+pub mod how_this_deployment_is_set_up;
 pub mod the_program_as_it_runs;
 pub mod the_project_on_disk;
 pub mod whether_a_model_rules_here_is_read;
