@@ -17,6 +17,10 @@ pub struct ANowhereToLeaveAComment {
 
 impl ANowhereToLeaveAComment {
     /// Why the comment was refused, naming the work and the fact that nobody filed it.
+    ///
+    /// **Two reasons land here and they are not the same thing**: a request nobody filed, and a
+    /// write that failed. **The reason is the string either way**, because a caller reading one
+    /// message can act on it and a caller reading a category has to ask which.
     pub fn because(the_request: &CommissionedRequest) -> Self {
         Self {
             the_work: the_request.title.clone(),
@@ -32,15 +36,25 @@ impl ANowhereToLeaveAComment {
     }
 }
 
-/// The run leaves a comment, refusing a request nobody filed before it writes anything.
+/// The run leaves a comment, refusing a request nobody filed **before it writes anything**.
+///
+/// **The order is the rule, and it is the destination guard's rule again.** A refusal that arrives
+/// after the write is a comment nobody can take back, so the filing is asked about first and the
+/// comment is only written once there is somewhere to write it.
 pub fn the_run_leaves_a_comment(
     somewhere: &mut impl AGitHubWeWriteTo,
     the_request: &CommissionedRequest,
     what_it_would_say: &str,
     who_wrote_this: &WhoDecided,
 ) -> Result<(), ANowhereToLeaveAComment> {
-    let _somewhere = somewhere;
-    let _what_it_would_say = what_it_would_say;
-    let _who_wrote_this = who_wrote_this;
-    Err(ANowhereToLeaveAComment::because(the_request))
+    let Some(filed_as) = the_request.where_it_was_filed() else {
+        return Err(ANowhereToLeaveAComment::because(the_request));
+    };
+    let what_it_is_asked_for =
+        WhatGitHubWasAskedFor::a_comment_at(filed_as.clone(), what_it_would_say, who_wrote_this);
+    somewhere
+        .it_is_asked_to(&what_it_is_asked_for)
+        .map_err(|why_it_failed| ANowhereToLeaveAComment {
+            the_work: why_it_failed,
+        })
 }
