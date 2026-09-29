@@ -24,6 +24,7 @@
 //! refuses, or a copy.
 
 pub mod a_stretch_of_the_file;
+pub mod reaching_for_the_world;
 pub mod reading_the_checkout;
 pub mod reading_the_code;
 pub mod reading_the_glossary;

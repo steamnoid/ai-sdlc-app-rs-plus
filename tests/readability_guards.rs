@@ -1980,7 +1980,7 @@ mod the_domain_depends_on_nothing {
     //! `std::fs` in its documentation — the walk that would refuse that is the walk this gate
     //! exists to make impossible.
 
-    use aisdlc_gates::a_stretch_of_the_file::WhatIsWrittenThere;
+    use aisdlc_gates::reaching_for_the_world::what_reaches_the_world_in;
     use aisdlc_gates::reading_the_checkout;
     use aisdlc_gates::scanning::HowTheFileIsWritten;
 
@@ -2000,26 +2000,11 @@ mod the_domain_depends_on_nothing {
     /// just read would never match anything, and a gate that never matches is green forever.
     const THE_SECTIONS_THE_DOMAIN_MAY_NOT_FILL: [&str; 2] = ["dependencies", "dev-dependencies"];
 
-    /// The five modules of the standard library that can touch the world.
-    ///
-    /// **Drawn as five names and not as a list of everything `std` offers**, because a list of
-    /// every reach is a list to keep in step with a standard library, and a rule drawn at the
-    /// reach is what a rule about a boundary looks like. `temp_dir` is here and it carries no
-    /// credential at all — a gate that is asked to refuse a path lookup has to refuse where it
-    /// is going to look as well, or a domain can be handed the answer on a plate.
-    const THE_MODULES_THAT_REACH_THE_WORLD: [&str; 5] = ["fs", "process", "time", "net", "thread"];
-
-    /// The path the domain's own manifest is at, with the `std::` in front of it.
-    ///
-    /// A domain that owns a module called `fs` is not reaching for the world, and the glossary
-    /// fixes this as a rule about the path rather than about the last segment.
-    const THE_PATH_EACH_REACH_STANDS_AT: &str = "std::";
-
     /// What a manifest and its sources break, named so a reader can act on the finding.
     fn what_is_wrong_with(manifest: &str, the_source: &str) -> Vec<String> {
         let mut what_broke = Vec::new();
         what_broke.extend(the_sections_that_are_filled(manifest));
-        what_broke.extend(the_reaches_in_the_code(the_source));
+        what_broke.extend(what_reaches_the_world_in(the_source));
         what_broke
     }
 
@@ -2080,57 +2065,6 @@ mod the_domain_depends_on_nothing {
     /// A fully qualified `std::fs::read_to_string(path)` with no import at all is a reach, and a
     /// checker that looks for a `use` line misses it — that was the first escape from an earlier
     /// version of this gate, and the two are the same hole seen from two sides.
-    fn the_reaches_in_the_code(the_source: &str) -> Vec<String> {
-        let mut found = Vec::new();
-        for stretch in HowTheFileIsWritten::of(the_source).stretches() {
-            if stretch.kind() != WhatIsWrittenThere::Code {
-                continue;
-            }
-            found.extend(the_reaches_in(stretch.text(), stretch.line_it_starts_on()));
-        }
-        found
-    }
-
-    /// The reach one stretch of code makes, if any.
-    fn the_reaches_in(the_line_of_code: &str, the_line_number: usize) -> Vec<String> {
-        let mut found = Vec::new();
-        for module in THE_MODULES_THAT_REACH_THE_WORLD {
-            let the_path = format!("{THE_PATH_EACH_REACH_STANDS_AT}{module}");
-            if the_line_of_code.contains(&the_path) {
-                found.push(format!("line {the_line_number} reaches for {the_path}"));
-            }
-            if the_line_of_code.contains(&format!("{THE_PATH_EACH_REACH_STANDS_AT}{{")) {
-                found.extend(the_module_in_a_group(
-                    module,
-                    the_line_of_code,
-                    the_line_number,
-                ));
-            }
-        }
-        found
-    }
-
-    /// A module named among others inside a `use std::{…}` group.
-    ///
-    /// The group's own spellings vary — `use  std::{`, `pub use std::{` — and a checker that
-    /// knows one spelling is the same defect again, so the group is found by the two words
-    /// before the brace.
-    fn the_module_in_a_group(
-        module: &str,
-        the_line_of_code: &str,
-        the_line_number: usize,
-    ) -> Vec<String> {
-        if !the_line_of_code.contains(module) {
-            return Vec::new();
-        }
-        if !the_line_of_code.contains("use std::{") && !the_line_of_code.contains("use  std::{") {
-            return Vec::new();
-        }
-        vec![format!(
-            "line {the_line_number} names {module} in a group of modules"
-        )]
-    }
-
     #[test]
     fn a_manifest_with_a_dependency_is_refused() {
         let manifest = "[package]\nname = \"x\"\n\n[dependencies]\nserde = \"1\"\n";
@@ -2943,6 +2877,126 @@ mod the_core_never_names_a_trait_object {
         assert!(
             found.is_empty(),
             "the domain's types are the specification, and a value that is some stage is a value nobody can say anything definite about: {found:?}"
+        );
+    }
+}
+
+mod the_use_cases_may_not_reach_the_world {
+    //! `aisdlc-run` names ports and nothing else, and the adapters are the only place the world
+    //! may be named.
+    //!
+    //! **The rule is the domain's rule, drawn a second time, and the list is shared on purpose.**
+    //! Five module names in two files is five names in one file and four in another, and the one
+    //! that drifts is the one nobody re-reads. **The exception is exactly one crate, and it is
+    //! named rather than derived** — a rule that derived the exception would exempt every crate
+    //! added after the adapter, and a crate added tomorrow is a crate nobody has read.
+    //!
+    //! **`aisdlc-run` holds three ports and a use case that hands work to the outside world**, so
+    //! this is not a rule about a crate that could not reach anything if it tried. A run that reads
+    //! a clock, or writes a file, is a run whose tests stop being green with no network and no
+    //! model — which is the property every other gate here rests on.
+
+    use aisdlc_gates::reaching_for_the_world::{
+        THE_MODULES_THAT_REACH_THE_WORLD, what_reaches_the_world_in, what_reaches_the_world_says,
+    };
+    use aisdlc_gates::reading_the_checkout;
+
+    /// The one crate allowed to name the world, because it is where the world is answered.
+    const THE_ADAPTER_CRATE: &str = "outside";
+
+    /// A crate's name, which is its directory's own name.
+    fn the_crate_named(a_crate: &std::path::Path) -> String {
+        a_crate
+            .file_name()
+            .and_then(std::ffi::OsStr::to_str)
+            .unwrap_or_default()
+            .to_string()
+    }
+
+    /// Every crate of the workspace that may not reach the world.
+    fn every_crate_but_the_adapters() -> Vec<std::path::PathBuf> {
+        aisdlc_gates::reading_the_checkout::the_crates_under(
+            &reading_the_checkout::the_root_of_the_checkout().join("crates"),
+        )
+        .into_iter()
+        .filter(|a_crate| the_crate_named(a_crate) != THE_ADAPTER_CRATE)
+        .collect()
+    }
+
+    #[test]
+    fn a_use_case_naming_a_process_is_refused_and_the_line_is_named() {
+        let the_code = "fn the_run() {\n    let _ = std::process::Command::new(\"git\");\n}\n";
+
+        assert_eq!(
+            what_reaches_the_world_says(the_code, 1),
+            vec!["line 1 reaches for std::process".to_string()],
+            "**because a use case that starts a process is a use case whose tests need whatever that process needs** — and 'somewhere in the use cases' is not a place a reader can act on"
+        );
+    }
+
+    #[test]
+    fn a_use_case_naming_a_filesystem_is_refused() {
+        let the_code = "fn the_run() {\n    let _ = std::fs::read_dir(\".\");\n}\n";
+
+        assert!(
+            !what_reaches_the_world_says(the_code, 1).is_empty(),
+            "**and a run that reads a file is a run whose answer depends on what is on the disk that day** — the adapter exists so that a use case can be tested with no disk at all"
+        );
+    }
+
+    /// What one crate reaches for, named against the file it was found in.
+    fn what_one_crate_reaches_for(a_crate: &std::path::Path) -> Vec<String> {
+        let mut found = Vec::new();
+        let its_source = a_crate.join("src");
+        for a_file in aisdlc_gates::reading_the_code::the_rust_files_under(&its_source) {
+            for a_reach in what_reaches_the_world_in(&reading_the_checkout::the_text_at(&a_file)) {
+                found.push(format!("{} {a_reach}", a_file.display()));
+            }
+        }
+        found
+    }
+
+    #[test]
+    fn a_reach_in_a_comment_is_not_a_reach() {
+        let the_code = "// the adapter uses std::process::Command, and no other crate reaches\nfn the_run() {}\n";
+
+        assert_eq!(
+            what_reaches_the_world_in(the_code),
+            Vec::<String>::new(),
+            "**because a file that explains where the reach lives is not a file that makes it** — and a gate that read its own explanation would refuse the sentence that keeps the rule from being undone"
+        );
+    }
+
+    #[test]
+    fn the_adapter_crate_may_name_the_world() {
+        let the_code = "fn the_run() {\n    let _ = std::process::Command::new(\"git\");\n}\n";
+        let no_crate_is_the_adapter = every_crate_but_the_adapters()
+            .iter()
+            .all(|a_crate| the_crate_named(a_crate) != THE_ADAPTER_CRATE);
+
+        assert!(
+            no_crate_is_the_adapter && !what_reaches_the_world_in(the_code).is_empty(),
+            "**because the adapter is the answer and the use cases are the question** — and a rule that refused the adapters would be a rule refusing the only place a port is allowed to be real"
+        );
+    }
+
+    #[test]
+    fn no_crate_but_the_adapters_reaches_for_the_world() {
+        let every_crate = every_crate_but_the_adapters();
+        let found: Vec<String> = every_crate
+            .iter()
+            .flat_map(|a_crate| what_one_crate_reaches_for(a_crate))
+            .collect();
+
+        assert!(
+            !every_crate.is_empty(),
+            "**because a gate that reads no crate passes everything** — and there are crates to read"
+        );
+        assert!(
+            found.is_empty(),
+            "a use case may never reach for the world, and these {} reach for {}: {found:?}",
+            every_crate.len(),
+            THE_MODULES_THAT_REACH_THE_WORLD.join(", "),
         );
     }
 }
