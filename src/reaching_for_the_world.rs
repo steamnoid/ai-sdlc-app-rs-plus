@@ -29,8 +29,34 @@ pub fn what_reaches_the_world_says(one_line: &str, the_line_number: usize) -> Ve
         if one_line.contains(&the_path) {
             found.push(format!("line {the_line_number} reaches for {the_path}"));
         }
+        found.extend(the_module_named_in_a_group(
+            a_module,
+            one_line,
+            the_line_number,
+        ));
     }
     found
+}
+
+/// A module named among others inside a `use std::{…}` group.
+///
+/// **The group's own spellings vary** — `use std::{`, `pub use std::{`, `use  std::{` — and a
+/// checker that knows one spelling is the same defect again, so the group is found by the two
+/// words in front of the brace rather than by the brace.
+fn the_module_named_in_a_group(
+    a_module: &str,
+    one_line: &str,
+    the_line_number: usize,
+) -> Vec<String> {
+    if !one_line.contains(a_module) {
+        return Vec::new();
+    }
+    if !one_line.contains("use std::{") && !one_line.contains("use  std::{") {
+        return Vec::new();
+    }
+    vec![format!(
+        "line {the_line_number} names {a_module} in a group of modules"
+    )]
 }
 
 /// What a whole file reaches for, reading its code and not its comments.

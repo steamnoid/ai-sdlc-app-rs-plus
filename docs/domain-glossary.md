@@ -1099,6 +1099,7 @@ and `the_documentation_says_what_the_code_does` exists because that happened.
 | `a_name_is_never_generic_vocabulary` | `readability_guards.rs` | with the first types |
 | `a_synonym_is_never_used` | `readability_guards.rs` | with the first types |
 | `the_domain_depends_on_nothing` | `readability_guards.rs` | with the crates |
+| `the_use_cases_may_not_reach_the_world` | `readability_guards.rs` | with the crates |
 | `a_name_the_gates_share_has_one_implementation` | `readability_guards.rs` | with the gates |
 | `no_test_reads_an_environment_variable` | `readability_guards.rs` | with the tests |
 | `the_specification_and_the_code_have_not_drifted_apart` | `documentation_guards.rs` | with the transition table |
