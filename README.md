@@ -91,7 +91,17 @@ started with an argument vector and no shell, the destination asked about before
 to, the commit and the ref read back out of the clone, and the four ways a clone can fail
 refused by name rather than as a boolean.
 
-What is not here yet: the container, the pull request, and the five ports with no caller.
+**There is no pipeline, and this is the one number in the file that matters: sixteen use cases
+and not one of them is called from outside its own tests.** Every part is proved — the state
+machine, the gate, the clone, the real `git`, the real disk — and the thing that joins them does
+not exist, so **a reader who counts sixteen use cases and a green suite will assume a run, and
+there is no run.** It is not a defect and it is not finished: the pipeline needs the first agent,
+the first agent needs the first artifact, and the first artifact's name belongs to the agent that
+will produce it — **so the chain is blocked at a name a person has not chosen yet, and building
+the artifact first would be writing an identifier before the thing that owns it.**
+
+What is not here yet: the pipeline itself, the container, the pull request, and the five ports
+with no caller.
 
 ## Running it
 
