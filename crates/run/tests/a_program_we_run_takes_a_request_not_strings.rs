@@ -24,12 +24,12 @@ fn the_clone_the_run_wants() -> ARepositoryToClone {
 }
 
 #[test]
-fn the_only_program_this_system_runs_is_named() {
+fn every_program_this_system_runs_is_named() {
     let every_one = WhichProgramWeRun::every_program();
 
     assert_eq!(
         every_one,
-        vec![WhichProgramWeRun::Git],
+        vec![WhichProgramWeRun::Git, WhichProgramWeRun::Curl],
         "**because a program we run is a closed set and not a name a caller supplies** — a port that runs whatever string it is given is a port that runs whatever reaches it"
     );
 }

@@ -15,7 +15,7 @@
 
 use aisdlc_domain::repository::Repository;
 use aisdlc_domain::work_item_id::WorkItemId;
-use aisdlc_outside::the_program_as_it_runs::{TheProgramAsItRuns, the_arguments_of};
+use aisdlc_outside::the_program_as_it_runs::TheProgramAsItRuns;
 use aisdlc_run::a_program_we_run::{AProgramWeRun, WhichProgramWeRun};
 use aisdlc_run::the_repository_to_clone_into::ARepositoryToClone;
 use aisdlc_run::what_we_tell_a_program_to_do::WhatWeTellAProgramToDo;
@@ -49,7 +49,8 @@ fn under_the_target_directory(named: &str) -> std::path::PathBuf {
 
 #[test]
 fn the_arguments_are_one_thing_each_and_not_one_line() {
-    let the_arguments = the_arguments_of(&a_request_to_clone("what-the-run-asked-for"));
+    let the_program = TheProgramAsItRuns::as_it_is_on_this_host(None);
+    let the_arguments = the_program.the_arguments_of(&a_request_to_clone("what-the-run-asked-for"));
 
     assert_eq!(
         the_arguments,
@@ -66,7 +67,8 @@ fn the_arguments_are_one_thing_each_and_not_one_line() {
 
 #[test]
 fn no_argument_is_itself_a_shell_to_be_given_anything_else_to() {
-    let the_arguments = the_arguments_of(&a_request_to_clone("what-the-run-asked-for"));
+    let the_program = TheProgramAsItRuns::as_it_is_on_this_host(None);
+    let the_arguments = the_program.the_arguments_of(&a_request_to_clone("what-the-run-asked-for"));
 
     for an_argument in &the_arguments {
         assert!(
@@ -78,8 +80,8 @@ fn no_argument_is_itself_a_shell_to_be_given_anything_else_to() {
 
 #[test]
 fn the_program_is_git_and_git_is_never_one_of_the_arguments() {
-    let the_program = TheProgramAsItRuns::as_it_is_on_this_host();
-    let the_arguments = the_arguments_of(&a_request_to_clone("what-the-run-asked-for"));
+    let the_program = TheProgramAsItRuns::as_it_is_on_this_host(None);
+    let the_arguments = the_program.the_arguments_of(&a_request_to_clone("what-the-run-asked-for"));
 
     assert_eq!(
         the_program.which_program_it_runs(),
@@ -102,7 +104,7 @@ fn the_program_is_git_and_git_is_never_one_of_the_arguments() {
 fn git_really_clones_and_the_clone_really_stands_on_a_commit() {
     let named = "a-clone-of-this-repository";
     let _ = std::fs::remove_dir_all(under_the_target_directory(named));
-    let the_program = TheProgramAsItRuns::as_it_is_on_this_host();
+    let the_program = TheProgramAsItRuns::as_it_is_on_this_host(None);
 
     let what_it_said = the_program.run(&a_request_to_clone(named));
 
@@ -126,7 +128,7 @@ fn a_repository_that_is_not_there_does_not_say_it_was_cloned() {
         under_the_target_directory("a-clone-of-a-repository-that-is-not-there"),
     );
     let _ = std::fs::remove_dir_all(nowhere.where_it_lands());
-    let the_program = TheProgramAsItRuns::as_it_is_on_this_host();
+    let the_program = TheProgramAsItRuns::as_it_is_on_this_host(None);
 
     let what_it_said = the_program.run(&WhatWeTellAProgramToDo::clone_the_repository(nowhere));
 

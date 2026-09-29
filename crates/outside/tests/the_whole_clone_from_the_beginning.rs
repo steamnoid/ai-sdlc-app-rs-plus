@@ -74,7 +74,7 @@ fn the_request_into(named: &str) -> WhatWeTellAProgramToDo {
 #[test]
 fn a_destination_somebody_else_holds_is_refused_without_reaching_the_network() {
     let _ = a_directory_somebody_else_holds("a-destination-somebody-else-holds");
-    let mut the_program = TheProgramAsItRuns::as_it_is_on_this_host();
+    let mut the_program = TheProgramAsItRuns::as_it_is_on_this_host(None);
     let the_disk = WhetherAnythingStandsOnDisk;
 
     let how_it_went = the_run_makes_a_checkout(
@@ -99,7 +99,7 @@ fn a_destination_somebody_else_holds_is_refused_without_reaching_the_network() {
 fn the_whole_run_clones_for_real_and_reads_the_commit_and_the_ref_back() {
     let named = "the-whole-clone";
     let _ = std::fs::remove_dir_all(under_the_target_directory(named));
-    let mut the_program = TheProgramAsItRuns::as_it_is_on_this_host();
+    let mut the_program = TheProgramAsItRuns::as_it_is_on_this_host(None);
     let the_disk = WhetherAnythingStandsOnDisk;
 
     let how_it_went =
@@ -125,7 +125,7 @@ fn the_whole_run_clones_for_real_and_reads_the_commit_and_the_ref_back() {
 fn a_repository_nobody_ever_made_is_refused_with_gits_own_words() {
     let named = "a-repository-nobody-ever-made";
     let _ = std::fs::remove_dir_all(under_the_target_directory(named));
-    let mut the_program = TheProgramAsItRuns::as_it_is_on_this_host();
+    let mut the_program = TheProgramAsItRuns::as_it_is_on_this_host(None);
     let the_disk = WhetherAnythingStandsOnDisk;
 
     let how_it_went = the_run_makes_a_checkout(
