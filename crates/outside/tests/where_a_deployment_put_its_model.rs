@@ -70,6 +70,26 @@ fn both_named_and_the_model_can_be_asked() {
 /// from**, and `cargo test` starts it from a shell that has not read `.env`. Running this with the
 /// file loaded is the point; running it without is a skip with the reason printed, and a skip with
 /// the reason printed is not a green.
+/// **The endpoint a deployment names is the whole address, and not a base this system completes.**
+///
+/// The first real run posted to what `LLM_ENDPOINT` said and a web page came back: the variable held
+/// a base, and a base is not a thing this system can post to. **A base plus a path this system
+/// invents is a fallback with a different address** — the same grudge as the `localhost` that came
+/// before it, and one step further from the truth because the invented part looks like a standard.
+#[test]
+fn an_endpoint_that_is_only_a_base_is_a_refusal_naming_it() {
+    let a_base_and_not_an_address = WhereAModelIs::where_a_deployment_put_its_model(
+        Some("https://a-gateway.example/v1"),
+        Some("a-model"),
+    );
+
+    assert!(
+        a_base_and_not_an_address.is_err(),
+        "**because a base is not a thing this system can post to, and completing it is a second fact          this system chose** — the one fact about an endpoint a deployment can be held to is the          address it answers at, and a base leaves a reader guessing which shape a provider wanted: \
+         {a_base_and_not_an_address:?}"
+    );
+}
+
 #[test]
 #[ignore = "asserts about the environment the process was started from, and needs .env loaded"]
 fn the_reader_keeps_what_a_process_was_told_and_asks_for_it_by_name() {
