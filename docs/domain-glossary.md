@@ -1108,6 +1108,19 @@ shape of the work and not about the work.**
 rules that were lost from the gate table in `AGENTS.md` were lost by an edit nobody recorded,
 and `the_documentation_says_what_the_code_does` exists because that happened.
 
+**And it stays removed, now with the history read to decide rather than assumed.** Seventy-eight
+pull requests: 160 commits on branches, 74 on `main`, and **not one of the 74 named a RED** — the
+subject is the commit's own message when a branch has one commit and the title when it has two or
+more, and a behaviour cycle has two, so the subject was the title, and the title was never the
+pair. Seventy-seven of the seventy-eight carried a test, and the one that did not was the
+workspace harness, which has nothing to break first. **A gate reading the history would have had
+nothing to catch that the record had not already lost**, and it would be the rule about the shape
+of the work rebuilt as a rule about the shape of the work.
+
+**The record comes back through the subject instead, given explicitly to `--subject`** — and that
+was verified rather than assumed: the command that disproved the first version of this paragraph
+is the one that confirms the second.
+
 | Rule | Held in | Built |
 |---|---|---|
 | No `unsafe` | `#![forbid(unsafe_code)]` — the compiler | with the crates |
