@@ -1271,6 +1271,7 @@ is the one that confirms the second.
 | `the_gate_workflow_needs_no_secret` | `documentation_guards.rs` | with the workflow |
 | `the_core_never_names_a_trait_object` | `readability_guards.rs` | with the domain |
 | `an_ignored_test_says_why_it_is_ignored` | `readability_guards.rs` | with the tests |
+| `a_declaration_is_held_by_what_it_lacks` | `readability_guards.rs` | with the declarations |
 
 ---
 

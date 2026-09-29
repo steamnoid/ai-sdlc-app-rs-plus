@@ -18,8 +18,21 @@
 use std::fmt;
 
 /// Where a request was filed, as the address the filing itself returned.
-#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+///
+/// **No `Debug`, and this is the second type in the repository with that.** A filing address is
+/// what a work item is traced by, and a derived `Debug` on a value a run prints and records is one
+/// brace away from a log — **so the declaration carries no derive and the only text it can become
+/// is its own `Display`**, which is the address because an address is not a secret and pretending
+/// otherwise would make the audit trail unreadable.
+#[derive(Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct AWhereItWasFiled(String);
+
+impl std::fmt::Debug for AWhereItWasFiled {
+    /// The address in full, because an audit trail a reader cannot follow is not an audit trail.
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        std::fmt::Display::fmt(self, formatter)
+    }
+}
 
 impl AWhereItWasFiled {
     /// The address a filing returned, or a refusal when it was not one.
@@ -39,6 +52,15 @@ impl AWhereItWasFiled {
     /// The address, word for word as the filing returned it.
     pub fn as_str(&self) -> &str {
         &self.0
+    }
+}
+
+impl std::fmt::Display for AWhereItWasFiled {
+    /// The address in full, because **an audit trail a reader cannot follow is not an audit
+    /// trail** — and an address is not a secret, so hiding it protects nothing and costs the one
+    /// thing a filing is for.
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter.write_str(&self.0)
     }
 }
 

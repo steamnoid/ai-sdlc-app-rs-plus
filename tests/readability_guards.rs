@@ -3000,3 +3000,100 @@ mod the_use_cases_may_not_reach_the_world {
         );
     }
 }
+
+mod a_declaration_is_held_by_what_it_lacks {
+    //! A declaration is read for what it does **not** contain, because that is the half of it a
+    //! test cannot reach.
+    //!
+    //! **Two of this repository's own properties had no holder at all.** `ACredential` printed as a
+    //! credential — and adding `#[derive(Debug)]` to it was tried twice in one day and the suite
+    //! said nothing either time, because no test can hold a fact about a type. And
+    //! `AWhereItWasFiled` took a whole address — **and a function composing one from a number was
+    //! added to its module and every test still passed**, because a claim about a door that does
+    //! not exist has nothing for a test to name.
+    //!
+    //! **So this reads the declaration instead of the value.** A reader of a value is a test; a
+    //! reader of a declaration is a walk, and this repository already has the walk — the same one
+    //! that holds every other rule about how code is written.
+
+    use aisdlc_gates::reading_the_checkout;
+    use aisdlc_gates::reading_the_code::{every_source_file, the_lines_of_code};
+
+    /// What a declaration of one name carries, and the lines it carries it on.
+    fn the_declaration_of(one_name: &str) -> Option<(String, Vec<String>)> {
+        let marker = format!("struct {one_name}");
+        for a_file in every_source_file() {
+            let the_text = reading_the_checkout::the_text_at(&a_file);
+            if !the_text.contains(&marker) {
+                continue;
+            }
+            let its_lines = the_declaration_and_what_is_above_it(&the_text, &marker);
+            if !its_lines.is_empty() {
+                return Some((a_file.display().to_string(), its_lines));
+            }
+        }
+        None
+    }
+
+    /// The declaration and the attribute lines above it, which is where a `derive` lives.
+    ///
+    /// **Found by matching and not by arithmetic.** The walk hands back code lines with the line
+    /// numbers they sit on, so the list is shorter than the file and a line number is a position,
+    /// not an index — **and using one as the other is how this returned nothing at all when a
+    /// `derive(Debug)` was added to `ACredential` and this gate did not notice.**
+    fn the_declaration_and_what_is_above_it(the_text: &str, the_marker: &str) -> Vec<String> {
+        let every_code_line: Vec<String> = the_lines_of_code(the_text)
+            .into_iter()
+            .map(|(_, one_line)| one_line)
+            .collect();
+        let Some(where_it_is) = every_code_line
+            .iter()
+            .position(|one_line| one_line.contains(the_marker))
+        else {
+            return Vec::new();
+        };
+        let first_above = where_it_is.saturating_sub(3);
+        every_code_line[first_above..=where_it_is].to_vec()
+    }
+
+    /// What a declaration wrongly carries, and nothing when it carries nothing wrong.
+    fn what_is_wrong_with(one_name: &str) -> Vec<String> {
+        let Some((where_it_is, its_lines)) = the_declaration_of(one_name) else {
+            return Vec::new();
+        };
+        let it_can_be_debugged = its_lines
+            .iter()
+            .any(|one_line| one_line.contains("derive") && one_line.contains("Debug"));
+        let it_is_tuple_of_a_number = its_lines.iter().any(|one_line| {
+            one_line.contains("derive") && one_line.contains("Debug") && one_line.contains("u32")
+        });
+        let mut found = Vec::new();
+        if it_can_be_debugged {
+            found.push(format!(
+                "{where_it_is}: {one_name} carries a derived Debug, and a derived Debug is one brace away from a log"
+            ));
+        }
+        if it_is_tuple_of_a_number {
+            found.push(format!("{where_it_is}: {one_name} holds a number"));
+        }
+        found
+    }
+
+    #[test]
+    fn a_credential_carries_no_derived_debug() {
+        assert_eq!(
+            what_is_wrong_with("ACredential"),
+            Vec::<String>::new(),
+            "**because a credential is a thing runs print, log and put in a commit message** — and adding a derive to it twice passed the whole suite, because no test can hold a fact about a type and only a walk of the declaration can"
+        );
+    }
+
+    #[test]
+    fn a_filing_address_is_not_something_a_number_can_be_composed_into() {
+        assert_eq!(
+            what_is_wrong_with("AWhereItWasFiled"),
+            Vec::<String>::new(),
+            "**and the door that takes a whole address is the whole of the property** — a function composing one from a number was added to that module and every test still passed, so the composition is a shape and shapes are what this walks"
+        );
+    }
+}
