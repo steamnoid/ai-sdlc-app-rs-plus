@@ -594,6 +594,21 @@ and then ignores the flag has already paid for a ruling nobody authorised. **The
 honest answer until a person turns it on**, rather than a decision this system made on a human's
 behalf — and the whole of what the flag buys is a model that may be asked, nothing more.
 
+**`WhatGitHubWasAskedFor`** — one thing asked of GitHub, carrying the address word for word, the
+words unaltered, and **who wrote it**. **A comment is this system's handwriting and a reader cannot
+tell it from a person's**, so the author travels with it, and the name is one this system was told
+— because a comment claiming a person wrote it is the same forgery as a record naming a person for
+a decision no person made. **That is the one thing a comment shares with a gate ruling**, and the
+gate already refuses it by name.
+
+**`the_run_leaves_a_comment`** — leaves a comment on the filing its work answers, **refusing a
+request nobody filed before it writes anything.** The order is the destination guard's rule again:
+**a refusal that arrives after the write is a comment nobody can take back.**
+
+**`ANowhereToLeaveAComment`** — and **two reasons land here that are not the same thing**: a
+request nobody filed, and a write that failed. The reason is a string either way, **because a
+caller reading one message can act on it and a caller reading a category has to ask which.**
+
 **`AWhereItWasFiled`** — where a request was filed, **as the address the filing itself returned**
 and as nothing at all when nobody filed it. **The only door takes a whole address, and nothing
 watches for a second door**: adding `an_address_composed_of(what, 41)` to that module was tried

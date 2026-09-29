@@ -13,6 +13,8 @@
 //! use case that says `reqwest` instead of `AGitHubWeReadFrom` has moved a decision out of
 //! the type and into a line of code.
 
+pub mod a_comment_is_left;
+pub mod a_git_hub_we_write_to;
 pub mod a_model_is_asked_how_it_rules;
 pub mod a_path_in_the_project;
 pub mod a_program_we_run;
