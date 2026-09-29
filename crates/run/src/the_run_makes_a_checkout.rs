@@ -144,12 +144,22 @@ fn the_commit_and_the_ref(
     Ok((a_commit_named_in(&the_commit)?, a_ref_named_in(&the_ref)?))
 }
 
-/// Git copied the repository, and then said what the copy is standing on.
-fn what_the_clone_stands_on(
+/// Git copied the repository, named the second address, and said what the copy stands on.
+///
+/// **Four questions in the order they must be asked, and the order is the whole of it.** The
+/// copy is made before there is anything to name, the second address is named before the commit
+/// is read because a reader months later is the one who needs both, and each of the four can
+/// stop the ones after it.
+///
+/// **One request and not a request beside the clone it is about.** They are the same fact, and
+/// two parameters holding one fact is a reader's job to notice they cannot disagree.
+fn the_copy_the_run_made(
     the_program: &mut impl AProgramWeRun,
-    the_clone_of: &ARepositoryToClone,
     the_request: &WhatWeTellAProgramToDo,
 ) -> Result<ACloneOnDisk, HowCloningWent> {
+    let the_clone_of = the_request
+        .the_clone_it_is_about()
+        .expect("a request about a clone is the only request that reaches here");
     what_git_said_about(the_program, the_request)?;
     the_second_address_is_named(the_program, the_clone_of)?;
     let (commit, reference) = the_commit_and_the_ref(the_program, the_clone_of)?;
@@ -206,7 +216,7 @@ pub fn the_run_makes_a_checkout(
     {
         return a_refusal;
     }
-    match what_the_clone_stands_on(the_program, the_clone_of, what_it_is_asked_to_do) {
+    match the_copy_the_run_made(the_program, what_it_is_asked_to_do) {
         Ok(the_clone) => HowCloningWent::made(the_clone),
         Err(a_refusal) => a_refusal,
     }
