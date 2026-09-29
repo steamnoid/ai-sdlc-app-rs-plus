@@ -38,8 +38,12 @@ pub enum WhatWeTellAProgramToDo {
     },
     /// Ask a model how it rules on an exact artifact at an exact version.
     AskAModelHowItRules {
-        /// The whole question, built here and not by the model.
-        the_question: String,
+        /// Where the model is, which is a deployment fact and not a secret.
+        the_endpoint: String,
+        /// Which model, which is a deployment fact and not a secret.
+        the_model: String,
+        /// The question and the shape of the answer, built here and not by the model.
+        the_body: String,
     },
 }
 
@@ -81,13 +85,17 @@ impl WhatWeTellAProgramToDo {
             | WhatWeTellAProgramToDo::NameWhereTheCodeWasWrittenIn { the_clone_of } => {
                 the_clone_of.fetch_from()
             }
-            WhatWeTellAProgramToDo::AskAModelHowItRules { the_question } => the_question.clone(),
+            WhatWeTellAProgramToDo::AskAModelHowItRules { the_body, .. } => the_body.clone(),
         }
     }
 
     /// Ask a model how it rules on an exact artifact.
-    pub fn ask_a_model_how_it_rules(the_question: String) -> Self {
-        WhatWeTellAProgramToDo::AskAModelHowItRules { the_question }
+    pub fn ask_a_model_how_it_rules(the_endpoint: &str, the_model: &str, the_body: &str) -> Self {
+        WhatWeTellAProgramToDo::AskAModelHowItRules {
+            the_endpoint: the_endpoint.to_string(),
+            the_model: the_model.to_string(),
+            the_body: the_body.to_string(),
+        }
     }
 
     /// This request, read as a question about a ruling.
@@ -98,7 +106,7 @@ impl WhatWeTellAProgramToDo {
     /// The question this request carries, for a request that carries one.
     pub fn what_it_is_asked_about(&self) -> &str {
         match self {
-            WhatWeTellAProgramToDo::AskAModelHowItRules { the_question } => the_question,
+            WhatWeTellAProgramToDo::AskAModelHowItRules { the_body, .. } => the_body,
             _ => "",
         }
     }

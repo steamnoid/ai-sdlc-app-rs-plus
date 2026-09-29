@@ -11,7 +11,9 @@
 use aisdlc_domain::approval::{AnArtifactVersion, WhichArtifact, WhoDecided};
 use aisdlc_domain::repository::Repository;
 use aisdlc_domain::work_item_id::WorkItemId;
-use aisdlc_run::a_model_is_asked_how_it_rules::the_model_is_asked_how_it_rules_on;
+use aisdlc_run::a_model_is_asked_how_it_rules::{
+    WhereAModelIs, the_model_is_asked_how_it_rules_on,
+};
 use aisdlc_run::a_program_we_run::{AProgramWeRun, WhatTheProgramSaid};
 use aisdlc_run::{ApprovalQuestion, the_question_put_to_somebody};
 
@@ -39,6 +41,14 @@ impl AProgramWeRun for AModelThatAnswersWith {
             .borrow_mut()
             .push(what_it_is_asked_to_do.what_it_is_asked_about().to_string());
         WhatTheProgramSaid::of(true, &self.what_it_says)
+    }
+}
+
+/// The model this deployment is configured to ask.
+fn a_configured_model() -> WhereAModelIs {
+    WhereAModelIs {
+        the_endpoint: "http://localhost:11434/v1".to_string(),
+        which_model: "a-model".to_string(),
     }
 }
 
@@ -71,6 +81,7 @@ fn a_plain_yes_is_a_ruling_naming_whoever_this_system_was_told() {
         &a_model,
         &a_question_about_one_artifact(),
         &WhoDecided::try_from("a model: the configured one").expect("a name"),
+        &a_configured_model(),
     )
     .expect("one word in the fixed form is a ruling");
 
@@ -91,6 +102,7 @@ fn a_model_that_offers_a_decider_is_refused_rather_than_obeyed() {
         &a_model,
         &a_question_about_one_artifact(),
         &WhoDecided::try_from("a model: the configured one").expect("a name"),
+        &a_configured_model(),
     );
 
     assert!(
@@ -107,6 +119,7 @@ fn an_answer_that_is_not_the_fixed_form_is_refused_rather_than_guessed_at() {
         &a_model,
         &a_question_about_one_artifact(),
         &WhoDecided::try_from("a model: the configured one").expect("a name"),
+        &a_configured_model(),
     );
 
     assert!(
@@ -123,6 +136,7 @@ fn the_question_it_is_asked_names_the_artifact_and_its_version() {
         &a_model,
         &a_question_about_one_artifact(),
         &WhoDecided::try_from("a model: the configured one").expect("a name"),
+        &a_configured_model(),
     );
 
     let what_it_was_asked = a_model.what_it_was_asked.borrow();

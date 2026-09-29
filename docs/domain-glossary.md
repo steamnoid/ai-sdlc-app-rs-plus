@@ -568,6 +568,18 @@ clone a checkout in `ACloneOnDisk`, so the name that was refused is not the one 
 it. **Three questions in order, and each can stop the next**: whether anything stands at the
 destination, whether git copied the repository, what the copy stands on.
 
+**`WhereAModelIs`** — where a model answers and which one, **both deployment facts and neither a
+secret**. **And that is the point of the type existing**: the address and the model name are the
+two facts a deployment configures and can say out loud, **and the credential is deliberately not
+one of them.**
+
+**`AskAModelHowItRules`** — a request carrying the endpoint, the model and the body, and **no
+credential at all.** `curl` builds no arguments for it today, and the program run says so in words
+rather than fetching the question as an address. **A translation guessed at is a translation that
+looks right until somebody runs it**, and the fact this one is missing is the fact a reader
+cannot see: **where a secret lives in a process is a decision a person has to make, and this
+system has not made it.**
+
 **`AnAnswerThatIsNotARuling`** — a model's answer that was not `APPROVED` or `REFUSED` and
 nothing else, quoting what came back. **A contract a model can miss is not a contract**, so an
 answer in another shape is a refusal rather than a guess at what was meant.

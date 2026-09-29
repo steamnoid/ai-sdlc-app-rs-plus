@@ -54,9 +54,7 @@ pub fn the_arguments_of(what_it_is_asked_to_do: &WhatWeTellAProgramToDo) -> Vec<
             the_clone_of,
             &["remote", "add", "upstream", &the_clone_of.fetch_from()],
         ),
-        WhatWeTellAProgramToDo::AskAModelHowItRules { the_question } => {
-            vec!["-sS".to_string(), the_question.clone()]
-        }
+        WhatWeTellAProgramToDo::AskAModelHowItRules { .. } => Vec::new(),
     }
 }
 
@@ -74,6 +72,14 @@ fn inside_the_clone(the_clone_of: &ARepositoryToClone, the_question: &[&str]) ->
     the_arguments
 }
 
+/// What the program run says when a request has no program to run, and says so rather than
+/// running one with no arguments.
+///
+/// **Said in words and not left to a panic.** A caller reading a refusal can act on it, and a
+/// request with no program is a fact about this system's own incompleteness — **it is the one
+/// refusal in this file that is ours and not the program's.**
+const NO_PROGRAM_IS_NAMED_FOR_THIS_REQUEST: &str = "no program is named for this request yet, and where a secret lives in a process is a decision this system has not made";
+
 /// What the program wrote, and both streams, because git writes progress to one and trouble to
 /// the other — **a caller told only about the stream it did not expect is told nothing.**
 fn the_words_of(what_it_ran: &std::process::Output) -> String {
@@ -89,8 +95,12 @@ impl AProgramWeRun for TheProgramAsItRuns {
     /// so in the same words a failure would: the caller has to tell *git is not installed* from
     /// *there is no such repository*, and this is the half of that telling that is not git's.
     fn run(&self, what_it_is_asked_to_do: &WhatWeTellAProgramToDo) -> WhatTheProgramSaid {
+        let the_arguments = the_arguments_of(what_it_is_asked_to_do);
+        if the_arguments.is_empty() {
+            return WhatTheProgramSaid::of(false, NO_PROGRAM_IS_NAMED_FOR_THIS_REQUEST);
+        }
         let what_it_ran = std::process::Command::new(self.which_program.name_on_the_host())
-            .args(the_arguments_of(what_it_is_asked_to_do))
+            .args(&the_arguments)
             .output();
         match what_it_ran {
             Ok(what_it_ran) => {
