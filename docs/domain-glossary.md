@@ -594,6 +594,21 @@ and then ignores the flag has already paid for a ruling nobody authorised. **The
 honest answer until a person turns it on**, rather than a decision this system made on a human's
 behalf — and the whole of what the flag buys is a model that may be asked, nothing more.
 
+**`ACredential`** — a key a deployment supplied, **which prints as the words "a credential" and
+never as itself, and has no `Debug` at all.** A derived `Debug` is one `{:?}` away from a log and a
+derived `Display` is one `{}` away from an error message, and **adding either was tried twice in one
+day and the suite said nothing either time** — because **no test can hold a fact about a type, only
+code that would stop compiling can.** So the type carries no `Debug`, the one `Display` is
+hand-written, and the reason is written where whoever adds the derive is already reading.
+
+**The key lives on the program and not on the request**, because a request is the thing this system
+renders, records, quotes into a commit message and shows to a reader — **so a secret on a request
+is a secret in four places, and a secret on a program is a secret in one.** The third test proves
+the consequence: a question a reader could not read would be a question nobody could check.
+
+**`ACredentialThatIsNothing`** — a blank key, refused, **because a credential that is blank is a
+request the far end refuses** and the far end's refusal is this system's problem to read.
+
 **`WhatGitHubWasAskedFor`** — one thing asked of GitHub, carrying the address word for word, the
 words unaltered, and **who wrote it**. **A comment is this system's handwriting and a reader cannot
 tell it from a person's**, so the author travels with it, and the name is one this system was told
