@@ -11,6 +11,7 @@
 //! never travel as data, and the first argument is what to do rather than which program.
 
 use aisdlc_run::a_program_we_run::{AProgramWeRun, WhatTheProgramSaid, WhichProgramWeRun};
+use aisdlc_run::the_repository_to_clone_into::ARepositoryToClone;
 use aisdlc_run::what_we_tell_a_program_to_do::WhatWeTellAProgramToDo;
 
 /// One of our own programs, run on this host.
@@ -43,23 +44,31 @@ pub fn the_arguments_of(what_it_is_asked_to_do: &WhatWeTellAProgramToDo) -> Vec<
             the_clone_of.fetch_from(),
             the_clone_of.where_it_lands().display().to_string(),
         ],
-        WhatWeTellAProgramToDo::TheCommitItStandsOn { the_clone_of } => vec![
-            "-C".to_string(),
-            the_clone_of.where_it_lands().display().to_string(),
-            "rev-parse".to_string(),
-            "HEAD".to_string(),
-        ],
-        WhatWeTellAProgramToDo::TheRefItStandsOn { the_clone_of } => vec![
-            "-C".to_string(),
-            the_clone_of.where_it_lands().display().to_string(),
-            "rev-parse".to_string(),
-            "--abbrev-ref".to_string(),
-            "HEAD".to_string(),
-        ],
-        WhatWeTellAProgramToDo::NameWhereTheCodeWasWrittenIn { the_clone_of } => {
-            vec!["nothing".to_string()]
+        WhatWeTellAProgramToDo::TheCommitItStandsOn { the_clone_of } => {
+            inside_the_clone(the_clone_of, &["rev-parse", "HEAD"])
         }
+        WhatWeTellAProgramToDo::TheRefItStandsOn { the_clone_of } => {
+            inside_the_clone(the_clone_of, &["rev-parse", "--abbrev-ref", "HEAD"])
+        }
+        WhatWeTellAProgramToDo::NameWhereTheCodeWasWrittenIn { the_clone_of } => inside_the_clone(
+            the_clone_of,
+            &["remote", "add", "upstream", &the_clone_of.fetch_from()],
+        ),
     }
+}
+
+/// The arguments of a question about a clone that already exists, run inside it.
+///
+/// **`-C` and the directory are one thing each, like everything else.** Six repetitions of the
+/// same two arguments is a list of six places to change, and a list like that is a list to keep
+/// in step with git.
+fn inside_the_clone(the_clone_of: &ARepositoryToClone, the_question: &[&str]) -> Vec<String> {
+    let mut the_arguments = vec![
+        "-C".to_string(),
+        the_clone_of.where_it_lands().display().to_string(),
+    ];
+    the_arguments.extend(the_question.iter().map(|one| (*one).to_string()));
+    the_arguments
 }
 
 /// What the program wrote, and both streams, because git writes progress to one and trouble to

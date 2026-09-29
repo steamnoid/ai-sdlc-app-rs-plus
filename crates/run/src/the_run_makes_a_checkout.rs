@@ -111,6 +111,23 @@ fn what_git_said_about(
     Ok(what_it_said.the_words().trim().to_string())
 }
 
+/// The address the code was written in, named on the copy this run just made.
+///
+/// **Asked after the copy exists, because there is nothing to name before it.** `git clone` sets
+/// `origin` and nothing else, so a checkout holding one name is a checkout nobody can reason
+/// about months later — **and the two addresses are the same today**, because the deployment's
+/// own copy and the public original are one address until the deployment forks something.
+fn the_second_address_is_named(
+    the_program: &mut impl AProgramWeRun,
+    the_clone_of: &ARepositoryToClone,
+) -> Result<(), HowCloningWent> {
+    what_git_said_about(
+        the_program,
+        &WhatWeTellAProgramToDo::name_where_the_code_was_written_in(the_clone_of.clone()),
+    )
+    .map(|_| ())
+}
+
 /// The commit and the ref, asked of git rather than remembered from a run that has ended.
 fn the_commit_and_the_ref(
     the_program: &mut impl AProgramWeRun,
@@ -134,6 +151,7 @@ fn what_the_clone_stands_on(
     the_request: &WhatWeTellAProgramToDo,
 ) -> Result<ACloneOnDisk, HowCloningWent> {
     what_git_said_about(the_program, the_request)?;
+    the_second_address_is_named(the_program, the_clone_of)?;
     let (commit, reference) = the_commit_and_the_ref(the_program, the_clone_of)?;
     Ok(ACloneOnDisk::the_clone_at(
         the_clone_of.where_it_lands().to_path_buf(),

@@ -85,6 +85,16 @@ impl WhetherAnythingStandsThere for WhetherTheDirectoryIs {
     }
 }
 
+/// A run's four answers: the copy, the second address, the commit and the ref.
+fn every_answer_a_run_hears() -> Vec<WhatTheProgramSaid> {
+    vec![
+        WhatTheProgramSaid::of(true, "Cloning into 'a-destination'..."),
+        WhatTheProgramSaid::of(true, ""),
+        WhatTheProgramSaid::of(true, "e1c2d3"),
+        WhatTheProgramSaid::of(true, "HEAD"),
+    ]
+}
+
 /// Git failing with those words and nothing else.
 fn git_saying(what_git_said: &str) -> Vec<WhatTheProgramSaid> {
     vec![WhatTheProgramSaid::of(false, what_git_said)]
@@ -150,28 +160,25 @@ fn what_git_said_is_carried_and_not_summarised() {
 
 #[test]
 fn the_commit_and_the_ref_are_asked_of_git_and_never_remembered() {
-    let (how_it_went, what_it_was_asked) = the_run_meeting(
-        vec![
-            WhatTheProgramSaid::of(true, "Cloning into 'a-destination'..."),
-            WhatTheProgramSaid::of(true, "e1c2d3"),
-            WhatTheProgramSaid::of(true, "HEAD"),
-        ],
-        false,
-    );
+    let (how_it_went, what_it_was_asked) = the_run_meeting(every_answer_a_run_hears(), false);
 
     let what_it_was_asked = what_it_was_asked.what_it_was_asked.borrow();
     assert!(
         how_it_went.the_clone().is_some(),
-        "**because a run that asked the three questions and then refused has still refused** — and a test that only counted the questions would call that a pass"
+        "**because a run that asked all four questions and then refused has still refused** — and a test that only counted the questions would call that a pass"
     );
     assert_eq!(
         what_it_was_asked.len(),
-        3,
-        "**because a clone, a commit and a ref are three questions and not one** — and a run that filled the commit in from an earlier run would report its changes against a commit it stopped at days ago"
+        4,
+        "**because a copy, a second address, a commit and a ref are four questions and not one** — and a run that filled the commit in from an earlier run would report its changes against a commit it stopped at days ago"
     );
     assert!(
-        what_it_was_asked[1].is_the_commit_of_the_clone().is_some()
-            && what_it_was_asked[2].is_the_ref_of_the_clone().is_some(),
+        what_it_was_asked[1].is_naming_where_the_code_was_written_in(),
+        "**and the second is the address the code was written in**, because `git clone` sets `origin` and nothing else, so a checkout holding one name cannot be reasoned about months later"
+    );
+    assert!(
+        what_it_was_asked[2].is_the_commit_of_the_clone().is_some()
+            && what_it_was_asked[3].is_the_ref_of_the_clone().is_some(),
         "**and the last two ask what the clone is standing on**, because a value read out of the clone is the only one that is about the commit the clone is actually on"
     );
 }
@@ -181,6 +188,7 @@ fn a_clone_that_succeeded_is_a_clone_and_the_commit_and_the_ref_it_stands_on() {
     let (how_it_went, _) = the_run_meeting(
         vec![
             WhatTheProgramSaid::of(true, "Cloning into 'a-destination'..."),
+            WhatTheProgramSaid::of(true, ""),
             WhatTheProgramSaid::of(true, "e1c2d3"),
             WhatTheProgramSaid::of(true, "HEAD"),
         ],

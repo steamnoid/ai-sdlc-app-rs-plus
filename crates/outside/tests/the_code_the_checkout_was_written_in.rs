@@ -76,7 +76,7 @@ fn naming_where_the_code_was_written_in_is_one_argument_each() {
         aisdlc_domain::work_item_id::WorkItemId::try_from("WELLBEINGT-5").expect("a name"),
         under_the_target_directory("two-addresses"),
     );
-    let mut the_program = AProgramThatAnswers::with_one_answer();
+    let the_program = AProgramThatAnswers::with_one_answer();
 
     let _ = the_program.run(&WhatWeTellAProgramToDo::name_where_the_code_was_written_in(
         the_clone,
@@ -120,7 +120,7 @@ fn a_checkout_a_run_made_carries_both_addresses_and_today_they_are_one() {
     let named = "a-checkout-with-both-addresses";
     let _ = std::fs::remove_dir_all(under_the_target_directory(named));
     let mut the_program = TheProgramAsItRuns::as_it_is_on_this_host();
-    let mut the_disk = WhetherAnythingStandsOnDisk;
+    let the_disk = WhetherAnythingStandsOnDisk;
 
     let how_it_went =
         the_run_makes_a_checkout(&mut the_program, &the_disk, &the_request_into(named));
