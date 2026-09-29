@@ -8,15 +8,23 @@
 use aisdlc_run::a_credential::ACredential;
 use aisdlc_run::how_this_deployment_is_set_up::HowThisDeploymentIsSetUp;
 
+use crate::the_environment::TheEnvironment;
 use crate::whether_a_model_rules_here_is_read::the_flag_as_this_deployment_sets_it;
 
-/// How this deployment is set up, given what its environment held and no more.
-pub fn how_this_deployment_is_set_up<'a>(
-    what_the_environment_held: (Option<&'a str>, Option<&'a str>),
+/// How this deployment is set up, from the two variables this system reads and no others.
+///
+/// **The names are written down here and not taken as arguments,** because a caller that could name
+/// a variable could read a different one — and what a deployment *is* would then be that caller's
+/// opinion rather than a fact about the process. `std::env` is not reached here.
+pub fn how_this_deployment_is_set_up(
+    what_the_process_was_told: &TheEnvironment,
 ) -> HowThisDeploymentIsSetUp {
-    let (what_they_typed, the_key) = what_the_environment_held;
-    let may_a_model_rule = the_flag_as_this_deployment_sets_it(what_they_typed);
-    let the_credential = the_key.map(ACredential::the_key_a_deployment_supplied);
+    let may_a_model_rule = the_flag_as_this_deployment_sets_it(
+        what_the_process_was_told.the_variable_a_deployment_set("AISDLC_A_MODEL_RULES_HERE"),
+    );
+    let the_credential = what_the_process_was_told
+        .the_variable_a_deployment_set("OPENAI_API_KEY")
+        .map(ACredential::the_key_a_deployment_supplied);
     HowThisDeploymentIsSetUp::the_two_facts_of_one_deployment(may_a_model_rule, None)
         .with_a_credential_or_a_refusal(the_credential)
 }

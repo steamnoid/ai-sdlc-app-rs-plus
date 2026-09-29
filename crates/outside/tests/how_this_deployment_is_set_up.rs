@@ -7,18 +7,29 @@
 //! than failing later at the far end in words this system did not write.
 
 use aisdlc_outside::how_this_deployment_is_set_up::how_this_deployment_is_set_up;
+use aisdlc_outside::the_environment::TheEnvironment;
 
 /// What a deployment's environment held: the flag, and whether a key was there.
-fn an_environment_holding<'a>(
-    what_they_typed: Option<&'a str>,
-    the_key: Option<&'a str>,
-) -> (Option<&'a str>, Option<&'a str>) {
-    (what_they_typed, the_key)
+///
+/// **The two names are this system's, not the caller's,** so a test says what a deployment said and
+/// not which variable a test happened to reach for.
+fn an_environment_holding(what_they_typed: Option<&str>, the_key: Option<&str>) -> TheEnvironment {
+    let mut what_it_held = Vec::new();
+    if let Some(what_they_typed) = what_they_typed {
+        what_it_held.push((
+            "AISDLC_A_MODEL_RULES_HERE".to_string(),
+            what_they_typed.to_string(),
+        ));
+    }
+    if let Some(the_key) = the_key {
+        what_it_held.push(("OPENAI_API_KEY".to_string(), the_key.to_string()));
+    }
+    TheEnvironment::of(what_it_held)
 }
 
 #[test]
 fn a_deployment_that_asked_for_nothing_gets_nothing_and_asks_nobody() {
-    let the_setup = how_this_deployment_is_set_up(an_environment_holding(None, None));
+    let the_setup = how_this_deployment_is_set_up(&an_environment_holding(None, None));
 
     assert!(
         !the_setup.may_a_model_rule().may_be_asked(),
@@ -29,7 +40,7 @@ fn a_deployment_that_asked_for_nothing_gets_nothing_and_asks_nobody() {
 #[test]
 fn a_deployment_that_asked_for_a_model_and_gave_it_one_is_set_up() {
     let the_setup =
-        how_this_deployment_is_set_up(an_environment_holding(Some("yes"), Some("sk-a-key")));
+        how_this_deployment_is_set_up(&an_environment_holding(Some("yes"), Some("sk-a-key")));
 
     assert!(
         the_setup.may_a_model_rule().may_be_asked(),
@@ -39,7 +50,7 @@ fn a_deployment_that_asked_for_a_model_and_gave_it_one_is_set_up() {
 
 #[test]
 fn a_deployment_that_asked_for_a_model_and_gave_it_nothing_is_refused_naming_both() {
-    let the_setup = how_this_deployment_is_set_up(an_environment_holding(Some("yes"), None));
+    let the_setup = how_this_deployment_is_set_up(&an_environment_holding(Some("yes"), None));
 
     let how_it_went = the_setup.why_it_cannot_answer_anybody();
 
@@ -56,7 +67,7 @@ fn a_deployment_that_asked_for_a_model_and_gave_it_nothing_is_refused_naming_bot
 #[test]
 fn the_key_is_never_printed_by_the_setup_that_holds_it() {
     let the_setup =
-        how_this_deployment_is_set_up(an_environment_holding(Some("yes"), Some("sk-a-key")));
+        how_this_deployment_is_set_up(&an_environment_holding(Some("yes"), Some("sk-a-key")));
 
     let what_a_reader_sees = format!("{the_setup}");
 

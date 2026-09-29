@@ -573,6 +573,20 @@ value and **not as a setting read inside a use case**. A use case that reads its
 has moved a decision out of a type and into a line of code, and the line is somewhere a reader has
 to find. **Two values and not a bool**, so a call site says which thing is being set.
 
+**`TheEnvironment`** — what a process was told before it started, **as a value and never as a
+reading.** Everything else in this system takes what a process was told as a value it was handed,
+**because a function that reads its own configuration has moved a decision out of a type and into a
+line of code** — and a reader that goes looking cannot be handed a test. `std::env` appears in
+`reading_what_the_process_was_told` and nowhere else, so the one place a test can point at is the
+one place it happens.
+
+**A variable nobody set is `None`, and never a default.** A reader that invents a value for a key it
+did not find describes a deployment that does not exist. **The two names are written down in
+`how_this_deployment_is_set_up` and not taken as arguments**, because a caller that could name a
+variable could read a different one — and what a deployment *is* would then be that caller's
+opinion rather than a fact about the process. `AISDLC_A_MODEL_RULES_HERE` and `OPENAI_API_KEY` are
+the only two this system reads.
+
 **`the_flag_as_this_deployment_sets_it`** — the flag as this deployment set it, **given what the
 environment held or nothing at all**, and the reader lives in the adapter because it is the only
 crate allowed to reach one. **A flag that is absent is off and is not a failure**: a deployment
