@@ -580,6 +580,13 @@ fallback is a lie with a position**, the same rule that stopped the board from s
 this is the place that used to have one. A guess that is wrong costs the same time as a refusal and
 says less.
 
+**An endpoint a deployment names is the whole address, and not a base this system completes.** The
+second real run posted to exactly what `LLM_ENDPOINT` said and a web page came back, because the
+variable held a base. **A base plus a path this system invents is a fallback with a different
+address** — the same grudge as the `localhost` before it, and one step further from the truth,
+because the invented part looks like a standard rather than like a guess. `LLM_ENDPOINT` must end at
+`/chat/completions`, and the test says so by refusing a base by name.
+
 **`TheEnvironment` reads four names, and the two that were missing are how a model gets asked at
 all** — `LLM_ENDPOINT` and `LLM_MODEL` joined the flag and the key. A reader closed to two names
 described a deployment that had not finished being configured.

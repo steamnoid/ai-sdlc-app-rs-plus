@@ -118,6 +118,12 @@ impl WhereAModelIs {
                 "LLM_ENDPOINT is not set, and this system will not choose an address for a model",
             ));
         };
+        if !the_endpoint.ends_with("/chat/completions") {
+            return Err(format!(
+                "LLM_ENDPOINT is '{the_endpoint}', which is a base and not the address a model \
+                 answers at, and a base this system completes is a second fact this system chose"
+            ));
+        }
         let Some(which_model) = which_model else {
             return Err(String::from(
                 "LLM_MODEL is not set, and a model this system invented is one nobody deployed",
