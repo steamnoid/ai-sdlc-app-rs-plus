@@ -56,6 +56,9 @@ pub fn the_arguments_of(what_it_is_asked_to_do: &WhatWeTellAProgramToDo) -> Vec<
             "--abbrev-ref".to_string(),
             "HEAD".to_string(),
         ],
+        WhatWeTellAProgramToDo::NameWhereTheCodeWasWrittenIn { the_clone_of } => {
+            vec!["nothing".to_string()]
+        }
     }
 }
 
