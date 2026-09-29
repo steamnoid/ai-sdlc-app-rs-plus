@@ -12,4 +12,5 @@
 
 pub mod the_program_as_it_runs;
 pub mod the_project_on_disk;
+pub mod whether_a_model_rules_here_is_read;
 pub mod whether_anything_stands_there;
