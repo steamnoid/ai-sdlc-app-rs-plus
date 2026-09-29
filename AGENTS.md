@@ -442,17 +442,29 @@ git worktree add ../wt-<name> -b <scope>/<name> main
 # ... the work, in its own worktree, on its own branch ...
 git push -u origin <scope>/<name>
 gh pr create --fill
-gh pr merge --squash --delete-branch     # only once the gate is green
+gh pr merge --squash --delete-branch     # only once the gate is green; the title carries the RED
 ```
 
-A worker branch is deleted after its merge. Its commits stay reachable from `main`, so only
-the name goes, and without that the repository accumulates one short-lived branch per gate
-and stops looking like a line of work.
+A worker branch is deleted after its merge, and a **squash discards its commits** — so only the
+name goes and the commits do not: `main` carries one line per pull request, and a branch's two
+commits are not among them. Measured on the seventy-eight pull requests so far: 160 commits on
+branches, 69 on `main`, and **zero of the 69 contain a RED**. Without that, the repository
+accumulates one short-lived branch per gate and stops looking like a line of work.
 
-**Squash, always.** One commit per cycle is a lie about a cycle that is two commits, and a
-linear history with a squashed message keeps the pair readable: the RED and the GREEN
-belong together in the record, which is what a squash of the two says better than two lines
-in a log.
+**Squash, always**, and the **title carries both halves of the cycle**, because the squash takes
+the title and the title is the only part of the pair that survives:
+
+```text
+GREEN — <the behaviour that now holds>   (pairs with RED — <the expectation that failed>)
+```
+
+**This is not a gate and it is deliberately not one.** The rule that read the commit history was
+removed from the table on the grounds that **it is a rule about the shape of the work and not
+about the work** — a position taken deliberately and written down. What was not predicted is the
+consequence of holding it *together with* squashing: the one record that something was broken
+first went away twice over. **A gate is not brought back for this, because a gate is the thing
+that was decided against; the record comes back through the title instead**, which is where a
+squash already looks.
 
 **`required_approving_review_count` is zero, on purpose, and it is a decision somebody
 should know about.** A human review requirement would have been safer, and it would also
