@@ -13,23 +13,25 @@ against, and a name that is not in it does not enter the source.
 |---|---|
 | [`AGENTS.md`](AGENTS.md) | three rules, the layout, the commands |
 | [`docs/domain-glossary.md`](docs/domain-glossary.md) | every name, the rule each one protects, and the table of all nineteen |
-| [`crates/domain`](crates/domain) | the state machine and every type: 3737 lines, no dependencies |
-| [`crates/run`](crates/run) | the use cases, and the ports they are written against: 2549 lines |
-| [`crates/outside`](crates/outside) | the implementations of the ports, and nothing else: 515 lines |
-| [`src/`](src) | the walk every gate reads the source with: 1068 lines |
+| [`crates/domain`](crates/domain) | the state machine and every type, with **no `[dependencies]` section at all** |
+| [`crates/run`](crates/run) | the use cases, and the ports — **and nothing that names a filesystem, a process, a clock or a network** |
+| [`crates/outside`](crates/outside) | the three real implementations, and the only crate a gate lets reach the world |
+| [`src/`](src) | the walk every gate reads the source with |
 | [`tests/`](tests) | the nineteen gates, in two files named for what they are about |
 | [`scripts/gate`](scripts/gate) | the one command, and the check `main` requires |
 
-**324 tests.** The domain is complete: the six stages, the five roles, the exhaustive
+**330 tests.** The domain is complete: the six stages, the five roles, the exhaustive
 transition table, the work item and its three doors, and the approval record. `crates/run`
 carries four moves of a run, the gate that asks a person, the model that answers, and **a run
 that really clones a repository with `git` and reads the commit and the ref back out of the
 clone it made**.
 
-**The counts above are counted, not checked.** Nothing in this repository reads this file, so a
-number here is a number somebody wrote down on a day — **and the gates do not hold the README,
-which makes every claim in it a promise rather than a check.** The one that matters is the gate
-table in the glossary, because a gate holds that.
+**Nothing in this repository reads this file, so every claim in it is a promise rather than a
+check.** The numbers that used to sit beside the crates were the most perishable facts here — two
+of them had gone stale inside a single working day — **so they are gone, and what each crate is
+instead of how long it is.** The one count left is the test count, because it moves only when a
+test is added and because it is the one number a reader wants. The claim that matters is the gate
+table in the glossary, because a gate holds that one.
 
 ## The three rules
 
@@ -61,10 +63,11 @@ Nothing.
 
 Everything the domain cannot answer by itself is a **port**: a trait declared in `aisdlc-run`
 and implemented in `aisdlc-outside`. The glossary names ten and says why each is separate.
-**Five of them have a caller and three have a real implementation behind them**: the project on
-disk, the program we run, and the directory we ask about. The other five do not yet, and a port
-with no implementation behind it is not a port — it is a trait nobody calls, so each arrives with
-the first use case that needs it.
+**Five of them have a caller and three have a real implementation behind them** — `TheProjectOnDisk`,
+`AProgramWeRun` and `WhetherAnythingStandsThere`, which are the only three places a filesystem, a
+process or a real directory is touched. The other five do not yet, and a port with no
+implementation behind it is not a port — it is a trait nobody calls, so each arrives with the
+first use case that needs it.
 
 **The port table is not checked for completeness, and it was wrong until this file was read
 against the code.** A port with a caller and a real implementation had been left out of it for
