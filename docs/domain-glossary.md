@@ -573,6 +573,18 @@ value and **not as a setting read inside a use case**. A use case that reads its
 has moved a decision out of a type and into a line of code, and the line is somewhere a reader has
 to find. **Two values and not a bool**, so a call site says which thing is being set.
 
+**`the_flag_as_this_deployment_sets_it`** — the flag as this deployment set it, **given what the
+environment held or nothing at all**, and the reader lives in the adapter because it is the only
+crate allowed to reach one. **A flag that is absent is off and is not a failure**: a deployment
+that has never heard of the flag must still run, and a run that refuses to start without a switch
+is not a run that fails safely, it is a run that does not run.
+
+**One word opens the gate and no other does.** `yes` opens it; `YES`, `y`, `true`, `1`, `on`,
+`enabled` and the empty string all leave it shut, **because a word this system does not know is a
+word it will not act on** — and guessing that `true` means yes would put a model at a gate on a
+deployment whose operator never asked for one. The test proves this by making the reader
+accept those spellings and watching it fail.
+
 **`AMayNotRule`** — a gate nobody switched a model on for, naming the artifact **and the flag**.
 **The flag and the artifact, and not a bare "no"**: a human turning the flag on needs to know it
 was the thing that was missing.
