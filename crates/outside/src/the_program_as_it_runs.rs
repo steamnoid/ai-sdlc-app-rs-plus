@@ -54,6 +54,9 @@ pub fn the_arguments_of(what_it_is_asked_to_do: &WhatWeTellAProgramToDo) -> Vec<
             the_clone_of,
             &["remote", "add", "upstream", &the_clone_of.fetch_from()],
         ),
+        WhatWeTellAProgramToDo::AskAModelHowItRules { the_question } => {
+            vec!["-sS".to_string(), the_question.clone()]
+        }
     }
 }
 

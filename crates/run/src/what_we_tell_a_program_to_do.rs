@@ -36,6 +36,11 @@ pub enum WhatWeTellAProgramToDo {
         /// Which clone, and where it landed.
         the_clone_of: ARepositoryToClone,
     },
+    /// Ask a model how it rules on an exact artifact at an exact version.
+    AskAModelHowItRules {
+        /// The whole question, built here and not by the model.
+        the_question: String,
+    },
 }
 
 impl WhatWeTellAProgramToDo {
@@ -76,6 +81,25 @@ impl WhatWeTellAProgramToDo {
             | WhatWeTellAProgramToDo::NameWhereTheCodeWasWrittenIn { the_clone_of } => {
                 the_clone_of.fetch_from()
             }
+            WhatWeTellAProgramToDo::AskAModelHowItRules { the_question } => the_question.clone(),
+        }
+    }
+
+    /// Ask a model how it rules on an exact artifact.
+    pub fn ask_a_model_how_it_rules(the_question: String) -> Self {
+        WhatWeTellAProgramToDo::AskAModelHowItRules { the_question }
+    }
+
+    /// This request, read as a question about a ruling.
+    pub fn is_a_question_about_a_ruling(&self) -> bool {
+        matches!(self, WhatWeTellAProgramToDo::AskAModelHowItRules { .. })
+    }
+
+    /// The question this request carries, for a request that carries one.
+    pub fn what_it_is_asked_about(&self) -> &str {
+        match self {
+            WhatWeTellAProgramToDo::AskAModelHowItRules { the_question } => the_question,
+            _ => "",
         }
     }
 
@@ -88,6 +112,7 @@ impl WhatWeTellAProgramToDo {
             | WhatWeTellAProgramToDo::NameWhereTheCodeWasWrittenIn { the_clone_of } => {
                 Some(the_clone_of)
             }
+            WhatWeTellAProgramToDo::AskAModelHowItRules { .. } => None,
         }
     }
 
@@ -130,7 +155,8 @@ impl WhatWeTellAProgramToDo {
             WhatWeTellAProgramToDo::CloneTheRepository { .. } => Some(true),
             WhatWeTellAProgramToDo::TheCommitItStandsOn { .. }
             | WhatWeTellAProgramToDo::TheRefItStandsOn { .. }
-            | WhatWeTellAProgramToDo::NameWhereTheCodeWasWrittenIn { .. } => None,
+            | WhatWeTellAProgramToDo::NameWhereTheCodeWasWrittenIn { .. }
+            | WhatWeTellAProgramToDo::AskAModelHowItRules { .. } => None,
         }
     }
 }
