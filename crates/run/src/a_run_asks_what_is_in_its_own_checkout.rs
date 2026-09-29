@@ -32,11 +32,27 @@ impl NotTheRunItsOwnCheckout {
     }
 }
 
+/// The two places, refused when they differ, and nothing when they agree.
+fn the_places_the_run_refuses(
+    the_checkout: &ACloneOnDisk,
+    the_project: &impl TheProjectOnDisk,
+) -> Option<NotTheRunItsOwnCheckout> {
+    if the_project.where_it_lives() == the_checkout.where_it_lands() {
+        return None;
+    }
+    Some(NotTheRunItsOwnCheckout {
+        where_the_checkout_lands: the_checkout.where_it_lands().display().to_string(),
+        where_the_project_lives: the_project.where_it_lives().display().to_string(),
+    })
+}
+
 /// What the run's own checkout holds, or a refusal naming the two places that differ.
 pub fn the_run_asks_what_is_in_its_own_checkout(
     the_checkout: &ACloneOnDisk,
     the_project: &mut impl TheProjectOnDisk,
 ) -> Result<Vec<String>, NotTheRunItsOwnCheckout> {
-    let _ = the_checkout;
+    if let Some(a_refusal) = the_places_the_run_refuses(the_checkout, the_project) {
+        return Err(a_refusal);
+    }
     Ok(the_project.what_is_in_it())
 }
