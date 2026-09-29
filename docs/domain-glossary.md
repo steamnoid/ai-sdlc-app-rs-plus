@@ -557,6 +557,17 @@ is a yes or a no. **A separate port rather than a check inside `AProgramWeRun`**
 to clone at all is made by the use case and not by the adapter that copies files: an adapter that
 could refuse on its own is an adapter holding a decision it has no business holding.
 
+**`origin_of_the_code`** — the address a clone was written from, which may only be read, and
+**`upstream`** as the remote carrying it. **`git clone` sets `origin` and nothing else**, so
+without the second a reader running `git remote -v` months later cannot tell a fork from a
+mystery.
+
+**The two addresses are one address today, and the code says so rather than hiding it.** The
+deployment's own copy and the public original are the same place until the deployment forks
+something, and a reader being told that by accident is exactly the mystery this is here to
+remove. **The second is asked after the copy exists** — a run asked to name it before the clone
+has nothing to name.
+
 **`HowCloningWent`** — the clone and the reason, one of which is always nothing. **`DONE` and not
 `Result` at the boundary**, because a caller asks *which way it failed* as often as it asks *the
 clone*, and a `Result` read the second way would throw the reason away.

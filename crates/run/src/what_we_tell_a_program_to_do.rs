@@ -31,6 +31,11 @@ pub enum WhatWeTellAProgramToDo {
         /// Which clone, and where it landed.
         the_clone_of: ARepositoryToClone,
     },
+    /// Name the address the code was written in, which may only be read.
+    NameWhereTheCodeWasWrittenIn {
+        /// Which clone, and where it landed.
+        the_clone_of: ARepositoryToClone,
+    },
 }
 
 impl WhatWeTellAProgramToDo {
@@ -49,12 +54,26 @@ impl WhatWeTellAProgramToDo {
         WhatWeTellAProgramToDo::TheRefItStandsOn { the_clone_of }
     }
 
+    /// Name the address the code was written in, once the copy this run made exists.
+    pub fn name_where_the_code_was_written_in(the_clone_of: ARepositoryToClone) -> Self {
+        WhatWeTellAProgramToDo::NameWhereTheCodeWasWrittenIn { the_clone_of }
+    }
+
+    /// This request, read as a question about where the code was written in.
+    pub fn is_naming_where_the_code_was_written_in(&self) -> bool {
+        matches!(
+            self,
+            WhatWeTellAProgramToDo::NameWhereTheCodeWasWrittenIn { .. }
+        )
+    }
+
     /// The address to fetch from, derived from the repository and not a formatted line.
     pub fn fetch_from(&self) -> String {
         match self {
             WhatWeTellAProgramToDo::CloneTheRepository { the_clone_of }
             | WhatWeTellAProgramToDo::TheCommitItStandsOn { the_clone_of }
-            | WhatWeTellAProgramToDo::TheRefItStandsOn { the_clone_of } => {
+            | WhatWeTellAProgramToDo::TheRefItStandsOn { the_clone_of }
+            | WhatWeTellAProgramToDo::NameWhereTheCodeWasWrittenIn { the_clone_of } => {
                 the_clone_of.fetch_from()
             }
         }
@@ -65,7 +84,10 @@ impl WhatWeTellAProgramToDo {
         match self {
             WhatWeTellAProgramToDo::CloneTheRepository { the_clone_of }
             | WhatWeTellAProgramToDo::TheCommitItStandsOn { the_clone_of }
-            | WhatWeTellAProgramToDo::TheRefItStandsOn { the_clone_of } => Some(the_clone_of),
+            | WhatWeTellAProgramToDo::TheRefItStandsOn { the_clone_of }
+            | WhatWeTellAProgramToDo::NameWhereTheCodeWasWrittenIn { the_clone_of } => {
+                Some(the_clone_of)
+            }
         }
     }
 
