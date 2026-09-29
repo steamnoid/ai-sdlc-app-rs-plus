@@ -594,6 +594,23 @@ and then ignores the flag has already paid for a ruling nobody authorised. **The
 honest answer until a person turns it on**, rather than a decision this system made on a human's
 behalf — and the whole of what the flag buys is a model that may be asked, nothing more.
 
+**`AWhereItWasFiled`** — where a request was filed, **as the address the filing itself returned**
+and as nothing at all when nobody filed it. **The only door takes a whole address, and nothing
+watches for a second door**: adding `an_address_composed_of(what, 41)` to that module was tried
+and every test still passed. **A claim about a door that does not exist is the one claim a test
+cannot make from the outside, because it has nothing to name** — and a reader deserves to be told
+that the thing holding it is the code, not the suite.
+
+**`AWhereItWasFiledThatNamesNothing`** — an address that is only whitespace, so a link to nowhere.
+**Worse than no link at all**, because a reader follows it, finds nothing, and learns that this
+system's references cannot be trusted.
+
+**`asked_for_and_filed_at`** — the words **and** the filing, as a second door rather than a
+settable field, so a caller cannot fill an address in afterwards from a number it happened to have.
+**The words first, and the filing beside them rather than instead of them**: a type that carried a
+number instead of a sentence made a product analyst read the repository while the sentence went
+to the planner.
+
 **`WhereAModelIs`** — where a model answers and which one, **both deployment facts and neither a
 secret**. **And that is the point of the type existing**: the address and the model name are the
 two facts a deployment configures and can say out loud, **and the credential is deliberately not

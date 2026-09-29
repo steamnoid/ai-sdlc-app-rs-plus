@@ -1,9 +1,58 @@
-//! What somebody asked for, in the words they used.
+//! What somebody asked for, in the words they used, and where those words were typed.
 //!
-//! **Text, not an address.** The words arrive with the work, the work item keeps them, and a
-//! stage that reads them nine reads later reads what the first one read.
+//! **Text first, and the filing beside the words rather than instead of them.** The words are the
+//! request; the filing is where they were typed. A stage that reads the words nine times must
+//! read the same nine times, and a type that carried a number instead of a sentence made a
+//! product analyst read the repository while the sentence went to the planner.
+//!
+//! **An address this system composed would be a link to a page it had not checked.** The only door
+//! here takes a whole address, and a derived `…/issues/N` resolves to a page that does not exist
+//! in a repository with no issues — a false reference in the audit trail is the one thing a
+//! traceability chain exists to prevent.
+//!
+//! **And nothing watches for a second door.** Adding `an_address_composed_of(what, 41)` to this
+//! module was tried and every test in this file still passed, so the claim above is held by the
+//! code and not by the suite. **A claim about a door that does not exist is the one kind of claim
+//! a test cannot make from the outside**, because it has nothing to name.
 
 use std::fmt;
+
+/// Where a request was filed, as the address the filing itself returned.
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct AWhereItWasFiled(String);
+
+impl AWhereItWasFiled {
+    /// The address a filing returned, or a refusal when it was not one.
+    ///
+    /// **A whole address and not a number to build one from.** The composition is the whole defect
+    /// and this is the only door it has — **and see the module's own note: nothing watches for a
+    /// second one.**
+    pub fn the_address_the_filing_returned(
+        the_address: &str,
+    ) -> Result<Self, AWhereItWasFiledThatNamesNothing> {
+        if the_address.trim().is_empty() {
+            return Err(AWhereItWasFiledThatNamesNothing(the_address.to_string()));
+        }
+        Ok(AWhereItWasFiled(the_address.to_string()))
+    }
+
+    /// The address, word for word as the filing returned it.
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+/// An address that names nothing, and a link to nothing in an audit trail is worse than no link.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct AWhereItWasFiledThatNamesNothing(pub String);
+
+impl fmt::Display for AWhereItWasFiledThatNamesNothing {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(formatter, "{} names no place a request was filed", self.0)
+    }
+}
+
+impl std::error::Error for AWhereItWasFiledThatNamesNothing {}
 
 /// Somebody's request, and never a bare string.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -12,6 +61,8 @@ pub struct CommissionedRequest {
     pub title: String,
     /// What they said.
     pub body: String,
+    /// Where it was filed, and nothing at all when nobody filed it.
+    pub filed_as: Option<AWhereItWasFiled>,
 }
 
 /// A request with no title and no body, so nothing was asked for.
@@ -30,7 +81,32 @@ impl CommissionedRequest {
         if says_nothing {
             return Err(ARequestThatSaysNothing);
         }
-        Ok(CommissionedRequest { title, body })
+        Ok(CommissionedRequest {
+            title,
+            body,
+            filed_as: None,
+        })
+    }
+
+    /// What somebody asked for, in the words they used, and where it was filed.
+    ///
+    /// **A second door and not a settable field**, so a caller cannot fill the address in after
+    /// the fact from a number it happened to have.
+    pub fn asked_for_and_filed_at(
+        title: String,
+        body: String,
+        filed_as: AWhereItWasFiled,
+    ) -> Result<Self, ARequestThatSaysNothing> {
+        let the_request = Self::asked_for(title, body)?;
+        Ok(CommissionedRequest {
+            filed_as: Some(filed_as),
+            ..the_request
+        })
+    }
+
+    /// Where this request was filed, and nothing when nobody filed it.
+    pub fn where_it_was_filed(&self) -> Option<&AWhereItWasFiled> {
+        self.filed_as.as_ref()
     }
 }
 
