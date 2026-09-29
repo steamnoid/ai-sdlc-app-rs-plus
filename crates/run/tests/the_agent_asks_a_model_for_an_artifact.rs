@@ -230,6 +230,10 @@ struct AProjectHoldingOneReadme;
 struct AProjectHoldingNothing;
 
 impl aisdlc_run::TheProjectOnDisk for AProjectHoldingOneReadme {
+    fn where_it_lives(&self) -> &std::path::Path {
+        std::path::Path::new("a-project-holding-one-readme")
+    }
+
     fn what_is_in_it(&mut self) -> Vec<String> {
         vec!["README.md".to_string()]
     }
@@ -240,6 +244,10 @@ impl aisdlc_run::TheProjectOnDisk for AProjectHoldingOneReadme {
 }
 
 impl aisdlc_run::TheProjectOnDisk for AProjectHoldingNothing {
+    fn where_it_lives(&self) -> &std::path::Path {
+        std::path::Path::new("a-project-holding-nothing")
+    }
+
     fn what_is_in_it(&mut self) -> Vec<String> {
         Vec::new()
     }

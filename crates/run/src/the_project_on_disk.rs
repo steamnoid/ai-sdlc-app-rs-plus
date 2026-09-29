@@ -11,6 +11,13 @@ use crate::the_path_inside_the_project::ThePathInsideTheProject;
 
 /// A project a run reads from.
 pub trait TheProjectOnDisk {
+    /// Where this project lives, and every project has a place.
+    ///
+    /// **A path and not nothing, because a project that cannot say where it is cannot be told
+    /// it is the right one.** A run that made a checkout knows where it landed, and comparing
+    /// the two is the only thing standing between a run and a listing of a directory it never
+    /// cloned — **and every name in that listing would be a real name of some other project.**
+    fn where_it_lives(&self) -> &std::path::Path;
     /// The names of everything in it.
     fn what_is_in_it(&mut self) -> Vec<String>;
 

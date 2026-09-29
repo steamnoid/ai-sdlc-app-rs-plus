@@ -30,6 +30,11 @@ impl TheProjectAsItIsOnDisk {
 }
 
 impl TheProjectOnDisk for TheProjectAsItIsOnDisk {
+    /// The directory it was opened at, which is the one thing a project on a disk always has.
+    fn where_it_lives(&self) -> &Path {
+        &self.the_root
+    }
+
     /// The names of everything in it, relative to the project and sorted.
     fn what_is_in_it(&mut self) -> Vec<String> {
         let mut found = Vec::new();

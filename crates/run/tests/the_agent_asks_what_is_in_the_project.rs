@@ -17,6 +17,7 @@ use aisdlc_run::the_project_this_run_is_in;
 
 /// A project holding two named files, and a record of what it was asked.
 struct AProjectWithTwoFilesInIt {
+    where_it_lives: std::path::PathBuf,
     the_files: Vec<(String, String)>,
     was_asked_for: Vec<String>,
 }
@@ -24,6 +25,7 @@ struct AProjectWithTwoFilesInIt {
 impl AProjectWithTwoFilesInIt {
     fn holding(these: &[(&str, &str)]) -> Self {
         Self {
+            where_it_lives: std::path::PathBuf::from("a-project-holding-two-files"),
             the_files: these
                 .iter()
                 .map(|(a_name, its_text)| (a_name.to_string(), its_text.to_string()))
@@ -34,6 +36,10 @@ impl AProjectWithTwoFilesInIt {
 }
 
 impl TheProjectOnDisk for AProjectWithTwoFilesInIt {
+    fn where_it_lives(&self) -> &std::path::Path {
+        &self.where_it_lives
+    }
+
     fn what_is_in_it(&mut self) -> Vec<String> {
         self.the_files
             .iter()

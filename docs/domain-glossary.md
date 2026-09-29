@@ -506,6 +506,17 @@ error.
 artifact and the reason. **The refusal is a value and not an empty answer**, and it is built
 before the call: **a refusal that has already spent a call has paid for it.**
 
+**`NotTheRunItsOwnCheckout`** — a checkout a run made, handed a project living somewhere else,
+naming **both** places. **A refusal quoting one of two facts leaves the reader guessing which was
+wrong**, and the run cannot tell either — it was handed both.
+
+**A listing is a listing, and that is why this refusal exists.** Every name in a project listing
+is a real name of some project, so a run that listed a project rooted elsewhere hands an agent the
+wrong repository's `README` and the agent has no way to know. **`TheProjectOnDisk` therefore has
+`where_it_lives`, and a path rather than nothing**, because a project that cannot say where it is
+cannot be told it is the right one — and a door is also what forces every double to name a real
+place instead of an empty one.
+
 **`NotStandingAtTheGate`** — a work item put to somebody who is not there, naming the stage it is
 standing at. **`DONE` is the case that matters**: a finished work item has nothing left to
 approve, and the record would be evidence that a human ruled on work that was already over.
