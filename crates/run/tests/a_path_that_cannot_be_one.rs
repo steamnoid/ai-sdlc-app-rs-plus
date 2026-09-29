@@ -74,3 +74,36 @@ fn a_refusal_says_why() {
         "because a refusal that does not say why leaves the caller to guess between a blank, a bad character and a long component"
     );
 }
+
+/// A real file under `target/` whose component is exactly `a_bound` bytes, and whether the disk
+/// took it.
+fn a_file_named_exactly(a_bound: usize) -> (std::path::PathBuf, std::io::Result<()>) {
+    let the_directory = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("..")
+        .join("..")
+        .join("target")
+        .join("a-name-at-the-bound");
+    let _ = std::fs::remove_dir_all(&the_directory);
+    std::fs::create_dir_all(&the_directory).expect("a directory can be made under the target");
+    let the_name = format!("{}.md", "x".repeat(a_bound - 3));
+    let where_it_is = the_directory.join(the_name);
+    let what_the_disk_said = std::fs::write(&where_it_is, "written so the disk has an opinion");
+    (where_it_is, what_the_disk_said)
+}
+
+#[test]
+fn the_bound_is_the_disks_own_and_the_disk_is_asked_in_both_directions() {
+    let (at_the_bound, the_disk_took_it) = a_file_named_exactly(THE_LONGEST_A_COMPONENT_MAY_BE);
+    let (_one_byte_over, what_the_disk_said_over) =
+        a_file_named_exactly(THE_LONGEST_A_COMPONENT_MAY_BE + 1);
+    let _ = std::fs::remove_dir_all(at_the_bound.parent().expect("a file is in a directory"));
+
+    assert!(
+        the_disk_took_it.is_ok(),
+        "**because {THE_LONGEST_A_COMPONENT_MAY_BE} is this rule's claim about the disk and the disk is the only authority on it** — a name the disk itself refuses is a legal name refused, and a model cannot tell that from a real one"
+    );
+    assert!(
+        what_the_disk_said_over.is_err(),
+        "**and one byte more the disk refuses**, so a rule drawn at a number above the disk's would refuse a name the disk had just taken. The refusal side was already proved at exactly one byte over; **this is the half nobody was proving** — that the accepted side is a name the disk really holds"
+    );
+}
