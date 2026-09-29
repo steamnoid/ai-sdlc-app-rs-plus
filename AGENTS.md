@@ -451,11 +451,16 @@ commits are not among them. Measured on the seventy-eight pull requests so far: 
 branches, 69 on `main`, and **zero of the 69 contain a RED**. Without that, the repository
 accumulates one short-lived branch per gate and stops looking like a line of work.
 
-**Squash, always**, and the **title carries both halves of the cycle**, because the squash takes
-the title and the title is the only part of the pair that survives:
+**Squash, always, and the squash is given a subject of its own** — because the subject GitHub
+writes is the **first commit's** message and not the pull request's title, and that was measured
+rather than assumed: a pull request titled with the pair produced a `main` commit carrying only the
+GREEN's own subject. The title is what a reader of the pull request sees; **the subject is what
+`main` keeps**, so the pair goes in the subject:
 
-```text
-GREEN — <the behaviour that now holds>   (pairs with RED — <the expectation that failed>)
+```bash
+gh pr merge --squash --delete-branch \
+  --subject "GREEN — <the behaviour that now holds> (pairs with RED — <what failed>)" \
+  --body "$(git log --format=%B --reverse -1)"
 ```
 
 **This is not a gate and it is deliberately not one.** The rule that read the commit history was
