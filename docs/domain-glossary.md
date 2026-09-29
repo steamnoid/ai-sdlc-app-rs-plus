@@ -543,6 +543,13 @@ clone a checkout in `ACloneOnDisk`, so the name that was refused is not the one 
 it. **Three questions in order, and each can stop the next**: whether anything stands at the
 destination, whether git copied the repository, what the copy stands on.
 
+**`WhetherAnythingStandsOnDisk`** — the real disk answering whether anything stands somewhere,
+and the one implementation of `WhetherAnythingStandsThere`. **The directory is read and not
+checked for existing, because existing is a different question**: a place can be there and hold
+nothing at all, and a run that made its own destination is in exactly that state. **A run refused
+by `exists()` is a run that can never start**, which is the one failure a check written for
+convenience produces.
+
 **`WhetherAnythingStandsThere`** — whether anything at all stands at a directory, asked
 **before** anything is written there. **A question and not a thing returned**, because the answer
 is a yes or a no. **A separate port rather than a check inside `AProgramWeRun`**, so the decision
