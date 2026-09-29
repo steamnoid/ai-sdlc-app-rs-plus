@@ -36,15 +36,16 @@ fn a_deployment_that_may_ask_a_model() -> Option<(TheProgramAsItRuns, WhereAMode
         eprintln!("SKIPPED: the flag is on and OPENAI_API_KEY is not set, so nothing was asked");
         return None;
     };
-    let where_the_model_is = WhereAModelIs {
-        the_endpoint: what_the_process_was_told
-            .the_variable_a_deployment_set("LLM_ENDPOINT")
-            .unwrap_or("http://localhost:11434/v1/chat/completions")
-            .to_string(),
-        which_model: what_the_process_was_told
-            .the_variable_a_deployment_set("LLM_MODEL")
-            .unwrap_or("a-model")
-            .to_string(),
+    let where_the_model_is = WhereAModelIs::where_a_deployment_put_its_model(
+        what_the_process_was_told.the_variable_a_deployment_set("LLM_ENDPOINT"),
+        what_the_process_was_told.the_variable_a_deployment_set("LLM_MODEL"),
+    );
+    let where_the_model_is = match where_the_model_is {
+        Ok(where_it_is) => where_it_is,
+        Err(why_not) => {
+            eprintln!("SKIPPED: {why_not}");
+            return None;
+        }
     };
     Some((
         TheProgramAsItRuns::as_it_is_on_this_host(Some(the_credential)),

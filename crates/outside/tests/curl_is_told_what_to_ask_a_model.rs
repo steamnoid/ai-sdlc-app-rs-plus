@@ -70,6 +70,22 @@ fn the_body_is_one_argument_and_never_split_into_its_pieces() {
 }
 
 #[test]
+fn the_program_is_told_to_be_quiet() {
+    let the_arguments = a_program(true).the_arguments_of(&a_question_to_a_model());
+
+    let it_was_told_to_be_quiet = the_arguments.iter().any(|one| one == "-s");
+    let it_was_told_to_narrate = the_arguments
+        .iter()
+        .any(|one| one == "--progress-bar" || one == "#");
+    assert!(
+        it_was_told_to_be_quiet && !it_was_told_to_narrate,
+        "**because a program that narrates is a program whose narration can be mistaken for what it \
+         found** — the first real run came back with curl's transfer table where the model's words \
+         should have been, and the refusal quoted a percentage: {the_arguments:?}"
+    );
+}
+
+#[test]
 fn the_model_question_asks_to_post_and_says_where() {
     let the_arguments = a_program(true).the_arguments_of(&a_question_to_a_model());
 
