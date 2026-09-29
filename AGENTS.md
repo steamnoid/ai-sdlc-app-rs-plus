@@ -451,11 +451,19 @@ commits are not among them. Measured on the seventy-eight pull requests so far: 
 branches, 69 on `main`, and **zero of the 69 contain a RED**. Without that, the repository
 accumulates one short-lived branch per gate and stops looking like a line of work.
 
-**Squash, always, and the squash is given a subject of its own** — because the subject GitHub
-writes is the **first commit's** message and not the pull request's title, and that was measured
-rather than assumed: a pull request titled with the pair produced a `main` commit carrying only the
-GREEN's own subject. The title is what a reader of the pull request sees; **the subject is what
-`main` keeps**, so the pair goes in the subject:
+**Squash, always, and the squash is given a subject of its own** — because which of the two
+GitHub uses depends on how many commits there are, and that was measured on five pull requests
+rather than assumed:
+
+| commits on the branch | the subject `main` gets |
+|---|---|
+| one | **the commit's own message** |
+| two or more | **the pull request's title** |
+
+**A behaviour cycle is two commits, so a cycle's subject is its title** — and the title was never
+the pair, so for twenty-four paired cycles `main` held the GREEN alone and the RED nowhere. The
+title is what a reader of the pull request sees; **the subject is what `main` keeps**, so the pair
+goes in the subject, given explicitly rather than inherited from either:
 
 ```bash
 gh pr merge --squash --delete-branch \
