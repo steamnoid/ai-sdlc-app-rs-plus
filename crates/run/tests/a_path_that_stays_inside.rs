@@ -94,3 +94,47 @@ fn the_project_this_run_is_in_is_the_checkout_and_not_the_crate() {
         "**the workspace and not the crate** — the rule is about the project, and a crate is a directory inside it. The first version of this test asserted the opposite and the code was right: the name of the test said checkout and the assertion said `crates/run`."
     );
 }
+
+/// A symlink inside the project pointing out of it, made under `target/` and taken away after.
+fn a_symlink_pointing_out_of_the_project() -> std::path::PathBuf {
+    let the_link = the_root().join("target/a-symlink-pointing-out");
+    let _ = std::fs::remove_file(&the_link);
+    let _ = std::fs::create_dir_all(the_root().join("target"));
+    std::os::unix::fs::symlink("/etc", &the_link).expect("a symlink can be made under the target");
+    the_link
+}
+
+#[test]
+fn a_path_that_goes_out_through_a_symlink_is_refused_and_says_it_escaped() {
+    a_symlink_pointing_out_of_the_project();
+    let a_path = a_path_in_the_project("target/a-symlink-pointing-out/passwd")
+        .expect("a symlink's name is a path, and nothing in it says where it points");
+
+    let how_it_went = the_path_inside_the_project(&the_root(), &a_path);
+
+    let why_not = how_it_went.expect_err("a path out through a symlink is not inside");
+    assert!(
+        why_not.why_not().contains("outside the project"),
+        "**because `/etc/passwd` exists, so a rule that refused this for being missing would have proved nothing about the symlink** — and a refusal naming absence instead of escape is a reader being told to look somewhere that is not where the problem is: {why_not:?}"
+    );
+}
+
+#[test]
+fn a_path_through_a_symlink_that_stays_inside_is_not_refused_for_the_symlink() {
+    let the_link = the_root().join("target/a-symlink-staying-in");
+    let _ = std::fs::remove_file(&the_link);
+    let _ = std::fs::create_dir_all(the_root().join("target"));
+    std::os::unix::fs::symlink(the_root(), &the_link).expect("a symlink can point back inside");
+
+    let a_path = a_path_in_the_project("target/a-symlink-staying-in/Cargo.toml")
+        .expect("an ordinary name is a path");
+
+    let inside = the_path_inside_the_project(&the_root(), &a_path).expect(
+        "a path that resolves back inside is inside, and a symlink is not a way out of this",
+    );
+
+    assert!(
+        inside.as_str().ends_with("Cargo.toml"),
+        "**and it resolved rather than being refused for containing a symlink** — refusing every symlink would refuse this repository's own `target/` a hundred times a day, and a rule that refuses too much is a rule that hides the one it was written for"
+    );
+}
