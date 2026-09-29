@@ -318,6 +318,7 @@ two of the splits are not inventions — they are lines this domain had already 
 | `TheClock` | how long it has been, and to wait | the operating system, or a test's zero |
 | `ARecordOfARun` | to remember a run, and to read it back | a SQLite table |
 | `APersonToDecide` | to rule on an exact artifact | a person, or a policy on their behalf |
+| `WhetherAnythingStandsThere` | whether anything stands at a directory, before anything is written there | the real filesystem |
 
 ### Why reading and writing GitHub are two ports
 
