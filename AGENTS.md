@@ -342,17 +342,17 @@ with, and the answer is always the code it judges** — a gate written before th
 polls is a gate nobody has watched catch a mistake, and the earlier version of this
 repository had eight of them, all green, all empty.
 
-| Rule | Gate | Built |
-|---|---|---|
-| No `unsafe` | `#![forbid(unsafe_code)]` — the compiler | with the crates |
-| Every public item documented | `#![deny(missing_docs)]` — the compiler | with the crates |
-| Code is written so a person can read it | `readability_guards.rs` | with the first files |
-| The documents say what the code does | `documentation_guards.rs` | with the first gates |
+**There is one table of rules and it is in
+[`docs/domain-glossary.md`](docs/domain-glossary.md), with the module that holds each one.** This
+file used to carry a four-row table of its own, with the two gate files named by bare filename and
+no path to them, and prose about the rows marked *not built* — **of which it had none, every row
+saying it was built.** Both halves were copies of a table the glossary holds and a gate checks, and
+a second copy of a checked fact is a copy that drifts: this one carried two dead sentences before
+anybody looked.
 
-**A rule with a gate that is not built is a wish, and it is in this table as a wish.** The
-ones marked not built are the rules a later phase will need, and each arrives with the
-slice that first meets it — a gate written before the code it judges is a gate that cannot
-be seen to fail, which is worth nothing.
+**So the copy is gone rather than refreshed**, which is the third time in this repository that the
+answer to *this document disagrees with a checked one* has been to delete the copy instead of
+correcting it. A summary is a second place to be wrong, and the glossary's table is readable.
 
 **The transition table and the biconditional are compiler-enforced, not read from this
 file.** `legal_transitions_from` is an exhaustive `match` on `Stage`, so a seventh stage
