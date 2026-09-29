@@ -285,9 +285,17 @@ impl<'a> WhereTheReadingHasGotTo<'a> {
     /// too high — a walk that is off by a constant still looks right at the top of a file,
     /// which is why the fixture that caught it is three blank lines and one comment rather
     /// than a comment on line two.
+    /// Read `how_many` bytes, **and no more than the file has.**
+    ///
+    /// **A backslash in a string asks for two bytes, and a file can end after the first.** The
+    /// count was allowed to run past the end of the file, and the stretch was then cut from
+    /// `from` to a position one past the last byte — so a source file that ended in a string whose
+    /// last byte was a backslash took the whole reading down with a slice out of bounds. The
+    /// reading is the thing that decides what a file says, and it must survive a file it has not
+    /// seen before.
     fn take(&mut self, how_many: usize) {
-        let the_last = self.at + how_many;
-        let the_took = &self.the_bytes[self.at..the_last.min(self.the_bytes.len())];
+        let the_last = (self.at + how_many).min(self.the_bytes.len());
+        let the_took = &self.the_bytes[self.at..the_last];
         self.line += how_many_of(the_took, b'\n');
         self.at = the_last;
     }
