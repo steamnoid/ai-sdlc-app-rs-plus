@@ -15,6 +15,7 @@
 
 pub mod a_path_in_the_project;
 pub mod a_program_we_run;
+pub mod a_run_asks_what_is_in_its_own_checkout;
 pub mod the_path_inside_the_project;
 pub mod the_project_on_disk;
 pub mod the_repository_to_clone_into;
