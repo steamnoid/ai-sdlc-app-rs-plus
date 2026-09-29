@@ -35,8 +35,18 @@ impl AProgramWeRun for AProgramThatWouldNotice {
         _what_it_is_asked_to_do: &aisdlc_run::what_we_tell_a_program_to_do::WhatWeTellAProgramToDo,
     ) -> WhatTheProgramSaid {
         self.was_run.set(true);
-        WhatTheProgramSaid::of(true, "APPROVED")
+        WhatTheProgramSaid::of(true, &the_answer_a_model_endpoint_gives_for("APPROVED"))
     }
+}
+
+/// The answer an OpenAI-compatible endpoint gives, **and not a bare word** — because no endpoint
+/// returns a bare word, and a double that does proves a shape nothing produces.
+fn the_answer_a_model_endpoint_gives_for(what_the_model_said: &str) -> String {
+    serde_json::json!({
+        "id": "chatcmpl-a-test",
+        "choices": [{"message": {"role": "assistant", "content": what_the_model_said}}],
+    })
+    .to_string()
 }
 
 fn a_question_about_one_artifact() -> ApprovalQuestion {

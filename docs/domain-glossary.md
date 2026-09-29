@@ -573,6 +573,17 @@ value and **not as a setting read inside a use case**. A use case that reads its
 has moved a decision out of a type and into a line of code, and the line is somewhere a reader has
 to find. **Two values and not a bool**, so a call site says which thing is being set.
 
+**`the_ruling_a_model_gave`** — the ruling, out of the answer its endpoint wrapped it in. **The
+envelope is the endpoint's and the ruling is not**: a model asked to say one word answers with JSON
+around that word, and a reader that wants the whole answer to *be* the word decides no model can
+ever rule — which is what happened here, and what the green suite said nothing about because the
+double answered with a bare word that no endpoint returns.
+
+**Every way of failing here is a refusal and never an approval**, because that is the direction the
+failure has to point: a broken answer read as an approval puts a model at a human's gate on the
+strength of a bug. The one word is still checked afterwards, so **an envelope can approve nothing
+on its own** — and a model that added a sentence has not ruled.
+
 **`TheEnvironment`** — what a process was told before it started, **as a value and never as a
 reading.** Everything else in this system takes what a process was told as a value it was handed,
 **because a function that reads its own configuration has moved a decision out of a type and into a

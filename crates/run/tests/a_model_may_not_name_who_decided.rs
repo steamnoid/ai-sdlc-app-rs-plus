@@ -24,6 +24,13 @@ struct AModelThatAnswersWith {
 }
 
 impl AModelThatAnswersWith {
+    /// **A model that says the given words inside the envelope its endpoint answers with.**
+    ///
+    /// This double used to hand back the bare word, and the whole suite was green — **and no
+    /// endpoint returns a bare word.** A double that answers in a shape nothing produces is a
+    /// double that proves the plumbing and not the contract, so it now says what an
+    /// OpenAI-compatible endpoint says, and the escaping is `serde_json`'s because a model that
+    /// explains itself puts newlines and quotes in there.
     fn saying(what_it_says: &str) -> Self {
         Self {
             what_it_says: what_it_says.to_string(),
@@ -40,7 +47,18 @@ impl AProgramWeRun for AModelThatAnswersWith {
         self.what_it_was_asked
             .borrow_mut()
             .push(what_it_is_asked_to_do.what_it_is_asked_about().to_string());
-        WhatTheProgramSaid::of(true, &self.what_it_says)
+        WhatTheProgramSaid::of(true, &self.answer_the_endpoint_gave())
+    }
+}
+
+impl AModelThatAnswersWith {
+    /// The answer an OpenAI-compatible endpoint gives for a model that said these words.
+    fn answer_the_endpoint_gave(&self) -> String {
+        serde_json::json!({
+            "id": "chatcmpl-a-test",
+            "choices": [{"message": {"role": "assistant", "content": self.what_it_says}}],
+        })
+        .to_string()
     }
 }
 

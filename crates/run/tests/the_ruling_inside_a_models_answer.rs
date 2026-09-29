@@ -25,9 +25,8 @@ fn a_ruling_inside_an_answer_is_read() {
     let refused = the_ruling_a_model_gave(&an_answer_carrying("REFUSED"));
 
     assert!(
-        approved.is_ok() && approved.expect("a word") && !refused.expect("a word"),
-        "**because the envelope is the endpoint's and not the ruling** — a model that said APPROVED in a JSON body has approved, and a reader that wants the whole answer to *be* the word has decided no model can ever rule: {:?}",
-        approved
+        approved.as_ref().is_ok_and(|it_approved| *it_approved) && !refused.expect("a word"),
+        "**because the envelope is the endpoint's and not the ruling** — a model that said APPROVED in a JSON body has approved, and a reader that wants the whole answer to *be* the word has decided no model can ever rule: {approved:?}"
     );
 }
 
