@@ -10,12 +10,13 @@
 
 use aisdlc_outside::how_this_deployment_is_set_up::how_this_deployment_is_set_up;
 use aisdlc_outside::the_environment::TheEnvironment;
+use aisdlc_run::whether_a_model_rules_here::WhetherAModelRulesHere;
 
 /// What a process is told, in the form the tests can write down.
 fn an_environment_saying(one_pair: (&str, &str), another_pair: (&str, &str)) -> TheEnvironment {
     TheEnvironment::of(vec![
-        (one_pair.0, one_pair.1),
-        (another_pair.0, another_pair.1),
+        (one_pair.0.to_string(), one_pair.1.to_string()),
+        (another_pair.0.to_string(), another_pair.1.to_string()),
     ])
 }
 
@@ -41,9 +42,8 @@ fn the_flag_and_the_key_come_from_the_two_named_variables() {
     let how_it_is_set_up = how_this_deployment_is_set_up(&the_environment);
 
     assert!(
-        how_it_is_set_up.a_model_may_not_rule()
-            == aisdlc_run::whether_a_model_rules_here::AMayNotRule::Yes
-            && how_it_is_set_up.a_credential().is_some(),
+        how_it_is_set_up.may_a_model_rule() == WhetherAModelRulesHere::Yes
+            && how_it_is_set_up.the_credential().is_some(),
         "**because these two are one decision and not two features** — a model asked for and not reachable is a run that cannot answer anybody, so both halves have to arrive from the names this source writes down"
     );
 }
@@ -57,12 +57,12 @@ fn the_two_names_are_the_ones_this_system_uses() {
 
     let how_it_is_set_up = how_this_deployment_is_set_up(&the_environment);
     let with_no_key = how_this_deployment_is_set_up(&TheEnvironment::of(vec![(
-        "AISDLC_A_MODEL_RULES_HERE",
-        "yes",
+        "AISDLC_A_MODEL_RULES_HERE".to_string(),
+        "yes".to_string(),
     )]));
 
     assert!(
-        how_it_is_set_up.a_credential().is_some() && with_no_key.a_credential().is_none(),
+        how_it_is_set_up.the_credential().is_some() && with_no_key.the_credential().is_none(),
         "**and the two names are named here rather than handed in** — a caller that could name a variable could read a different one, and what a deployment is would be that caller's opinion"
     );
 }
