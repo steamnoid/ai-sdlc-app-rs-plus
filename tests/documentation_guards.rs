@@ -497,13 +497,19 @@ mod the_glossary_blesses_every_type_the_domain_defines {
 }
 
 mod the_documentation_says_what_the_code_does {
-    //! Every row of the gate table in `AGENTS.md` is true.
+    //! Every row of the gate table is true, and there is one table.
     //!
     //! **The table is a promise about what this repository has, and a promise nobody checks is a
     //! wish.** A row naming a gate that was never built sends the next reader looking for it; a
     //! row saying a gate is not built that is in fact built hides the one that is missing. Both
-    //! were true in this table at once, and **nothing caught either** — not the eleven gates, not
-    //! the glossary drift gate, and not the counting I did by hand.
+    //! were true in a second table in `AGENTS.md` at once, and **nothing caught either** — not the
+    //! eleven gates, not the glossary drift gate, and not the counting I did by hand.
+    //!
+    //! **This module reads the glossary, and it used to read `AGENTS.md` as well.** It checked
+    //! four rows there and nineteen here, so a rule could be true in one copy and false in the
+    //! other and both checks would pass. The four-row copy is gone and **the checker of the copy
+    //! went with it, one line at a time** — the same file, the same tests, pointed at the one
+    //! table that is left.
     //!
     //! **A rule with a test beside it is measured; a rule with only a name in a table is
     //! described.** This file is the difference, and it is the smallest one in the repository:
@@ -795,7 +801,7 @@ mod the_documentation_says_what_the_code_does {
     /// The refusal for the whole table: a name that is not true, and a file that is not named.
     fn what_is_wrong_somewhere() -> Vec<String> {
         let the_document = reading_the_checkout::the_text_at(
-            &reading_the_checkout::the_root_of_the_checkout().join("AGENTS.md"),
+            &reading_the_checkout::the_root_of_the_checkout().join("docs/domain-glossary.md"),
         );
         let mut found = Vec::new();
         for (the_gate, the_phrase) in what_the_table_promises(&the_document) {
@@ -908,15 +914,22 @@ mod the_documentation_says_what_the_code_does {
     #[test]
     fn a_gate_the_compiler_enforces_is_named_outside_the_rows() {
         let the_document = reading_the_checkout::the_text_at(
-            &reading_the_checkout::the_root_of_the_checkout().join("AGENTS.md"),
+            &reading_the_checkout::the_root_of_the_checkout().join("docs/domain-glossary.md"),
         );
 
         let promises = what_the_table_promises(&the_document);
+        let names_a_compiler_lint =
+            |a_name: &str| a_name.contains("forbid") || a_name.contains("deny");
 
         assert!(
-            promises.len() == 2,
-            "the reader found {} rows, so a table it reads as empty is a table this file is not reading at all",
-            promises.len()
+            !promises.is_empty(),
+            "the reader found no rows at all, so a table it reads as empty is a table this file is not reading"
+        );
+        assert!(
+            !promises
+                .iter()
+                .any(|(a_name, _)| names_a_compiler_lint(a_name)),
+            "**because the compiler's two rules are held by `#![forbid(unsafe_code)]` and `#![deny(missing_docs)]` and not by a file a reader can go and find** — a table that listed them among the gates would send someone looking for a module that does not exist, and this test used to count them at two and would have said two forever after the table it counted changed size"
         );
     }
 }
