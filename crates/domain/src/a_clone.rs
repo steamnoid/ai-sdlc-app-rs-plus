@@ -24,7 +24,19 @@ impl TheCommit {
 
 /// A commit that names nothing.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ACommitThatNamesNothing(pub String);
+pub struct ACommitThatNamesNothing(String);
+
+impl ACommitThatNamesNothing {
+    /// What was written, quoted back, and the same door `ARefThatNamesNothing` has.
+    ///
+    /// **A method and not a public field, and the same as the ref's.** One of the two refusals
+    /// gave its words away through the tuple and the other through a door, so a caller reporting
+    /// either of them had to know which was which — **an asymmetry between two refusals that say
+    /// the same kind of thing is a thing a reader has to notice rather than a thing a type states.**
+    pub fn what_was_written(&self) -> &str {
+        &self.0
+    }
+}
 
 impl Error for ACommitThatNamesNothing {}
 

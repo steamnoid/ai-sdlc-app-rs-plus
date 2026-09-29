@@ -39,6 +39,16 @@ impl WhatWeTellAProgramToDo {
         WhatWeTellAProgramToDo::CloneTheRepository { the_clone_of }
     }
 
+    /// Which commit the clone at this place is standing on.
+    pub fn the_commit_it_stands_on(the_clone_of: ARepositoryToClone) -> Self {
+        WhatWeTellAProgramToDo::TheCommitItStandsOn { the_clone_of }
+    }
+
+    /// Which ref the clone at this place is standing on, which may be `HEAD`.
+    pub fn the_ref_it_stands_on(the_clone_of: ARepositoryToClone) -> Self {
+        WhatWeTellAProgramToDo::TheRefItStandsOn { the_clone_of }
+    }
+
     /// The address to fetch from, derived from the repository and not a formatted line.
     pub fn fetch_from(&self) -> String {
         match self {
