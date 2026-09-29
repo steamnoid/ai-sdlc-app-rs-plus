@@ -41,6 +41,22 @@ pub struct WhatTheProgramSaid {
 }
 
 impl WhatTheProgramSaid {
+    /// What a program wrote, and whether it worked, for an implementation to hand back.
+    ///
+    /// **A door and not a field each,** because a wire type built by hand is a value the domain
+    /// has to be able to receive, and a struct whose fields are private to the crate that
+    /// declares the port is a port nobody outside it can implement.
+    ///
+    /// **The words are the program's and not ours,** so a caller can tell *no such repository*
+    /// from *git is unhappy* from *git is not installed* without this system inventing a fourth
+    /// thing it would then have to keep current with git.
+    pub fn of(did_it_work: bool, the_words: &str) -> Self {
+        Self {
+            did_it_work,
+            the_words: the_words.to_string(),
+        }
+    }
+
     /// What the program wrote, whether or not it worked.
     pub fn the_words(&self) -> &str {
         &self.the_words
