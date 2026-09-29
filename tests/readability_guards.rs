@@ -2946,3 +2946,123 @@ mod the_core_never_names_a_trait_object {
         );
     }
 }
+
+mod the_use_cases_may_not_reach_the_world {
+    //! `aisdlc-run` names ports and nothing else, and the adapters are the only place the world
+    //! may be named.
+    //!
+    //! **The rule is the domain's rule, drawn a second time, and the list is shared on purpose.**
+    //! Five module names in two files is five names in one file and four in another, and the one
+    //! that drifts is the one nobody re-reads. **The exception is exactly one crate, and it is
+    //! named rather than derived** — a rule that derived the exception would exempt every crate
+    //! added after the adapter, and a crate added tomorrow is a crate nobody has read.
+    //!
+    //! **`aisdlc-run` holds three ports and a use case that hands work to the outside world**, so
+    //! this is not a rule about a crate that could not reach anything if it tried. A run that reads
+    //! a clock, or writes a file, is a run whose tests stop being green with no network and no
+    //! model — which is the property every other gate here rests on.
+
+    use aisdlc_gates::reaching_for_the_world::{
+        THE_MODULES_THAT_REACH_THE_WORLD, what_reaches_the_world_says,
+    };
+    use aisdlc_gates::reading_the_checkout;
+
+    /// The one crate allowed to name the world, because it is where the world is answered.
+    const THE_ADAPTER_CRATE: &str = "outside";
+
+    /// A crate's name, which is its directory's own name.
+    fn the_crate_named(a_crate: &std::path::Path) -> String {
+        a_crate
+            .file_name()
+            .and_then(std::ffi::OsStr::to_str)
+            .unwrap_or_default()
+            .to_string()
+    }
+
+    /// Every crate of the workspace that may not reach the world.
+    fn every_crate_but_the_adapters() -> Vec<std::path::PathBuf> {
+        aisdlc_gates::reading_the_checkout::the_crates_under(
+            &reading_the_checkout::the_root_of_the_checkout().join("crates"),
+        )
+        .into_iter()
+        .filter(|a_crate| the_crate_named(a_crate) != THE_ADAPTER_CRATE)
+        .collect()
+    }
+
+    #[test]
+    fn a_use_case_naming_a_process_is_refused_and_the_line_is_named() {
+        let the_code = "fn the_run() {\n    let _ = std::process::Command::new(\"git\");\n}\n";
+
+        assert_eq!(
+            what_reaches_the_world_says(the_code, 1),
+            vec!["line 1 reaches for std::process".to_string()],
+            "**because a use case that starts a process is a use case whose tests need whatever that process needs** — and 'somewhere in the use cases' is not a place a reader can act on"
+        );
+    }
+
+    #[test]
+    fn a_use_case_naming_a_filesystem_is_refused() {
+        let the_code = "fn the_run() {\n    let _ = std::fs::read_dir(\".\");\n}\n";
+
+        assert!(
+            !what_reaches_the_world_says(the_code, 1).is_empty(),
+            "**and a run that reads a file is a run whose answer depends on what is on the disk that day** — the adapter exists so that a use case can be tested with no disk at all"
+        );
+    }
+
+    #[test]
+    fn a_reach_in_a_comment_is_not_a_reach() {
+        let the_code =
+            "// the adapter uses std::process::Command, and this crate may not\nfn the_run() {}\n";
+
+        assert_eq!(
+            what_reaches_the_world_says(the_code, 1),
+            Vec::<String>::new(),
+            "**because a file that explains where the reach lives is not a file that makes it** — and a gate that read its own explanation would refuse the sentence that keeps the rule from being undone"
+        );
+    }
+
+    #[test]
+    fn the_adapter_crate_may_name_the_world() {
+        let the_code = "fn the_run() {\n    let _ = std::process::Command::new(\"git\");\n}\n";
+        let adapter_is_excluded = every_crate_but_the_adapters()
+            .iter()
+            .all(|a_crate| the_crate_named(a_crate) != THE_ADAPTER_CRATE);
+
+        assert!(
+            adapter_is_excluded,
+            "**because the adapter is the answer and the use cases are the question** — and a rule that refused the adapters would be a rule refusing the only place a port is allowed to be real"
+        );
+        assert!(!what_reaches_the_world_says(the_code, 1).is_empty());
+    }
+
+    #[test]
+    fn no_crate_but_the_adapters_reaches_for_the_world() {
+        let every_crate = every_crate_but_the_adapters();
+        let mut found = Vec::new();
+        for a_crate in &every_crate {
+            for a_file in aisdlc_gates::reading_the_code::the_rust_files_under(&a_crate.join("src"))
+            {
+                let the_text = reading_the_checkout::the_text_at(&a_file);
+                for (a_line, one_line) in
+                    aisdlc_gates::reading_the_code::the_lines_of_code(&the_text)
+                {
+                    for a_reach in what_reaches_the_world_says(&one_line, a_line) {
+                        found.push(format!("{} {a_reach}", a_file.display()));
+                    }
+                }
+            }
+        }
+
+        assert!(
+            !every_crate.is_empty(),
+            "**because a gate that reads no crate passes everything** — and there are crates to read"
+        );
+        assert!(
+            found.is_empty(),
+            "a use case may not reach for the world, and these {} reach for {}: {found:?}",
+            every_crate.len(),
+            THE_MODULES_THAT_REACH_THE_WORLD.join(", "),
+        );
+    }
+}
