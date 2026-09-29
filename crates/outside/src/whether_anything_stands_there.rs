@@ -12,13 +12,17 @@ use aisdlc_run::whether_anything_stands_there::WhetherAnythingStandsThere;
 /// The real disk, answering whether anything stands somewhere on it.
 pub struct WhetherAnythingStandsOnDisk;
 
-impl WhetherAnythingStandsOnDisk {
-    /// The disk, which is always there and is not a thing that gets constructed.
-    pub const as_it_is: Self = Self;
-}
-
 impl WhetherAnythingStandsThere for WhetherAnythingStandsOnDisk {
+    /// Whether anything at all is there — a file, a directory, or nothing.
+    ///
+    /// **The directory is read and not checked for existing**, because existing is a different
+    /// question: a place can be there and hold nothing at all, and a run that made its own
+    /// destination is in exactly that state.
+    ///
+    /// **A directory that cannot be read answers `false`, and not a panic.** A run asking about a
+    /// place it may not look is a run with a problem this question is not the place to report,
+    /// and a question that panics takes the run down over something it could have refused.
     fn does_anything_stand_at(&self, a_directory: &Path) -> bool {
-        a_directory.exists()
+        std::fs::read_dir(a_directory).is_ok_and(|mut what_is_there| what_is_there.next().is_some())
     }
 }

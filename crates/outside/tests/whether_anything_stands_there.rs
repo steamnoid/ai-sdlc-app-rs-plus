@@ -32,7 +32,7 @@ fn an_empty_directory(named: &str) -> std::path::PathBuf {
 
 #[test]
 fn a_directory_nobody_has_ever_made_holds_nothing() {
-    let the_disk = WhetherAnythingStandsOnDisk::as_it_is;
+    let the_disk = WhetherAnythingStandsOnDisk;
     let where_it_would_land = under_the_target_directory("a-place-nobody-has-made");
 
     let _ = std::fs::remove_dir_all(&where_it_would_land);
@@ -44,7 +44,7 @@ fn a_directory_nobody_has_ever_made_holds_nothing() {
 
 #[test]
 fn a_directory_that_exists_and_holds_nothing_holds_nothing() {
-    let the_disk = WhetherAnythingStandsOnDisk::as_it_is;
+    let the_disk = WhetherAnythingStandsOnDisk;
     let where_it_is = an_empty_directory("a-directory-holding-nothing");
 
     assert!(
@@ -59,7 +59,7 @@ fn a_directory_that_exists_and_holds_nothing_holds_nothing() {
 
 #[test]
 fn a_directory_holding_one_thing_holds_something() {
-    let the_disk = WhetherAnythingStandsOnDisk::as_it_is;
+    let the_disk = WhetherAnythingStandsOnDisk;
     let where_it_is = an_empty_directory("a-directory-holding-one-thing");
     std::fs::write(where_it_is.join("a-file-in-it"), "written by a test")
         .expect("a file can be written");
@@ -72,7 +72,7 @@ fn a_directory_holding_one_thing_holds_something() {
 
 #[test]
 fn a_clone_already_made_holds_something_even_though_it_is_a_directory() {
-    let the_disk = WhetherAnythingStandsOnDisk::as_it_is;
+    let the_disk = WhetherAnythingStandsOnDisk;
     let where_it_is = an_empty_directory("a-clone-somebody-else-made");
     std::fs::create_dir_all(where_it_is.join(".git"))
         .expect("a clone is a directory with a .git in it");
