@@ -19,6 +19,16 @@ impl ACredential {
         }
         Ok(ACredential(the_key.to_string()))
     }
+
+    /// The key, for the one caller that has to put it into a request.
+    ///
+    /// **The only door, and it exists because a program that cannot read its credential cannot
+    /// authenticate with it** — and the alternative, a credential that hands its own text to
+    /// everything that touches it, is why this type carries no `Debug` in the first place.
+    /// `Display` stays `a credential`, so a `Display` anywhere in this system still cannot leak it.
+    pub fn the_key_to_authenticate_with(&self) -> &str {
+        &self.0
+    }
 }
 
 /// **Deliberately not derived, and the compiler is what holds that.** A derived `Debug` is one

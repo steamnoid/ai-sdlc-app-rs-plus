@@ -17,13 +17,22 @@ use aisdlc_run::what_we_tell_a_program_to_do::WhatWeTellAProgramToDo;
 /// One of our own programs, run on this host.
 pub struct TheProgramAsItRuns {
     which_program: WhichProgramWeRun,
+    the_credential: Option<aisdlc_run::a_credential::ACredential>,
 }
 
 impl TheProgramAsItRuns {
-    /// Our programs, as they really are on this host.
-    pub fn as_it_is_on_this_host() -> Self {
+    /// Our programs, as they really are on this host, with the credential a deployment supplied.
+    ///
+    /// **The credential is an argument and not a thing this struct finds for itself**, because a
+    /// program that reads its own configuration has moved a decision out of a type and into a
+    /// line of code — and because `None` has to be written down at every call site, where a
+    /// program that quietly went looking would leave no trace of having found nothing.
+    pub fn as_it_is_on_this_host(
+        the_credential: Option<aisdlc_run::a_credential::ACredential>,
+    ) -> Self {
         Self {
             which_program: WhichProgramWeRun::Git,
+            the_credential,
         }
     }
 
@@ -31,13 +40,45 @@ impl TheProgramAsItRuns {
     pub fn which_program_it_runs(&self) -> WhichProgramWeRun {
         self.which_program
     }
+
+    /// Which program carries a request, chosen here and not by the caller.
+    ///
+    /// **A question about a model is `curl` and nothing else**, and a caller that could name the
+    /// program would be a caller that could send a credential somewhere that is not a model —
+    /// which is the one thing a credential exists to prevent.
+    fn which_program_for(
+        &self,
+        what_it_is_asked_to_do: &WhatWeTellAProgramToDo,
+    ) -> WhichProgramWeRun {
+        match what_it_is_asked_to_do {
+            WhatWeTellAProgramToDo::AskAModelHowItRules { .. } => WhichProgramWeRun::Curl,
+            _ => self.which_program,
+        }
+    }
+
+    /// The arguments of one request, one thing each and never a line.
+    ///
+    /// **A list and not a `String`,** because a caller that cannot count its arguments cannot
+    /// tell one from three, and a formatted line is a shell's opinion about what it means.
+    ///
+    /// **A method and not a free function, because the arguments depend on which program is
+    /// carrying them** — a credential is one of them, and a free function that knew nothing
+    /// about the program is what produced a translation that was wrong by the time it was
+    /// merged.
+    pub fn the_arguments_of(&self, what_it_is_asked_to_do: &WhatWeTellAProgramToDo) -> Vec<String> {
+        match what_it_is_asked_to_do {
+            WhatWeTellAProgramToDo::AskAModelHowItRules {
+                the_endpoint,
+                the_body,
+                ..
+            } => self.asked_a_model_of(the_endpoint, the_body),
+            _ => what_git_is_asked_for(what_it_is_asked_to_do),
+        }
+    }
 }
 
-/// The arguments of one request, one thing each and never a line.
-///
-/// **A list and not a `String`,** because a caller that cannot count its arguments cannot tell
-/// one from three, and a formatted line is a shell's opinion about what it means.
-pub fn the_arguments_of(what_it_is_asked_to_do: &WhatWeTellAProgramToDo) -> Vec<String> {
+/// The arguments of everything `git` is asked for, one thing each and never a line.
+fn what_git_is_asked_for(what_it_is_asked_to_do: &WhatWeTellAProgramToDo) -> Vec<String> {
     match what_it_is_asked_to_do {
         WhatWeTellAProgramToDo::CloneTheRepository { the_clone_of } => vec![
             "clone".to_string(),
@@ -72,13 +113,41 @@ fn inside_the_clone(the_clone_of: &ARepositoryToClone, the_question: &[&str]) ->
     the_arguments
 }
 
+impl TheProgramAsItRuns {
+    /// The arguments asking a model, and nothing at all when there is no credential behind them.
+    ///
+    /// **Nothing rather than a request without a credential.** A request that goes out
+    /// unauthenticated comes back in words this system did not write, and **the one fact a caller
+    /// can usefully be given is that nothing left.**
+    fn asked_a_model_of(&self, the_endpoint: &str, the_body: &str) -> Vec<String> {
+        let Some(the_credential) = self.the_credential.as_ref() else {
+            return Vec::new();
+        };
+        let the_authorization = format!(
+            "Authorization: Bearer {}",
+            the_credential.the_key_to_authenticate_with()
+        );
+        vec![
+            "-X".to_string(),
+            "POST".to_string(),
+            the_endpoint.to_string(),
+            "-H".to_string(),
+            "Content-Type: application/json".to_string(),
+            "-H".to_string(),
+            the_authorization,
+            "-d".to_string(),
+            the_body.to_string(),
+        ]
+    }
+}
+
 /// What the program run says when a request has no program to run, and says so rather than
 /// running one with no arguments.
 ///
 /// **Said in words and not left to a panic.** A caller reading a refusal can act on it, and a
 /// request with no program is a fact about this system's own incompleteness — **it is the one
 /// refusal in this file that is ours and not the program's.**
-const NO_PROGRAM_IS_NAMED_FOR_THIS_REQUEST: &str = "no program is named for this request yet, and where a secret lives in a process is a decision this system has not made";
+const NO_CREDENTIAL_IS_CARRIED_FOR_THIS_REQUEST: &str = "no credential is carried for this request, and a request that goes out without one comes back in words this system did not write";
 
 /// What the program wrote, and both streams, because git writes progress to one and trouble to
 /// the other — **a caller told only about the stream it did not expect is told nothing.**
@@ -95,13 +164,16 @@ impl AProgramWeRun for TheProgramAsItRuns {
     /// so in the same words a failure would: the caller has to tell *git is not installed* from
     /// *there is no such repository*, and this is the half of that telling that is not git's.
     fn run(&self, what_it_is_asked_to_do: &WhatWeTellAProgramToDo) -> WhatTheProgramSaid {
-        let the_arguments = the_arguments_of(what_it_is_asked_to_do);
+        let the_arguments = self.the_arguments_of(what_it_is_asked_to_do);
         if the_arguments.is_empty() {
-            return WhatTheProgramSaid::of(false, NO_PROGRAM_IS_NAMED_FOR_THIS_REQUEST);
+            return WhatTheProgramSaid::of(false, NO_CREDENTIAL_IS_CARRIED_FOR_THIS_REQUEST);
         }
-        let what_it_ran = std::process::Command::new(self.which_program.name_on_the_host())
-            .args(&the_arguments)
-            .output();
+        let what_it_ran = std::process::Command::new(
+            self.which_program_for(what_it_is_asked_to_do)
+                .name_on_the_host(),
+        )
+        .args(&the_arguments)
+        .output();
         match what_it_ran {
             Ok(what_it_ran) => {
                 WhatTheProgramSaid::of(what_it_ran.status.success(), &the_words_of(&what_it_ran))

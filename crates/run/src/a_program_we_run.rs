@@ -17,18 +17,21 @@ use crate::what_we_tell_a_program_to_do::WhatWeTellAProgramToDo;
 pub enum WhichProgramWeRun {
     /// `git`.
     Git,
+    /// `curl`, and only for a question asked of a model.
+    Curl,
 }
 
 impl WhichProgramWeRun {
-    /// Every program this system runs, and the only one it runs so far.
+    /// Every program this system runs.
     pub fn every_program() -> Vec<WhichProgramWeRun> {
-        vec![WhichProgramWeRun::Git]
+        vec![WhichProgramWeRun::Git, WhichProgramWeRun::Curl]
     }
 
     /// The name the host knows this program by.
     pub fn name_on_the_host(&self) -> &'static str {
         match self {
             WhichProgramWeRun::Git => "git",
+            WhichProgramWeRun::Curl => "curl",
         }
     }
 }

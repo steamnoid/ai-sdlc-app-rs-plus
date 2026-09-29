@@ -40,7 +40,7 @@ fn the_request_into(named: &str) -> WhatWeTellAProgramToDo {
 /// A run that really cloned this repository into a directory of this name.
 fn a_run_that_really_cloned(named: &str) -> Option<aisdlc_domain::a_clone::ACloneOnDisk> {
     let _ = std::fs::remove_dir_all(under_the_target_directory(named));
-    let mut the_program = TheProgramAsItRuns::as_it_is_on_this_host();
+    let mut the_program = TheProgramAsItRuns::as_it_is_on_this_host(None);
     let the_disk = WhetherAnythingStandsOnDisk;
     the_run_makes_a_checkout(&mut the_program, &the_disk, &the_request_into(named))
         .the_clone()

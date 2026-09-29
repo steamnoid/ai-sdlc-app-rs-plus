@@ -119,7 +119,7 @@ impl AProgramWeRun for AProgramThatAnswers {
 fn a_checkout_a_run_made_carries_both_addresses_and_today_they_are_one() {
     let named = "a-checkout-with-both-addresses";
     let _ = std::fs::remove_dir_all(under_the_target_directory(named));
-    let mut the_program = TheProgramAsItRuns::as_it_is_on_this_host();
+    let mut the_program = TheProgramAsItRuns::as_it_is_on_this_host(None);
     let the_disk = WhetherAnythingStandsOnDisk;
 
     let how_it_went =
