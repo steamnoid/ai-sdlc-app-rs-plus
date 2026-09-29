@@ -114,8 +114,23 @@ impl WhatWeTellAProgramToDo {
             .where_it_lands()
     }
 
-    /// The whole history, always, because the type has nowhere else to put a depth.
-    pub fn is_the_whole_history(&self) -> bool {
-        matches!(self, WhatWeTellAProgramToDo::CloneTheRepository { .. })
+    /// How much history this request carries, and nothing at all when it asks about no clone.
+    ///
+    /// **`Some(true)` for a clone, because the type has nowhere to put a depth** — there is no
+    /// field to hold one, so a shallow clone is not something this system can ask for and is not
+    /// something a later change has to remember not to add.
+    ///
+    /// **`None` for a request that is not about cloning**, and this is why the answer is an
+    /// `Option` and not a `bool`. Three of the four requests this system can make are about a
+    /// commit, a ref or a second address, and **a `bool` says *no* for all three**, which a caller
+    /// reads as *a shallow clone* on a request that is not a clone at all. **Yes and *not a
+    /// question* are the same value in a `bool`, and one of them is a lie.**
+    pub fn how_much_history_it_carries(&self) -> Option<bool> {
+        match self {
+            WhatWeTellAProgramToDo::CloneTheRepository { .. } => Some(true),
+            WhatWeTellAProgramToDo::TheCommitItStandsOn { .. }
+            | WhatWeTellAProgramToDo::TheRefItStandsOn { .. }
+            | WhatWeTellAProgramToDo::NameWhereTheCodeWasWrittenIn { .. } => None,
+        }
     }
 }

@@ -64,13 +64,32 @@ fn a_request_carries_what_was_asked_for_and_not_a_formatted_line() {
 }
 
 #[test]
+fn a_question_about_a_clone_that_exists_is_not_a_question_about_depth() {
+    let the_clone = the_clone_the_run_wants();
+
+    let a_commit = WhatWeTellAProgramToDo::the_commit_it_stands_on(the_clone.clone());
+    let a_ref = WhatWeTellAProgramToDo::the_ref_it_stands_on(the_clone.clone());
+
+    assert_eq!(
+        a_commit.how_much_history_it_carries(),
+        None,
+        "**because a question about a commit is not a question about a depth** — and the function that answered it returned `false` for this, which a caller reads as *a shallow clone* on a request that is not a clone at all. A value that says *yes* and a value that says *not a question* are the same value in a `bool`, and one of them is a lie"
+    );
+    assert_eq!(
+        a_ref.how_much_history_it_carries(),
+        None,
+        "**and the same for the ref** — three of the four requests this system can make are not about cloning, and all three were answering a question about depth"
+    );
+}
+
+#[test]
 fn there_is_no_shallow_clone_to_ask_for() {
     let the_clone = the_clone_the_run_wants();
 
     let the_request = WhatWeTellAProgramToDo::clone_the_repository(the_clone);
 
     assert!(
-        the_request.is_the_whole_history(),
+        the_request.how_much_history_it_carries() == Some(true),
         "**the whole history and not a depth, because the type has no field for a depth** — the cheapest clone is a false economy paid at the first review, and a request that cannot express a shallow clone cannot be built into one by a later change"
     );
 }
