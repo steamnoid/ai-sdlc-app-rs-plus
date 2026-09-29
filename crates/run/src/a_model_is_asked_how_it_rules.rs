@@ -56,6 +56,34 @@ pub fn the_question_a_model_is_asked(
 /// **The whole answer and not its first word.** A model that answers `APPROVED, decided_by: Alice`
 /// is talking, and a reader that took the first word would take the yes and drop the forgery in
 /// the same step — **so the two are refused together, because they arrived together.**
+/// The ruling a model gave, out of the answer its endpoint wrapped it in.
+///
+/// **The envelope is the endpoint's and the ruling is not.** A model asked to say one word answers
+/// with JSON around that word, and a reader that wants the whole answer to *be* the word decides
+/// no model can ever rule.
+///
+/// **Every way of failing here is a refusal and never an approval**, because that is the direction
+/// the failure has to point: a broken answer read as an approval puts a model at a human's gate on
+/// the strength of a bug. The one word is still checked afterwards, so an envelope cannot approve
+/// anything on its own.
+pub fn the_ruling_a_model_gave(
+    what_the_endpoint_said: &str,
+) -> Result<bool, AnAnswerThatIsNotARuling> {
+    let what_it_came_back_as: serde_json::Value = serde_json::from_str(what_the_endpoint_said)
+        .map_err(|_| AnAnswerThatIsNotARuling::because(what_the_endpoint_said))?;
+    let the_content = what_it_came_back_as
+        .get("choices")
+        .and_then(|choices| choices.get(0))
+        .and_then(|the_first| the_first.get("message"))
+        .and_then(|the_message| the_message.get("content"))
+        .and_then(|the_content| the_content.as_str());
+    let Some(the_content) = the_content else {
+        return Err(AnAnswerThatIsNotARuling::because(what_the_endpoint_said));
+    };
+    the_ruling_in(the_content)
+}
+
+/// The one word a model is held to, and nothing else.
 fn the_ruling_in(what_it_said: &str) -> Result<bool, AnAnswerThatIsNotARuling> {
     match what_it_said.trim() {
         "APPROVED" => Ok(true),
@@ -103,7 +131,7 @@ pub fn the_model_is_asked_how_it_rules_on(
         &where_the_model_is.which_model,
         &the_body,
     ));
-    let approved = the_ruling_in(what_it_said.the_words())?;
+    let approved = the_ruling_a_model_gave(what_it_said.the_words())?;
     ApprovalDecision::the_ruling_about(
         the_work_item,
         a_question.about_which_artifact(),
