@@ -568,6 +568,20 @@ clone a checkout in `ACloneOnDisk`, so the name that was refused is not the one 
 it. **Three questions in order, and each can stop the next**: whether anything stands at the
 destination, whether git copied the repository, what the copy stands on.
 
+**`WhetherAModelRulesHere`** — whether a model may rule at the gate on this deployment, as a
+value and **not as a setting read inside a use case**. A use case that reads its own configuration
+has moved a decision out of a type and into a line of code, and the line is somewhere a reader has
+to find. **Two values and not a bool**, so a call site says which thing is being set.
+
+**`AMayNotRule`** — a gate nobody switched a model on for, naming the artifact **and the flag**.
+**The flag and the artifact, and not a bare "no"**: a human turning the flag on needs to know it
+was the thing that was missing.
+
+**The flag is read before the model, and that order is the rule.** A gate that reaches the model
+and then ignores the flag has already paid for a ruling nobody authorised. **The refusal is the
+honest answer until a person turns it on**, rather than a decision this system made on a human's
+behalf — and the whole of what the flag buys is a model that may be asked, nothing more.
+
 **`WhereAModelIs`** — where a model answers and which one, **both deployment facts and neither a
 secret**. **And that is the point of the type existing**: the address and the model name are the
 two facts a deployment configures and can say out loud, **and the credential is deliberately not

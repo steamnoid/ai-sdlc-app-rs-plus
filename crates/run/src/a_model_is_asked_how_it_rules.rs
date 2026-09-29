@@ -113,3 +113,53 @@ pub fn the_model_is_asked_how_it_rules_on(
     )
     .map_err(|a_why| AnAnswerThatIsNotARuling::because(&a_why.0))
 }
+
+/// A gate nobody switched a model on for, naming the flag that is off.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct AMayNotRule {
+    the_question: String,
+}
+
+/// The gate, asking a model only while the flag says it may.
+///
+/// **The flag is read before the model, and that order is the rule.** A gate that reaches the
+/// model and then ignores the flag has already paid for a ruling nobody authorised — **and the
+/// refusal is the honest answer until a person turns the flag**, rather than a decision this
+/// system made on a human's behalf.
+pub fn a_model_may_not_rule_without_a_flag(
+    the_model: &impl AProgramWeRun,
+    a_question: &ApprovalQuestion,
+    who_ruled: &WhoDecided,
+    where_the_model_is: &WhereAModelIs,
+    may_it_rule: &crate::whether_a_model_rules_here::WhetherAModelRulesHere,
+) -> Result<ApprovalDecision, AnAnswerThatIsNotARuling> {
+    if !may_it_rule.may_be_asked() {
+        return Err(the_refusal_for(a_question));
+    }
+    the_model_is_asked_how_it_rules_on(the_model, a_question, who_ruled, where_the_model_is)
+}
+
+/// The refusal for a gate the flag is off, built without nesting the call inside the return.
+fn the_refusal_for(a_question: &ApprovalQuestion) -> AnAnswerThatIsNotARuling {
+    let the_artifact = a_question.about_which_artifact().to_string();
+    AnAnswerThatIsNotARuling::because(
+        &AMayNotRule {
+            the_question: the_artifact,
+        }
+        .why_it_may_not_rule(),
+    )
+}
+
+impl AMayNotRule {
+    /// Why the model was not asked, naming the artifact and the flag.
+    ///
+    /// **The flag and the artifact, and not a bare "no"** — a caller refusing a decision needs to
+    /// know which gate refused and that the reason was a switch, so a human turning the flag on
+    /// knows it was the thing that was missing.
+    pub fn why_it_may_not_rule(&self) -> String {
+        format!(
+            "a model may not rule on {} here: the flag that lets one is off, and a gate answered by a model nobody switched on is a gate that ruled without anybody",
+            self.the_question
+        )
+    }
+}
