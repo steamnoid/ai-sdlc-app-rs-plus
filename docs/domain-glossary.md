@@ -353,6 +353,22 @@ wrote and whether it worked. **`did_it_work` and not whether it looked happy**: 
 wrote a warning and returned zero did work, and a caller reading a return code as an outcome
 learns about the wrong thing.
 
+**`TheProgramAsItRuns`** — one of our own programs, really started on this host, and the one
+implementation of `AProgramWeRun`. **A name and not `AProgramOnHost`**, which would say the host
+rather than the thing that acts, and which invites reading the host as a collaborator rather than
+as a place with our own tools on it.
+
+**No shell, anywhere, ever.** The arguments are one thing each because **a formatted command line
+is where a value read out of a model becomes part of a command** — and a shell metacharacter in an
+argument is a second program in a disguise. **The program is named by the port's closed set and
+never by the arguments**, so the same name is never in both places: two records of one decision
+is one more thing to keep in step, and a reader cannot tell which one the process was started
+with.
+
+**A program that could not be started is a refusal and not a crash**, and it says so in the same
+words a failure would — because the caller has to tell *git is not installed* from *there is no
+such repository*, and that telling is not this system's to make up.
+
 **`AProgramWeRun`** — a program we run ourselves, on the host, with our own arguments and
 our own inputs. Its `working_directory` is a convenience, not a promise that anything may
 be run there.
