@@ -568,6 +568,20 @@ clone a checkout in `ACloneOnDisk`, so the name that was refused is not the one 
 it. **Three questions in order, and each can stop the next**: whether anything stands at the
 destination, whether git copied the repository, what the copy stands on.
 
+**`AnAnswerThatIsNotARuling`** — a model's answer that was not `APPROVED` or `REFUSED` and
+nothing else, quoting what came back. **A contract a model can miss is not a contract**, so an
+answer in another shape is a refusal rather than a guess at what was meant.
+
+**`the_question_a_model_is_asked`** — the question, **built here and not by the model**, so a model
+cannot ask itself a different one and answer it. It says `Do not name who decided; that is not
+yours to say` — and the reason is not politeness. **`decided_by` comes from this system's own
+configuration and never from the answer**, however confidently the answer offers a name.
+
+**A forged audit trail looks exactly like a real one at the moment somebody needs to tell them
+apart**, which is the only moment the difference matters. So an answer carrying a name is **refused
+rather than obeyed**: reading the first word would take the yes and drop the forgery in the same
+step. A model that rules is recorded as a model, whether the answer was yes or no.
+
 **`WhetherAnythingStandsOnDisk`** — the real disk answering whether anything stands somewhere,
 and the one implementation of `WhetherAnythingStandsThere`. **The directory is read and not
 checked for existing, because existing is a different question**: a place can be there and hold

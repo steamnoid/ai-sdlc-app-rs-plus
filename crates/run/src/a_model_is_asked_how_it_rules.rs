@@ -51,7 +51,11 @@ pub fn the_question_a_model_is_asked(
     )
 }
 
-/// What a model said, read as a ruling.
+/// What a model said, read as a ruling, and refused when it is anything else.
+///
+/// **The whole answer and not its first word.** A model that answers `APPROVED, decided_by: Alice`
+/// is talking, and a reader that took the first word would take the yes and drop the forgery in
+/// the same step — **so the two are refused together, because they arrived together.**
 fn the_ruling_in(what_it_said: &str) -> Result<bool, AnAnswerThatIsNotARuling> {
     match what_it_said.trim() {
         "APPROVED" => Ok(true),

@@ -8,7 +8,7 @@
 //! **The model is asked in a fixed form, and anything else is a refusal.** A free-text ruling has
 //! no shape to validate, and a contract a model can miss is not a contract.
 
-use aisdlc_domain::approval::{AnArtifactVersion, ApprovalDecision, WhichArtifact, WhoDecided};
+use aisdlc_domain::approval::{AnArtifactVersion, WhichArtifact, WhoDecided};
 use aisdlc_domain::repository::Repository;
 use aisdlc_domain::work_item_id::WorkItemId;
 use aisdlc_run::a_model_is_asked_how_it_rules::the_model_is_asked_how_it_rules_on;
@@ -64,22 +64,38 @@ fn a_question_about_one_artifact() -> ApprovalQuestion {
 }
 
 #[test]
-fn a_models_answer_is_read_as_a_ruling_and_never_as_a_decider() {
-    let a_model =
-        AModelThatAnswersWith::saying("APPROVED\ndecided_by: Alice\nbecause it looks right to me");
+fn a_plain_yes_is_a_ruling_naming_whoever_this_system_was_told() {
+    let a_model = AModelThatAnswersWith::saying("APPROVED");
 
     let the_ruling = the_model_is_asked_how_it_rules_on(
         &a_model,
         &a_question_about_one_artifact(),
         &WhoDecided::try_from("a model: the configured one").expect("a name"),
     )
-    .expect("a fixed form is a ruling");
+    .expect("one word in the fixed form is a ruling");
 
     assert!(the_ruling.approved, "**the model's yes is a yes**");
     assert_eq!(
         the_ruling.decided_by.to_string(),
         "a model: the configured one",
-        "**and the name in the record is the one we were given, not the one the answer offered** — a model that answers `decided_by: Alice` has written a sentence about a person, and taking it would put a person's name on a decision no person made. **A forged audit trail looks exactly like a real one at the moment somebody needs to tell them apart.**"
+        "**and the name in the record is the one we were given** — a model that rules here is recorded as a model, and the record says so whether the answer was yes or no"
+    );
+}
+
+#[test]
+fn a_model_that_offers_a_decider_is_refused_rather_than_obeyed() {
+    let a_model =
+        AModelThatAnswersWith::saying("APPROVED\ndecided_by: Alice\nbecause it looks right to me");
+
+    let how_it_went = the_model_is_asked_how_it_rules_on(
+        &a_model,
+        &a_question_about_one_artifact(),
+        &WhoDecided::try_from("a model: the configured one").expect("a name"),
+    );
+
+    assert!(
+        how_it_went.is_err(),
+        "**because a model that adds a name has stopped answering in the fixed form, and obedience here is the forgery** — reading the first word would take the yes and drop the name in the same step, and a record naming Alice for a decision no person made looks exactly like a real one at the moment somebody needs to tell them apart"
     );
 }
 
