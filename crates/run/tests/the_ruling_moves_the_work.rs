@@ -17,6 +17,16 @@ use aisdlc_domain::work_item::WorkItem;
 use aisdlc_domain::work_item_id::WorkItemId;
 use aisdlc_run::a_ruling_moves_the_work::the_ruling_moves_the_work;
 
+/// The work the agent picked up, worked on, and is presenting.
+fn an_agent_is_working_on_it(picked_up: WorkItem) -> WorkItem {
+    aisdlc_domain::state_machine::transition(
+        picked_up,
+        Stage::InProgressByAgent,
+        Some(aisdlc_run::a_run_picks_up_the_work::the_agent_that_picks_up_work()),
+    )
+    .expect("the table allows pickup to become work in progress")
+}
+
 /// A work item standing at the gate, waiting to be ruled on.
 fn a_work_standing_at_the_gate() -> WorkItem {
     let the_work = WorkItem::standing_at(
@@ -30,12 +40,7 @@ fn a_work_standing_at_the_gate() -> WorkItem {
     let picked_up =
         aisdlc_run::a_run_picks_up_the_work::a_run_picks_up_the_work_it_was_given(&the_work)
             .expect("the table allows this edge");
-    let in_progress = aisdlc_domain::state_machine::transition(
-        picked_up,
-        Stage::InProgressByAgent,
-        Some(aisdlc_run::a_run_picks_up_the_work::the_agent_that_picks_up_work()),
-    )
-    .expect("the table allows pickup to become work in progress");
+    let in_progress = an_agent_is_working_on_it(picked_up);
     aisdlc_run::the_agent_presents_what_it_produced(
         in_progress,
         aisdlc_run::a_run_picks_up_the_work::the_agent_that_picks_up_work(),
@@ -54,7 +59,7 @@ fn a_work_that_was_approved_is_delivered_and_nothing_holds_it() {
         what_it_became
             .as_ref()
             .ok()
-            .map(|it| it.the_stage_it_stands_at()),
+            .map(WorkItem::the_stage_it_stands_at),
         Some(Stage::Done),
         "**because an approval is the only move that ends the work** — and `DONE` is the table's \\
          own destination for it, not one this file chose: {what_it_became:?}"
@@ -71,7 +76,7 @@ fn a_work_that_was_refused_goes_back_rather_than_being_delivered() {
         what_it_became
             .as_ref()
             .ok()
-            .map(|it| it.the_stage_it_stands_at()),
+            .map(WorkItem::the_stage_it_stands_at),
         Some(Stage::AwaitingAgentPickup),
         "**because a work whose ruling was a refusal is not delivered** — and a refusal that ended \\
          the work would record a delivery nobody made: {what_it_became:?}"
