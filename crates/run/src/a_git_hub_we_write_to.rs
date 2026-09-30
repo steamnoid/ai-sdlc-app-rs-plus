@@ -6,7 +6,6 @@
 //! comment that claims a person wrote it is the same forgery as a record naming a person for a
 //! decision no person made.
 
-use aisdlc_domain::approval::WhoDecided;
 use aisdlc_domain::commissioned_request::AWhereItWasFiled;
 
 /// One thing asked of GitHub, carrying the address, the words and the author.
@@ -41,7 +40,7 @@ impl WhatGitHubWasAskedFor {
     pub fn a_comment_at(
         where_it_is_going: AWhereItWasFiled,
         what_is_written: &str,
-        who_wrote_this: &WhoDecided,
+        who_wrote_this: &crate::who_signs_a_comment::WhoSignsAComment,
     ) -> Self {
         Self {
             where_it_is_going,

@@ -703,6 +703,25 @@ settable field, so a caller cannot fill an address in afterwards from a number i
 number instead of a sentence made a product analyst read the repository while the sentence went
 to the planner.
 
+**`WhoSignsAComment`** — the name a deployment writes its own comments under, **and never a person
+and never chosen by a caller.** A comment is not a decision, so a person did not decide it and did
+not write it. **A type and not a `WhoDecided` reused**, because a type both a person's ruling and an
+automated comment can be built from is a type that cannot tell a person from this system — and that
+is the whole question.
+
+This system held the way: the use case took the name as an argument, `WhoDecided` accepts any string
+that is not empty, and a test asserted that **"Alice"** reached GitHub. **A forgery primitive is
+removed by having no door rather than by a check on the way through it** — so the use case takes no
+name, and a test proves it by reading the signature.
+
+**A deployment that named nobody is refused before anything is written**, because a comment with
+nobody on it is a comment nobody can be asked about, and an invented name is the forgery this type
+exists to remove.
+
+**`ADeploymentThatNamedNobody`** — a deployment that named nothing, or named only spaces. **Named
+after what is wrong and not after what happened**, because a refusal whose name says "error" tells a
+reader nothing they did not already know.
+
 **`WhereAModelIs`** — where a model answers and which one, **both deployment facts and neither a
 secret**. **And that is the point of the type existing**: the address and the model name are the
 two facts a deployment configures and can say out loud, **and the credential is deliberately not

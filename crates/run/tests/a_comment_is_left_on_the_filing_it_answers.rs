@@ -38,6 +38,12 @@ impl AGitHubWeWriteTo for SomewhereThatAccepts {
     }
 }
 
+/// The name a deployment writes its own comments under, and never a person's.
+fn the_deployment_that_wrote_it() -> aisdlc_run::who_signs_a_comment::WhoSignsAComment {
+    aisdlc_run::who_signs_a_comment::WhoSignsAComment::the_name_a_deployment_used("aisdlc-dev")
+        .expect("a deployment named one")
+}
+
 fn a_request_filed_at(the_address: &str) -> CommissionedRequest {
     CommissionedRequest::asked_for_and_filed_at(
         "a thing should change".to_string(),
@@ -56,7 +62,7 @@ fn a_comment_names_where_it_was_left_and_who_wrote_it() {
         &mut somewhere,
         &a_request_filed_at(the_address),
         "a run looked at this and here is what it found",
-        &aisdlc_domain::approval::WhoDecided::try_from("a run, not a person").expect("a name"),
+        &the_deployment_that_wrote_it(),
     )
     .expect("a request that was filed has somewhere to be commented on");
 
@@ -82,15 +88,16 @@ fn a_comment_carries_who_wrote_it_and_nobody_may_name_a_person_for_it() {
         &mut somewhere,
         &a_request_filed_at(the_address),
         "a run looked at this",
-        &aisdlc_domain::approval::WhoDecided::try_from("Alice").expect("a name"),
+        &the_deployment_that_wrote_it(),
     )
     .expect("the comment is written");
 
     assert!(
-        somewhere.what_it_was_asked.borrow()[0]
-            .who_wrote_this()
-            .contains("Alice"),
-        "**and the name the caller was given is carried into the comment** — a comment with no author is a comment a reader cannot weigh, and a reader who cannot weigh it will treat it as a person"
+        somewhere.what_it_was_asked.borrow()[0].who_wrote_this() == "aisdlc-dev",
+        "**and the name is the one a deployment used** — a comment with no author is a comment a \
+         reader cannot weigh, and **a reader who cannot weigh it will treat it as a person**: this \
+         test used to assert that the name 'Alice' reached GitHub, which is this system signing its \
+         own writing with a person, and the test called it correct"
     );
 }
 
@@ -105,7 +112,7 @@ fn a_request_nobody_filed_has_nowhere_to_be_commented_on() {
         &mut somewhere,
         &typed_by_hand,
         "a run looked at this",
-        &aisdlc_domain::approval::WhoDecided::try_from("a run, not a person").expect("a name"),
+        &the_deployment_that_wrote_it(),
     );
 
     assert!(
