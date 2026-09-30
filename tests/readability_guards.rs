@@ -659,7 +659,8 @@ mod a_function_body_is_no_longer_than_twenty_lines {
 
     use aisdlc_gates::a_stretch_of_the_file::{AStretchOfTheFile, WhatIsWrittenThere};
     use aisdlc_gates::reading_the_checkout;
-    use aisdlc_gates::reading_the_code::{every_source_file, the_lines_of_code};
+    use aisdlc_gates::reading_the_code::every_source_file;
+    use aisdlc_gates::reading_the_code::the_lines_of_code;
     use aisdlc_gates::scanning::HowTheFileIsWritten;
 
     /// The most lines of code a function body may spend.
@@ -924,7 +925,8 @@ mod a_body_nests_no_deeper_than_two {
     //! field.
 
     use aisdlc_gates::reading_the_checkout;
-    use aisdlc_gates::reading_the_code::{every_source_file, the_lines_of_code};
+    use aisdlc_gates::reading_the_code::every_source_file;
+    use aisdlc_gates::reading_the_code::the_lines_of_code;
 
     /// The deepest a statement may sit inside a body.
     const THE_DEEPEST_A_STATEMENT_MAY_SIT: usize = 2;
@@ -1232,7 +1234,8 @@ mod no_allow_silences_a_lint {
     //! attribute that stands, and this gate asks the walk.
 
     use aisdlc_gates::reading_the_checkout;
-    use aisdlc_gates::reading_the_code::{every_source_file, the_lines_of_code};
+    use aisdlc_gates::reading_the_code::every_source_file;
+    use aisdlc_gates::reading_the_code::the_lines_of_code;
 
     /// The two attributes that silence something, as they are written.
     const THE_ATTRIBUTES_THAT_SILENCE: [&str; 2] = ["#[allow(", "#[expect("];
@@ -1371,7 +1374,8 @@ mod no_placeholder_is_left_in_the_code {
 
     use aisdlc_gates::a_stretch_of_the_file::WhatIsWrittenThere;
     use aisdlc_gates::reading_the_checkout;
-    use aisdlc_gates::reading_the_code::{every_source_file, the_lines_of_code};
+    use aisdlc_gates::reading_the_code::every_source_file;
+    use aisdlc_gates::reading_the_code::the_lines_of_code;
 
     use aisdlc_gates::scanning::HowTheFileIsWritten;
 
@@ -1595,7 +1599,8 @@ mod a_name_is_never_generic_vocabulary {
     //! word to the list needs no change in code and blessing one is a visible act.
 
     use aisdlc_gates::reading_the_checkout;
-    use aisdlc_gates::reading_the_code::{every_source_file, the_lines_of_code};
+    use aisdlc_gates::reading_the_code::every_source_file;
+    use aisdlc_gates::reading_the_code::the_lines_of_code;
     use aisdlc_gates::reading_the_glossary::{
         it_as_letters, the_glossary_text, the_last_word_of, the_word_under,
         the_words_the_vocabulary_gate_refuses,
@@ -1805,7 +1810,8 @@ mod a_synonym_is_never_used {
     //! changed.
 
     use aisdlc_gates::reading_the_checkout;
-    use aisdlc_gates::reading_the_code::{every_source_file, the_lines_of_code};
+    use aisdlc_gates::reading_the_code::every_source_file;
+    use aisdlc_gates::reading_the_code::the_lines_of_code;
     use aisdlc_gates::reading_the_glossary::{
         it_as_letters, the_blessed_names, the_glossary_spelling_of, the_refused_as_letters,
         the_words_of, the_words_refused_anywhere, the_words_refused_only_as_whole_names,
@@ -2258,7 +2264,8 @@ mod a_name_the_gates_share_has_one_implementation {
     use std::path::PathBuf;
 
     use aisdlc_gates::reading_the_checkout;
-    use aisdlc_gates::reading_the_code::{every_source_file, the_lines_of_code};
+    use aisdlc_gates::reading_the_code::every_source_file;
+    use aisdlc_gates::reading_the_code::the_lines_of_code;
 
     /// The refusal for one name, or nothing when the gates agree about what it means.
     fn what_is_wrong_with(one_name: &str, the_copies: &[String]) -> Option<String> {
@@ -2498,7 +2505,8 @@ mod no_test_reads_an_environment_variable {
     //! people — the glossary by whoever is about to break the rule, the gate by nobody.
 
     use aisdlc_gates::reading_the_checkout;
-    use aisdlc_gates::reading_the_code::{every_source_file, the_lines_of_code};
+    use aisdlc_gates::reading_the_code::every_source_file;
+    use aisdlc_gates::reading_the_code::the_lines_of_code;
     use aisdlc_gates::reading_the_glossary::the_block_containing;
 
     /// The words the glossary refuses, and the glossary is where they are written down.
@@ -2654,7 +2662,8 @@ mod an_ignored_test_says_why_it_is_ignored {
     //! reason in the source is a reason a reader cannot lose by deleting a line above it.
 
     use aisdlc_gates::reading_the_checkout;
-    use aisdlc_gates::reading_the_code::{every_source_file, the_lines_of_code};
+    use aisdlc_gates::reading_the_code::every_source_file;
+    use aisdlc_gates::reading_the_code::the_lines_of_code;
 
     /// The refusal for one ignored test, or nothing when it says why.
     ///
@@ -2776,7 +2785,8 @@ mod the_core_never_names_a_trait_object {
     //! file as a file.
 
     use aisdlc_gates::reading_the_checkout;
-    use aisdlc_gates::reading_the_code::{every_source_file, the_lines_of_code};
+    use aisdlc_gates::reading_the_code::every_source_file;
+    use aisdlc_gates::reading_the_code::the_lines_of_code;
 
     /// The refusal for one line, or nothing when the line names no trait object.
     ///
@@ -3017,7 +3027,8 @@ mod a_declaration_is_held_by_what_it_lacks {
     //! that holds every other rule about how code is written.
 
     use aisdlc_gates::reading_the_checkout;
-    use aisdlc_gates::reading_the_code::{every_source_file, the_lines_of_code};
+    use aisdlc_gates::reading_the_code::every_source_file;
+    use aisdlc_gates::reading_the_code::the_lines_of_code;
 
     /// What a declaration of one name carries, and the lines it carries it on.
     fn the_declaration_of(one_name: &str) -> Option<(String, Vec<String>)> {
@@ -3094,6 +3105,81 @@ mod a_declaration_is_held_by_what_it_lacks {
             what_is_wrong_with("AWhereItWasFiled"),
             Vec::<String>::new(),
             "**and the door that takes a whole address is the whole of the property** — a function composing one from a number was added to that module and every test still passed, so the composition is a shape and shapes are what this walks"
+        );
+    }
+}
+
+mod no_body_is_built_by_a_hand {
+    //! A body that leaves this system is a wire format, and a wire format is not typed by hand.
+    //!
+    //! **The body a model is given was once written by `format!`**, with the question put where a
+    //! quoted string belongs and no quotes around it — **so every request this system ever sent a
+    //! model was invalid JSON**, the far end answered `400` with zero bytes, and the refusal that
+    //! reached us quoted an empty string. Three real runs, the same refusal, and the cause was
+    //! eleven characters of a format string that no test ever looked at.
+    //!
+    //! **One test beside one function held that one body.** The next body, written the same way,
+    //! would have broken the same way — **so the rule is here rather than beside the body, where it
+    //! holds every body this system will ever send.**
+    //!
+    //! **An opening brace and an escaped quote, together, inside a `format!`.** An escaped quote
+    //! alone is a sentence somebody wanted to say — `let closing = format!("a \\"" thing")` is
+    //! ordinary — and the gate refused that on its first run and named it. **A wire format is not
+    //! recognised by its quotes but by its brace**, and that is the difference between a message
+    //! with a quote in it and an object built by hand.
+    //!
+    //! **A literal is the test's own
+    //! subject matter — a test that proves a body parses writes broken JSON on purpose — so the
+    //! walk reads `src` and not `tests`, and the refused thing is named in the message.
+
+    use aisdlc_gates::reading_the_checkout;
+    use aisdlc_gates::reading_the_code::every_source_file;
+
+    /// The source files a body is built in, and not the tests that write broken JSON on purpose.
+    fn every_file_a_body_is_built_in() -> Vec<std::path::PathBuf> {
+        every_source_file()
+            .into_iter()
+            .filter(|a_file| a_file.to_string_lossy().contains("/src/"))
+            .collect()
+    }
+
+    /// The lines of one file that build something out of escaped quotes and a `format!`.
+    fn the_lines_building_a_body_by_hand(a_file: &std::path::Path) -> Vec<String> {
+        let the_text = reading_the_checkout::the_text_at(a_file);
+        let mut found = Vec::new();
+        let mut in_a_format = false;
+        for one_line in the_text.lines() {
+            if one_line.contains("format!") {
+                in_a_format = true;
+            }
+            if in_a_format && one_line.contains("{\\\"") {
+                found.push(one_line.trim().to_string());
+            }
+            if in_a_format && one_line.trim_end().ends_with(");") {
+                in_a_format = false;
+            }
+        }
+        found
+    }
+
+    #[test]
+    fn no_body_in_this_repository_is_built_by_a_hand() {
+        let the_refusals: Vec<String> = every_file_a_body_is_built_in()
+            .into_iter()
+            .flat_map(|a_file| {
+                the_lines_building_a_body_by_hand(&a_file)
+                    .into_iter()
+                    .map(move |a_line| format!("{} says: {a_line}", a_file.display()))
+            })
+            .collect();
+
+        assert!(
+            the_refusals.is_empty(),
+            "**because a body that leaves this system is a wire format, and a wire format typed by \
+             hand is one that is broken by anything the hand did not think of** — this one was \
+             broken by everything: the question went where a quoted string belongs and no quotes \
+             went with it, the far end answered `400` with zero bytes, and the refusal reached us \
+             as an empty string three times. Build it with `serde_json`: {the_refusals:?}"
         );
     }
 }
