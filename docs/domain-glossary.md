@@ -795,6 +795,26 @@ is one no human was ever shown** — and a paraphrase of what an agent said is a
 its name. **`AJudgementNobodyMade`** is the refusal, and
 **`WHAT_MAY_BE_SAID_INSTEAD_OF_A_JUDGEMENT`** is what an agent with nothing may say instead, because
 **that is an answer and a blank is not.**
+**`WhetherAnAgentOffers`** — whether a deployment asked for an agent that offers work of its own,
+**as a value and not as a lookup.** Read from `AISDLC_AN_AGENT_OFFERS`, which is **off unless a
+deployment says otherwise, and the only word that opens it is `yes`.**
+
+**The default is the half that matters.** An agent that invents work and files it as issues reaches a
+real repository, **and the operator of that repository never asked for it** — so a deployment that
+has never heard of the flag still runs, and the only work such a run has is a human's filing.
+
+**A word this system does not know is a word it will not act on**, and `true` is not that word —
+**because guessing it means filing invented issues in a repository whose operator asked for none, and
+that is the one consequence in this cycle a person cannot undo by reading a log afterwards.** The same
+rule `WhetherAModelRulesHere` already follows, **for the same reason: a switch nobody reads is a
+comment in the environment, and a switch read the wrong way is worse than no switch.**
+
+**The flag is carried through `HowThisDeploymentIsSetUp` rather than read a second time**, because
+`std::env` is reached in one place in this system and a second reader is a second place to be
+consistent. **Two of its constructors rebuild the whole value** — the credential step and the refusal
+— **and both of them now carry the flag, because a flag quietly dropped by an unrelated step is a flag
+that works on a machine with no credential and silently fails on one that has it.**
+
 **Who asked is told to the run and never named by the code**, and `WhatThisFilingIsAbout` carries
 `who_asked` beside the work item's name and the discipline answering: **a work item that fills in its
 own commissioner is a work item that signs somebody's name for something a system did.** The literal

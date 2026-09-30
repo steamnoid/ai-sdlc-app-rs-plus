@@ -10,6 +10,7 @@ use aisdlc_run::how_this_deployment_is_set_up::HowThisDeploymentIsSetUp;
 
 use crate::the_environment::TheEnvironment;
 use crate::whether_a_model_rules_here_is_read::the_flag_as_this_deployment_sets_it;
+use crate::whether_an_agent_offers_is_read::the_flag_as_this_deployment_sets_it as the_flag_letting_an_agent_offer;
 
 /// How this deployment is set up, from the two variables this system reads and no others.
 ///
@@ -25,6 +26,13 @@ pub fn how_this_deployment_is_set_up(
     let the_credential = what_the_process_was_told
         .the_variable_a_deployment_set("OPENAI_API_KEY")
         .map(ACredential::the_key_a_deployment_supplied);
-    HowThisDeploymentIsSetUp::the_two_facts_of_one_deployment(may_a_model_rule, None)
-        .with_a_credential_or_a_refusal(the_credential)
+    let may_an_agent_offer = the_flag_letting_an_agent_offer(
+        what_the_process_was_told.the_variable_a_deployment_set("AISDLC_AN_AGENT_OFFERS"),
+    );
+    HowThisDeploymentIsSetUp::every_fact_a_deployment_was_told(
+        may_a_model_rule,
+        None,
+        may_an_agent_offer,
+    )
+    .with_a_credential_or_a_refusal(the_credential)
 }
