@@ -66,6 +66,17 @@ impl WhatDiscoveryConcluded {
         }
     }
 
+    /// One file of the repository, with the address a reviewer opens.
+    ///
+    /// **One and not many, because an offer checks each path against a listing separately** — and a
+    /// batch helper next to a single-path one would be two ways to build the same thing.
+    pub fn one_file(
+        of_which_repository: &aisdlc_domain::repository::Repository,
+        the_path: &str,
+    ) -> Result<EvidenceFile, AnEvidenceOutsideTheRepository> {
+        evidence_for(of_which_repository, the_path)
+    }
+
     /// Whether the gate may be shown this at all.
     ///
     /// **At least one field and not all of them**, because a rule demanding every field would only

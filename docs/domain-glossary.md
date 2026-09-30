@@ -795,6 +795,20 @@ is one no human was ever shown** — and a paraphrase of what an agent said is a
 its name. **`AJudgementNobodyMade`** is the refusal, and
 **`WHAT_MAY_BE_SAID_INSTEAD_OF_A_JUDGEMENT`** is what an agent with nothing may say instead, because
 **that is an answer and a blank is not.**
+**`WhatAModelSaidItWouldFile`** — what a model said it would file, **in the shape it said it in:
+paths and not addresses.** **The raw answer and the offer are two types, on purpose**, and the
+address rule is only half the reason.
+
+**`AnOfferThatNamedAFileTheRunNeverShowed`** closes the other half. Deriving the address stops a model
+inventing *where* a file is; **this stops it inventing *that a file is*.** A path that looks like a
+path can name a file the repository does not have, **and a model that invents `src/main.rs` in a
+project with none produces an offer that reads exactly like a real one.**
+
+**The check is against the listing the run really showed the model, and the run holds it** — so an
+offer may cite nothing else. **Checked before any address is built**, because an address derived from a
+path that is not there **resolves to nothing and looks exactly like a link** — the mother's
+`CitedFileNotFoundError` again, one layer further in.
+
 **`WhatAnAgentOffered`** — what an agent offers a human: work it concluded is worth filing, the
 files it concluded that from, and what it said about its own reading. **The agent is `aisdlc-offer`,
 transcribed from the router of the mother project** — `THE_NEXT_ARTIFACT_IS_THE_PROPOSAL =
