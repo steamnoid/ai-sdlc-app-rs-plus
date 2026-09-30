@@ -703,6 +703,20 @@ settable field, so a caller cannot fill an address in afterwards from a number i
 number instead of a sentence made a product analyst read the repository while the sentence went
 to the planner.
 
+**`who_signed_these_comments`** — who signs the comments this deployment writes, or the variable
+it left unset. **A port that answers is not a thing anybody calls**: `ACommentReachingGitHub` existed
+and `WhoSignsAComment` existed, and until this reader existed **there was no way for a deployment to
+put itself on a comment** — so the only way to reach the adapter was to invent a name, and inventing
+a name is the forgery `WhoSignsAComment` was written to remove.
+
+**An absent variable is a refusal and not a default, and the refusal comes before the write**,
+because a comment with an invented author is worse than no comment: it looks like a record.
+
+**And the author is an argument and not a field only `gh` never sees.** The signature was carried in
+the request and dropped on the way out — **a forgery prevented in one place and reopened in the
+next**, by the very code written to honour the signature. A comment whose author never reached GitHub
+has no author at all.
+
 **`ACommentReachingGitHub`** — a comment turned into what `gh` is run with, and the answer
 `AGitHubWeWriteTo` was missing. **A port with one implementor that was a test double is a port
 nothing could reach**, so a comment had never been written anywhere and the use case was proved

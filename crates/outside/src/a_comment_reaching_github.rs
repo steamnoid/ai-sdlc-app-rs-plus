@@ -8,6 +8,10 @@
 //! **No shell, one argument each, and the address is one argument.** A comment body is prose, and
 //! prose has dashes and colons and backticks in it; a body re-split into its lines is a body
 //! somebody else has assembled.
+//!
+//! **The author is an argument and not a field only `gh` never sees.** The signature was carried
+//! in the request and dropped on the way out, which is a forgery prevented in one place and reopened
+//! in the next: a comment whose author never reached GitHub has no author at all.
 
 use aisdlc_run::a_git_hub_we_write_to::{AGitHubWeWriteTo, WhatGitHubWasAskedFor};
 
@@ -27,6 +31,8 @@ impl ACommentReachingGitHub {
                 .to_string(),
             "--body".to_string(),
             what_git_hub_is_asked.what_is_written().to_string(),
+            "--author-name".to_string(),
+            what_git_hub_is_asked.who_wrote_this().to_string(),
         ]
     }
 }

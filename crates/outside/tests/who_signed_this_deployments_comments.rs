@@ -23,7 +23,7 @@ struct SomewhereThatAnswers {
 impl AGitHubWeWriteTo for SomewhereThatAnswers {
     fn it_is_asked_to(
         &mut self,
-        what_git_hub_is_asked: &WhatGitHubWasAskedFor,
+        _what_git_hub_is_asked: &WhatGitHubWasAskedFor,
     ) -> Result<(), String> {
         self.was_it_asked = true;
         Ok(())
@@ -67,7 +67,6 @@ fn a_deployment_that_named_nobody_cannot_have_a_comment_written() {
     };
 
     let the_way_out = who_signed_these_comments(&what_it_was_told);
-    let _ = the_way_out.as_ref().err().map(|why_not| why_not.clone());
     if let Ok(who_signed) = the_way_out.as_ref() {
         let _ = the_run_leaves_a_comment(
             &mut somewhere,
