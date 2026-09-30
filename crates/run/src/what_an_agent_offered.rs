@@ -21,6 +21,24 @@ pub struct AWorkAnAgentOffered {
     pub what_it_concluded_from: Vec<EvidenceFile>,
 }
 
+/// What a model said it would file, **in the shape it said it in — paths and not addresses.**
+///
+/// **The raw answer and the report are two types**, because an address a model may invent is worse
+/// than none, **and the address is derived here from a path this run verified was really there.**
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct WhatAModelSaidItWouldFile {
+    /// What the filing is called.
+    pub title: String,
+    /// What the filing asks for, in words.
+    pub what_it_asks_for: String,
+    /// Which files it says it concluded that from.
+    pub paths: Vec<String>,
+}
+
+/// An offer naming a file the run never showed the model.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct AnOfferThatNamedAFileTheRunNeverShowed(pub String);
+
 /// An offer nothing was concluded from, so nothing can be filed.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AnOfferNothingWasConcludedFrom(pub String);
@@ -35,6 +53,27 @@ pub struct WhatAnAgentOffered {
 }
 
 impl WhatAnAgentOffered {
+    /// The offers a model offered, **taken whole for now** — the refusal is the next commit.
+    pub fn the_offers_a_model_offered(
+        of_which_repository: &Repository,
+        what_the_run_saw: &[String],
+        what_the_model_said: Vec<WhatAModelSaidItWouldFile>,
+        judged: WhatAnAgentJudged,
+    ) -> Result<WhatAnAgentOffered, AnOfferThatNamedAFileTheRunNeverShowed> {
+        let _ = (of_which_repository, what_the_run_saw);
+        Ok(WhatAnAgentOffered {
+            offers: what_the_model_said
+                .into_iter()
+                .map(|one| AWorkAnAgentOffered {
+                    title: one.title,
+                    what_it_asks_for: one.what_it_asks_for,
+                    what_it_concluded_from: Vec::new(),
+                })
+                .collect(),
+            judged,
+        })
+    }
+
     /// The evidence behind an offer, **and the only way an offer gets any.**
     ///
     /// **Every path is checked before any address is built**, exactly as a discovery report's
