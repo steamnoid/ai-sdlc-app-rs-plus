@@ -53,6 +53,16 @@ fn a_request_filed_at(the_address: &str) -> CommissionedRequest {
     .expect("a title is a request")
 }
 
+/// Where a comment went, **and a comment always has somewhere to go** — a filing that has not been
+/// made is not one, and it is asked for through a different request entirely.
+fn where_a_comment_went(what_it_was_asked: &WhatGitHubWasAskedFor) -> String {
+    what_it_was_asked
+        .where_it_is_going()
+        .expect("a comment has somewhere to go")
+        .as_str()
+        .to_string()
+}
+
 #[test]
 fn a_comment_names_where_it_was_left_and_who_wrote_it() {
     let mut somewhere = SomewhereThatAccepts::a_new_one();
@@ -68,7 +78,7 @@ fn a_comment_names_where_it_was_left_and_who_wrote_it() {
 
     let what_it_was_asked = somewhere.what_it_was_asked.borrow();
     assert_eq!(
-        what_it_was_asked[0].where_it_is_going().as_str(),
+        where_a_comment_went(&what_it_was_asked[0]),
         the_address,
         "**and it is the address the filing returned, word for word** — a comment on a composed address is a comment on a page that does not exist"
     );

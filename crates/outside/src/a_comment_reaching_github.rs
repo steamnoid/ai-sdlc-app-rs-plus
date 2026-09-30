@@ -40,9 +40,16 @@ impl ACommentReachingGitHub {
     }
 }
 
-/// The address the filing returned, word for word.
+/// The address the filing returned, word for word, **and nothing at all for a filing not yet made.**
+///
+/// **Empty and not a guess.** This program comments; a filing that has not been made has no address
+/// to comment at, **and an address composed from the number would be a page that does not exist** —
+/// the exact thing this repository deleted once.
 fn what_git_hub_is_going_at(what_it_is_asked: &WhatGitHubWasAskedFor) -> String {
-    what_it_is_asked.where_it_is_going().as_str().to_string()
+    what_it_is_asked
+        .where_it_is_going()
+        .map(|where_it_is_going| where_it_is_going.as_str().to_string())
+        .unwrap_or_default()
 }
 
 impl AGitHubWeWriteTo for ACommentReachingGitHub {

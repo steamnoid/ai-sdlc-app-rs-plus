@@ -27,6 +27,7 @@ pub mod a_run_picks_up_the_work;
 pub mod an_agent_is_asked_what_it_would_file;
 pub mod an_issue_read;
 pub mod an_issue_to_read;
+pub mod an_offer_becomes_a_filing;
 pub mod how_this_deployment_is_set_up;
 pub mod the_path_inside_the_project;
 pub mod the_project_on_disk;
