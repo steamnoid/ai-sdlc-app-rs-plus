@@ -720,6 +720,19 @@ asserting a flag that does not exist. The name goes in the words, where a reader
 record keeps it for the audit trail. The account is the author and this system does not get to
 pretend otherwise.
 
+**`with_what_a_deployment_named`** — what a deployment said a model must be asked besides the
+body, one header each. **A deployment fact and not a gateway's name written into this system**: a
+proxy in front of a model can require anything, so the deployment says what it requires — **and no
+name of any particular host appears in `aisdlc-run`.**
+
+**A header is a name and a value and not two arguments**, because a name split from its value is a
+header sent to a host it was not addressed to. **A line that is not a header is not sent**, and a
+deployment that named none sends none — sending an empty one is a header with an empty name, which is
+a thing no host can be addressed by.
+
+**A header is not a credential and cannot stand in for one**: the program with no credential is asked
+for nothing at all even when the deployment named three headers.
+
 **A comment is left on a filing somebody named, and never on one this system chose.** This repository
 has no issues at all, so the address comes from `E2E_FILING` and the test refuses to run without it —
 **a proof that comments on a repository this system has no business commenting on is not a proof, it

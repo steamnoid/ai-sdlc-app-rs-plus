@@ -14,10 +14,13 @@ use aisdlc_run::a_program_we_run::{AProgramWeRun, WhatTheProgramSaid, WhichProgr
 use aisdlc_run::the_repository_to_clone_into::ARepositoryToClone;
 use aisdlc_run::what_we_tell_a_program_to_do::WhatWeTellAProgramToDo;
 
+use crate::the_environment::TheEnvironment;
+
 /// One of our own programs, run on this host.
 pub struct TheProgramAsItRuns {
     which_program: WhichProgramWeRun,
     the_credential: Option<aisdlc_run::a_credential::ACredential>,
+    what_a_deployment_named_besides: Vec<String>,
 }
 
 impl TheProgramAsItRuns {
@@ -33,7 +36,31 @@ impl TheProgramAsItRuns {
         Self {
             which_program: WhichProgramWeRun::Git,
             the_credential,
+            what_a_deployment_named_besides: Vec::new(),
         }
+    }
+
+    /// What a deployment said a model must be asked besides the body, one header each.
+    ///
+    /// **A deployment fact and not a gateway's name written into this system.** A proxy in front of
+    /// a model can require anything, so the deployment says what it requires and this system sends
+    /// it — **and a line that is not a header is not sent, because a request that guesses what a
+    /// host needs is the same invention as a base endpoint.**
+    #[must_use]
+    pub fn with_what_a_deployment_named(
+        mut self,
+        what_the_process_was_told: &TheEnvironment,
+    ) -> Self {
+        let what_it_named = what_the_process_was_told
+            .the_variable_a_deployment_set("LLM_HEADERS")
+            .unwrap_or_default();
+        self.what_a_deployment_named_besides = what_it_named
+            .lines()
+            .map(str::trim)
+            .filter(|one| !one.is_empty())
+            .map(str::to_string)
+            .collect();
+        self
     }
 
     /// Which program this will run, and it is never chosen by a caller.
@@ -131,18 +158,17 @@ impl TheProgramAsItRuns {
             "Authorization: Bearer {}",
             the_credential.the_key_to_authenticate_with()
         );
-        vec![
-            "-s".to_string(),
-            "-X".to_string(),
-            "POST".to_string(),
-            the_endpoint.to_string(),
-            "-H".to_string(),
-            "Content-Type: application/json".to_string(),
-            "-H".to_string(),
-            the_authorization,
-            "-d".to_string(),
-            the_body.to_string(),
-        ]
+        let mut the_arguments = vec!["-s", "-X", "POST", the_endpoint, "-H"];
+        the_arguments.push("Content-Type: application/json");
+        the_arguments.push("-H");
+        the_arguments.push(&the_authorization);
+        for one_header in &self.what_a_deployment_named_besides {
+            the_arguments.push("-H");
+            the_arguments.push(one_header);
+        }
+        the_arguments.push("-d");
+        the_arguments.push(the_body);
+        the_arguments.into_iter().map(str::to_string).collect()
     }
 }
 

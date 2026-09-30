@@ -116,7 +116,7 @@ fn a_header_a_deployment_named_is_one_argument_beside_the_others() {
         .any(|one| one == "x-opencode-session: aisdlc");
     let the_name_became_its_own_argument = the_arguments
         .iter()
-        .any(|one| one == "x-opencode-session" || one == "aisdlc");
+        .any(|one| one.as_str() == "x-opencode-session" || one.as_str() == "aisdlc");
     assert!(
         the_header_is_whole && !the_name_became_its_own_argument,
         "**because a header is a name and a value and not two arguments** — and a name split from \
@@ -133,7 +133,7 @@ fn a_deployment_that_named_no_headers_still_asks_the_model_and_names_no_header()
         && the_arguments
             .iter()
             .any(|one| one == "http://localhost:11434/v1/chat/completions");
-    let an_empty_header_was_sent = the_arguments.iter().any(|one| one.is_empty());
+    let an_empty_header_was_sent = the_arguments.iter().any(String::is_empty);
     assert!(
         it_still_asks && !an_empty_header_was_sent,
         "**because most deployments need no header at all** — and sending an empty one is a header \

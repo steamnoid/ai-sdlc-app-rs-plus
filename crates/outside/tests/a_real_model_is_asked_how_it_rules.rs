@@ -16,9 +16,11 @@ use aisdlc_domain::work_item_id::WorkItemId;
 use aisdlc_outside::how_this_deployment_is_set_up::how_this_deployment_is_set_up;
 use aisdlc_outside::the_environment::TheEnvironment;
 use aisdlc_outside::the_program_as_it_runs::TheProgramAsItRuns;
+use aisdlc_run::a_credential::ACredential;
 use aisdlc_run::a_model_is_asked_how_it_rules::{
     WhereAModelIs, the_model_is_asked_how_it_rules_on,
 };
+use aisdlc_run::how_this_deployment_is_set_up::HowThisDeploymentIsSetUp;
 
 /// Where a deployment said its model is, and the reason when it did not say.
 fn what_a_deployment_named(what_it_was_told: &TheEnvironment) -> Result<WhereAModelIs, String> {
@@ -29,29 +31,41 @@ fn what_a_deployment_named(what_it_was_told: &TheEnvironment) -> Result<WhereAMo
 }
 
 /// This deployment, or the reason there is nothing to ask.
-fn a_deployment_that_may_ask_a_model() -> Option<(TheProgramAsItRuns, WhereAModelIs)> {
-    let what_the_process_was_told = TheEnvironment::reading_what_the_process_was_told();
-    let how_it_is_set_up = how_this_deployment_is_set_up(&what_the_process_was_told);
+/// The credential this deployment allows, or the reason there is nothing to ask.
+///
+/// **A missing flag and a missing key are two different facts and both are printed**, because a
+/// tier that skipped without a reason is a green run that called nothing.
+fn the_credential_or_the_reason(
+    how_it_is_set_up: &HowThisDeploymentIsSetUp,
+) -> Option<ACredential> {
     if !how_it_is_set_up.may_a_model_rule().may_be_asked() {
         eprintln!("SKIPPED: AISDLC_A_MODEL_RULES_HERE is not 'yes' here");
         return None;
     }
-    let Some(the_credential) = how_it_is_set_up.the_credential().cloned() else {
+    let the_credential = how_it_is_set_up.the_credential().cloned();
+    if the_credential.is_none() {
         eprintln!("SKIPPED: the flag is on and OPENAI_API_KEY is not set, so nothing was asked");
-        return None;
-    };
+    }
+    the_credential
+}
+
+/// This deployment, or the reason there is nothing to ask.
+fn a_deployment_that_may_ask_a_model() -> Option<(TheProgramAsItRuns, WhereAModelIs)> {
+    let what_the_process_was_told = TheEnvironment::reading_what_the_process_was_told();
+    let how_it_is_set_up = how_this_deployment_is_set_up(&what_the_process_was_told);
+    let the_credential = the_credential_or_the_reason(&how_it_is_set_up)?;
     let named = what_a_deployment_named(&what_the_process_was_told);
-    let Ok(where_the_model_is) = named else {
+    let Ok(where_the_model_is) = named.as_ref() else {
         eprintln!(
             "SKIPPED: {}",
-            named.expect_err("nothing was found, so this ran")
+            named.expect_err("none was found, so this ran")
         );
         return None;
     };
-    let the_program = TheProgramAsItRuns::as_it_is_on_this_host(Some(the_credential));
-    Some((the_program, where_the_model_is))
+    let the_program = TheProgramAsItRuns::as_it_is_on_this_host(Some(the_credential))
+        .with_what_a_deployment_named(&what_the_process_was_told);
+    Some((the_program, where_the_model_is.clone()))
 }
-
 /// The name a real model's ruling is recorded under, and never a person's.
 fn the_model_that_ruled() -> WhoDecided {
     WhoDecided::try_from("a model: the configured one").expect("a name")
