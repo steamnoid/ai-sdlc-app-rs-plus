@@ -10,7 +10,9 @@
 //! string somebody else assembled.**
 
 use aisdlc_domain::commissioned_request::AWhereItWasFiled;
-use aisdlc_run::a_git_hub_we_write_to::WhatGitHubWasAskedFor;
+use aisdlc_run::a_git_hub_we_write_to::{
+    AGitHubWeWriteTo, WhatGitHubWasAskedFor, WhereGitHubAnswered,
+};
 
 /// A filing GitHub made no address for, quoting what it said instead.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -97,5 +99,32 @@ impl AFilingReachingGitHub {
             ));
         }
         self.what_the_address_it_returned(&String::from_utf8_lossy(&what_it_ran.stdout))
+    }
+}
+
+impl AGitHubWeWriteTo for AFilingReachingGitHub {
+    /// **The port's real implementation for a filing, which did not exist until a real run asked for
+    /// one.** Everything before this was a double in a test file — **and a double accepts anything**,
+    /// which is the shape that hides a broken translation.
+    ///
+    /// **A comment and a filing share one port and not one program**, because `gh issue comment` and
+    /// `gh issue create` take different arguments **and only one of them prints an address worth
+    /// keeping.** So the port asks which kind it was asked for: **a filing is made here, and a
+    /// comment is refused with the name of the program that does it** — because a comment this
+    /// program filed would be an issue opened with no words and then commented on, **which is a
+    /// different thing and nobody asked for it.**
+    fn it_is_asked_to(
+        &mut self,
+        what_it_is_asked_for: &WhatGitHubWasAskedFor,
+    ) -> Result<WhereGitHubAnswered, String> {
+        if !what_it_is_asked_for.is_a_filing_not_yet_made() {
+            return Err(String::from(
+                "this program files filings, and a comment is asked of ACommentReachingGitHub",
+            ));
+        }
+        let where_it_went = self
+            .the_filing_it_makes(what_it_is_asked_for)
+            .map_err(|nowhere_to_point| nowhere_to_point.to_string())?;
+        Ok(WhereGitHubAnswered::an_answer_at(where_it_went.as_str()))
     }
 }
