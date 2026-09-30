@@ -122,7 +122,8 @@ fn what_git_is_asked_for(what_it_is_asked_to_do: &WhatWeTellAProgramToDo) -> Vec
             the_clone_of,
             &["remote", "add", "upstream", &the_clone_of.fetch_from()],
         ),
-        WhatWeTellAProgramToDo::AskAModelHowItRules { .. } => Vec::new(),
+        WhatWeTellAProgramToDo::AskAModelHowItRules { .. }
+        | WhatWeTellAProgramToDo::ReadTheFiling { .. } => Vec::new(),
     }
 }
 

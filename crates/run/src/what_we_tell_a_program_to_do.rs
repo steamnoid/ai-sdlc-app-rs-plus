@@ -45,6 +45,11 @@ pub enum WhatWeTellAProgramToDo {
         /// The question and the shape of the answer, built here and not by the model.
         the_body: String,
     },
+    /// Read one filing, as a person named it.
+    ReadTheFiling {
+        /// Which filing, and of which repository.
+        which_filing: crate::an_issue_to_read::AnIssueToRead,
+    },
 }
 
 impl WhatWeTellAProgramToDo {
@@ -86,7 +91,15 @@ impl WhatWeTellAProgramToDo {
                 the_clone_of.fetch_from()
             }
             WhatWeTellAProgramToDo::AskAModelHowItRules { the_body, .. } => the_body.clone(),
+            WhatWeTellAProgramToDo::ReadTheFiling { which_filing } => {
+                which_filing.which_issue().to_string()
+            }
         }
+    }
+
+    /// Read one filing, as a person named it.
+    pub fn read_the_filing(which_filing: crate::an_issue_to_read::AnIssueToRead) -> Self {
+        WhatWeTellAProgramToDo::ReadTheFiling { which_filing }
     }
 
     /// Ask a model how it rules on an exact artifact.
@@ -120,7 +133,8 @@ impl WhatWeTellAProgramToDo {
             | WhatWeTellAProgramToDo::NameWhereTheCodeWasWrittenIn { the_clone_of } => {
                 Some(the_clone_of)
             }
-            WhatWeTellAProgramToDo::AskAModelHowItRules { .. } => None,
+            WhatWeTellAProgramToDo::AskAModelHowItRules { .. }
+            | WhatWeTellAProgramToDo::ReadTheFiling { .. } => None,
         }
     }
 
@@ -164,7 +178,8 @@ impl WhatWeTellAProgramToDo {
             WhatWeTellAProgramToDo::TheCommitItStandsOn { .. }
             | WhatWeTellAProgramToDo::TheRefItStandsOn { .. }
             | WhatWeTellAProgramToDo::NameWhereTheCodeWasWrittenIn { .. }
-            | WhatWeTellAProgramToDo::AskAModelHowItRules { .. } => None,
+            | WhatWeTellAProgramToDo::AskAModelHowItRules { .. }
+            | WhatWeTellAProgramToDo::ReadTheFiling { .. } => None,
         }
     }
 }

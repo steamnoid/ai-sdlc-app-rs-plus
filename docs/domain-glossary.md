@@ -720,6 +720,14 @@ asserting a flag that does not exist. The name goes in the words, where a reader
 record keeps it for the audit trail. The account is the author and this system does not get to
 pretend otherwise.
 
+**`AFilingIsRead`** — a filing, read out of GitHub by `gh`. **This is the half that was missing
+while the writing half was finished**: a comment could go back to a filing that nothing could bring
+in, and a system with one end closed is a system that cannot be run, only demonstrated.
+
+**Both streams, and not one**, because a refusal from the far end arrives on either and a reader
+that is told only about the stream it did not expect is told nothing. **One argument each and no
+shell**, like every other program here.
+
 **`AnIssueRead`** — what a person filed, word for word, and where it answers. **`address` is the
 one GitHub returned and not one derived from the repository and the number**: an issue that was
 transferred answers at an address that does not carry the number asked for, and a composed address
