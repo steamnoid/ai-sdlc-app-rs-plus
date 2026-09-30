@@ -32,7 +32,8 @@ fn the_address_is_the_one_github_returned() {
     assert_eq!(
         what_was_read
             .as_ref()
-            .map(|what_it_says| what_it_says.where_it_answers()),
+            .ok()
+            .map(AnIssueRead::where_it_answers),
         Some("https://github.com/steamnoid/wellbeing-tracker-public/issues/8"),
         "**because the address is the far end's and not ours** — an issue that was transferred \
          answers somewhere the number asked for does not appear, and a composed address can only be \
@@ -56,7 +57,7 @@ fn an_answer_carrying_no_address_is_refused_rather_than_composed() {
 }
 
 #[test]
-fn a_closed_request_says_so_because_a_person_reads_it_before_ruling() {
+fn a_closed_request_says_it_is_not_open_because_a_person_reads_it_before_ruling() {
     let closed =
         what_github_answered("a title").replace("\"state\":\"open\"", "\"state\":\"closed\"");
 
@@ -65,8 +66,9 @@ fn a_closed_request_says_so_because_a_person_reads_it_before_ruling() {
     assert_eq!(
         what_was_read
             .as_ref()
-            .map(|what_it_says| what_it_says.the_state_it_was_in()),
-        Some("closed"),
+            .ok()
+            .map(AnIssueRead::whether_it_is_open),
+        Some(false),
         "**because a closed request is a fact a person reads before ruling** — and a stage that has \
          to ask GitHub a second time to learn it is a stage that can rule on it wrongly: \
          {what_was_read:?}"
@@ -81,9 +83,7 @@ fn a_request_with_only_a_title_is_a_request_and_not_a_refusal() {
     let what_was_read = AnIssueRead::the_issue_read(only_a_title);
 
     assert_eq!(
-        what_was_read
-            .as_ref()
-            .map(|what_it_says| what_it_says.what_was_asked()),
+        what_was_read.as_ref().ok().map(AnIssueRead::what_was_asked),
         Some("a title"),
         "**because somebody filed it with a title and nothing else** — and refusing that would \
          refuse the issue a person wrote in the fewest seconds, which is the one they wrote first: \

@@ -720,6 +720,26 @@ asserting a flag that does not exist. The name goes in the words, where a reader
 record keeps it for the audit trail. The account is the author and this system does not get to
 pretend otherwise.
 
+**`AnIssueRead`** — what a person filed, word for word, and where it answers. **`address` is the
+one GitHub returned and not one derived from the repository and the number**: an issue that was
+transferred answers at an address that does not carry the number asked for, and a composed address
+cannot express that — **it can only be right or wrong, and it was silently wrong on the only
+repository this system had been pointed at.**
+
+**An answer carrying no address is refused rather than composed**, because a link to nothing in an
+audit trail is worse than no link at all.
+
+**Whether it is still open is carried, because a closed request is a fact a person reads before
+ruling** — a stage that has to ask GitHub a second time to learn it is a stage that can rule on it
+wrongly. **It is a property of the filing and not a `Stage`**: `Stage` is where a work item stands in
+this system, and a filing does not stand anywhere.
+
+**The body may be empty and that is a real request.** Somebody filed it with a title and nothing
+else, and refusing that would refuse the issue a person wrote in the fewest seconds.
+
+**`AnAnswerThatIsNotAFiledRequest`** — that refusal, quoting the answer back **and not summarising
+it**, because a caller deciding whether to retry needs to know what GitHub actually said.
+
 **`AnIssueToRead`** — which issue of which repository, **as a person named it.** A number and not
 an address, because a number is what a person types; the address is GitHub's to answer with, not
 ours to compose.
