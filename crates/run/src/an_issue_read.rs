@@ -13,6 +13,47 @@
 //! **`body` may be empty and that is a real request.** Somebody filed it with a title and nothing
 //! else, and refusing that would refuse the issue a person wrote in the fewest seconds.
 
+/// A number that carries no filing, quoted back so a person can check their own number.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ANoSuchFiling {
+    what_was_asked_for: String,
+}
+
+impl std::fmt::Display for ANoSuchFiling {
+    /// There is no filing there, and what was asked for.
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            formatter,
+            "{}: no filing is there. Either no filing carries that number, or this deployment \
+             cannot see the repository",
+            self.what_was_asked_for
+        )
+    }
+}
+
+/// Why an answer is not a filed request, **named rather than a paragraph.**
+///
+/// **"There is no filing" and "this system cannot read this" are different facts**, and one is
+/// worth retrying while the other is worth reading the number again. A far end having a bad minute
+/// is not a filing not existing — **and telling a person their filing is gone when the far end
+/// answered nonsense is worse than saying nothing.**
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum WhyAnAnswerIsNotAFiling {
+    /// There is nothing at the number that was asked for.
+    NoSuchFiling(ANoSuchFiling),
+    /// There is something there and this system cannot read it.
+    NotReadable(AnAnswerThatIsNotAFiledRequest),
+}
+
+impl std::fmt::Display for WhyAnAnswerIsNotAFiling {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            WhyAnAnswerIsNotAFiling::NoSuchFiling(why_not) => write!(formatter, "{why_not}"),
+            WhyAnAnswerIsNotAFiling::NotReadable(why_not) => write!(formatter, "{why_not}"),
+        }
+    }
+}
+
 /// An answer that is not a filed request, and why it is not one.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AnAnswerThatIsNotAFiledRequest {
@@ -41,12 +82,31 @@ impl std::fmt::Display for AnAnswerThatIsNotAFiledRequest {
 fn a_pull_request(
     where_it_answers: Option<&str>,
     what_github_answered: &str,
-) -> AnAnswerThatIsNotAFiledRequest {
+) -> WhyAnAnswerIsNotAFiling {
     let why_not = format!(
         "{where_it_answers:?} is a pull request and not a filed request: GitHub answers both from \
          one path, and a pull request's body describes a change rather than asking for one"
     );
-    AnAnswerThatIsNotAFiledRequest::because(what_github_answered, &why_not)
+    WhyAnAnswerIsNotAFiling::NotReadable(AnAnswerThatIsNotAFiledRequest::because(
+        what_github_answered,
+        &why_not,
+    ))
+}
+
+/// There is nothing at the number that was asked for.
+fn there_is_nothing_there(what_was_asked_for: &str) -> WhyAnAnswerIsNotAFiling {
+    WhyAnAnswerIsNotAFiling::NoSuchFiling(ANoSuchFiling {
+        what_was_asked_for: what_was_asked_for.to_string(),
+    })
+}
+
+/// There is something there and no address came with it.
+fn no_address_was_answered(what_came_back: &str) -> WhyAnAnswerIsNotAFiling {
+    WhyAnAnswerIsNotAFiling::NotReadable(AnAnswerThatIsNotAFiledRequest::because(
+        what_came_back,
+        "that answer carries no address, and an address this system would compose is a link to a \
+         page that may not be this one",
+    ))
 }
 
 /// What one field of an answer says, or nothing when it says nothing.
@@ -72,15 +132,13 @@ pub struct AnIssueRead {
 
 impl AnIssueRead {
     /// What GitHub answered, or the reason it is not a filed request.
-    pub fn the_issue_read(
-        what_github_answered: &str,
-    ) -> Result<Self, AnAnswerThatIsNotAFiledRequest> {
+    pub fn the_issue_read(what_github_answered: &str) -> Result<Self, WhyAnAnswerIsNotAFiling> {
         let what_it_came_back_as: serde_json::Value = serde_json::from_str(what_github_answered)
             .map_err(|_| {
-                AnAnswerThatIsNotAFiledRequest::because(
+                WhyAnAnswerIsNotAFiling::NotReadable(AnAnswerThatIsNotAFiledRequest::because(
                     what_github_answered,
                     "that is not an answer this system can read",
-                )
+                ))
             })?;
         Self::what_it_says(what_github_answered, &what_it_came_back_as)
     }
@@ -89,19 +147,18 @@ impl AnIssueRead {
     fn what_it_says(
         what_github_answered: &str,
         what_it_came_back_as: &serde_json::Value,
-    ) -> Result<Self, AnAnswerThatIsNotAFiledRequest> {
+    ) -> Result<Self, WhyAnAnswerIsNotAFiling> {
         let where_it_answers = what_it_came_back_as
             .get("html_url")
             .and_then(|it| it.as_str());
         if what_it_came_back_as.get("pull_request").is_some() {
             return Err(a_pull_request(where_it_answers, what_github_answered));
         }
+        if what_it_came_back_as.get("status").is_some() {
+            return Err(there_is_nothing_there(what_github_answered));
+        }
         let Some(where_it_answers) = where_it_answers else {
-            return Err(AnAnswerThatIsNotAFiledRequest::because(
-                what_github_answered,
-                "that answer carries no address, and an address this system would compose is a link \
-                 to a page that may not be this one",
-            ));
+            return Err(no_address_was_answered(what_github_answered));
         };
         Ok(AnIssueRead {
             what_was_asked: the_field_says(what_it_came_back_as, "title"),

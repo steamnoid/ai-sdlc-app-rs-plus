@@ -94,3 +94,23 @@ fn a_filing_is_read_and_then_answered_on_it() {
          halves were both proved separately before anything joined them: {how_it_went:?}"
     );
 }
+
+#[test]
+#[ignore = "reads GitHub over the network, and needs gh authenticated"]
+fn a_number_with_nothing_behind_it_is_refused_as_no_such_filing_and_not_as_a_broken_read() {
+    let mut the_reader = AFilingIsRead;
+
+    let what_was_read = the_reader.the_filing_is_read(&a_filing(99_999_999).expect("a number"));
+
+    let the_words = what_was_read
+        .as_ref()
+        .err()
+        .map(std::string::ToString::to_string)
+        .unwrap_or_default();
+    eprintln!("99_999_999 was refused as: {the_words}");
+    assert!(
+        the_words.contains("no filing") || the_words.contains("Not Found"),
+        "**because a person told 'this system cannot read this' goes to look at this system** — \
+         while the next thing they should do is check their own number: {the_words}"
+    );
+}

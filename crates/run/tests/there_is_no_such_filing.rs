@@ -9,13 +9,17 @@
 //! **A caller must be able to tell the two apart**, because one is worth retrying and the other is
 //! worth reading the number again.
 
-use aisdlc_run::an_issue_read::{ANoSuchFiling, AnIssueRead};
+use aisdlc_run::an_issue_read::{AnIssueRead, WhyAnAnswerIsNotAFiling};
 
-/// What `gh` writes when the number carries no filing, on both of its streams.
+/// What `gh` writes on its answer stream when the number carries no filing.
+///
+/// **The answer alone, and not the answer with the complaint joined to it** — `gh` writes the JSON
+/// on one stream and `gh: Not Found (HTTP 404)` on the other, and joining them produces something
+/// that is not an answer at all.
 fn what_github_answered_for_a_number_with_nothing_behind_it() -> String {
     String::from(
         "{\"message\":\"Not Found\",\"documentation_url\":\"https://docs.github.com/rest/issues\
-         /issues#get-an-issue\",\"status\":\"404\"}\ngh: Not Found (HTTP 404)",
+         /issues#get-an-issue\",\"status\":\"404\"}",
     )
 }
 
@@ -33,7 +37,7 @@ fn a_number_with_nothing_behind_it_is_refused_as_no_such_filing() {
     let it_is_no_such_filing = the_way_out
         .as_ref()
         .err()
-        .map(|why_not| matches!(why_not, AnIssueRead::NoSuchFiling(_)));
+        .map(|why_not| matches!(why_not, WhyAnAnswerIsNotAFiling::NoSuchFiling(_)));
     assert_eq!(
         it_is_no_such_filing,
         Some(true),
@@ -70,7 +74,7 @@ fn an_answer_this_system_cannot_read_is_never_reported_as_no_such_filing() {
     let it_is_merely_unreadable = the_way_out
         .as_ref()
         .err()
-        .map(|why_not| !matches!(why_not, AnIssueRead::NoSuchFiling(_)));
+        .map(|why_not| !matches!(why_not, WhyAnAnswerIsNotAFiling::NoSuchFiling(_)));
     assert_eq!(
         it_is_merely_unreadable,
         Some(true),
