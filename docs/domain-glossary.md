@@ -1402,6 +1402,7 @@ is the one that confirms the second.
 | `an_ignored_test_says_why_it_is_ignored` | `readability_guards.rs` | with the tests |
 | `a_declaration_is_held_by_what_it_lacks` | `readability_guards.rs` | with the declarations |
 | `no_body_is_built_by_a_hand` | `readability_guards.rs` | with every body this system will send |
+| `a_test_is_not_its_own_proof` | `readability_guards.rs` | with every test that describes a program |
 
 ---
 

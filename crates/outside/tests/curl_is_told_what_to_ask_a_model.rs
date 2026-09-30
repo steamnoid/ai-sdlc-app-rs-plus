@@ -11,6 +11,7 @@
 use aisdlc_outside::the_environment::TheEnvironment;
 use aisdlc_outside::the_program_as_it_runs::TheProgramAsItRuns;
 use aisdlc_run::a_credential::ACredential;
+use aisdlc_run::a_program_we_run::AProgramWeRun;
 use aisdlc_run::what_we_tell_a_program_to_do::WhatWeTellAProgramToDo;
 
 fn a_question_to_a_model() -> WhatWeTellAProgramToDo {
@@ -156,5 +157,20 @@ fn a_program_with_no_credential_is_asked_for_nothing_even_with_headers() {
         the_arguments.is_empty(),
         "**because a header is not a credential and cannot stand in for one** — the deployment named \
          a header and this system read it, and the request still goes nowhere: {the_arguments:?}"
+    );
+}
+
+#[test]
+fn the_program_answers_for_itself_and_says_it_was_asked_for_nothing() {
+    let a_program_without_a_credential = TheProgramAsItRuns::as_it_is_on_this_host(None);
+
+    let what_it_said = a_program_without_a_credential.run(&a_question_to_a_model());
+
+    assert!(
+        !what_it_said.did_it_work() && what_it_said.the_words().contains("credential"),
+        "**because this file has run `curl` and not only described it** — the other assertions here \
+         are about the arguments this system builds, and #107 is what happens when that is the only \
+         proof there is: the words: {}",
+        what_it_said.the_words()
     );
 }

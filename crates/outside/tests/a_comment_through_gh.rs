@@ -10,7 +10,7 @@
 
 use aisdlc_domain::commissioned_request::AWhereItWasFiled;
 use aisdlc_outside::a_comment_reaching_github::ACommentReachingGitHub;
-use aisdlc_run::a_git_hub_we_write_to::WhatGitHubWasAskedFor;
+use aisdlc_run::a_git_hub_we_write_to::{AGitHubWeWriteTo, WhatGitHubWasAskedFor};
 use aisdlc_run::who_signs_a_comment::WhoSignsAComment;
 
 /// One comment, as GitHub is asked for it, signed by a deployment.
@@ -59,5 +59,25 @@ fn a_comment_body_is_one_argument_and_is_never_split_into_its_pieces() {
         the_body_is_one_argument && !pieces_became_arguments,
         "**because a comment body is prose, and prose has dashes and colons and backticks in it** — \
          and a body re-split into its lines is a body somebody else has assembled: {the_arguments:?}"
+    );
+}
+
+#[test]
+fn gh_is_run_and_answers_and_says_why() {
+    let an_address_gh_cannot_even_read = WhatGitHubWasAskedFor::a_comment_at(
+        AWhereItWasFiled::the_address_the_filing_returned("not an address at all")
+            .expect("a string is a string"),
+        "a body",
+        &WhoSignsAComment::the_name_a_deployment_used("aisdlc-dev").expect("a name"),
+    );
+    let mut the_adapter = ACommentReachingGitHub;
+
+    let how_it_went = the_adapter.it_is_asked_to(&an_address_gh_cannot_even_read);
+
+    assert!(
+        how_it_went.is_err() && !how_it_went.as_ref().expect_err("it was refused").is_empty(),
+        "**because this file has run `gh` and not only described it** — an address gh cannot read is \
+         refused by gh before any of this is true of a network, and a refusal that quotes gh is the \
+         only thing a reader can act on: {how_it_went:?}"
     );
 }
