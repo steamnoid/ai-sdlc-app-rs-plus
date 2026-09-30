@@ -720,6 +720,20 @@ asserting a flag that does not exist. The name goes in the words, where a reader
 record keeps it for the audit trail. The account is the author and this system does not get to
 pretend otherwise.
 
+**`AnIssueToRead`** — which issue of which repository, **as a person named it.** A number and not
+an address, because a number is what a person types; the address is GitHub's to answer with, not
+ours to compose.
+
+**Refused before it is sent, not answered as a 404**, because a mistyped number and a missing issue
+answer identically from the far end — **and a run that cannot tell them apart reports "no such
+issue" for somebody who typed `7 ` with a space in it**, having gone on to write eight artifacts
+about work nobody commissioned.
+
+**`ANumberThatIsNotAnIssueNumber`** — that refusal, its own type and not a string, **because a
+caller that has to tell a typo from a missing filing has nothing to act on when both arrive as
+text.** The number is in the message and not only in the field: a person reading a refusal is told
+what they typed, while a caller reading a field has to know which field to look at.
+
 **`the_body_a_model_is_given`** — the body a model is given, **built by the JSON library and not
 by a hand.** This body was once written by hand, with the question put where a quoted string belongs
 and no quotes around it — **so every request this system ever sent a model was invalid JSON**, the

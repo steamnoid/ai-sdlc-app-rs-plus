@@ -13,7 +13,7 @@ use aisdlc_domain::repository::Repository;
 use aisdlc_run::an_issue_to_read::{ANumberThatIsNotAnIssueNumber, AnIssueToRead};
 
 /// This repository, and one issue of it.
-fn an_issue_to_read(number: i64) -> AnIssueToRead {
+fn an_issue_to_read(number: i64) -> Result<AnIssueToRead, ANumberThatIsNotAnIssueNumber> {
     AnIssueToRead::the_issue_to_read(
         Repository::try_from("steamnoid/wellbeing-tracker-public").expect("two halves"),
         number,
@@ -21,8 +21,8 @@ fn an_issue_to_read(number: i64) -> AnIssueToRead {
 }
 
 #[test]
-fn an_issue_is_which_issue_of_which_repository() {
-    let the_request = an_issue_to_read(8);
+fn what_a_person_named_is_what_will_be_asked_for() {
+    let the_request = an_issue_to_read(8).expect("eight is a number");
 
     assert_eq!(
         the_request.which_issue(),
