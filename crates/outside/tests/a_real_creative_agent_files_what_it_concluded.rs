@@ -76,22 +76,30 @@ fn where_this_deployments_model_is() -> Option<WhereAModelIs> {
     }
     named.ok()
 }
-use aisdlc_run::whether_anything_stands_there::WhetherAnythingStandsThere;
+use aisdlc_outside::whether_anything_stands_there::WhetherAnythingStandsOnDisk;
 
-/// A directory nothing has been put in yet, **and a real clone needs one that is not already there.**
-struct NothingStandsThereYet;
-
-impl WhetherAnythingStandsThere for NothingStandsThereYet {
-    fn does_anything_stand_at(&self, _a_directory: &std::path::Path) -> bool {
-        false
+/// Whatever the last run of this tier left behind, **and why a tier deletes it.**
+///
+/// **A work item reuses its own checkout and this tier must not** — a run that finds yesterday's
+/// clone has not proved it can make one, **and the subject of this tier is that the clone happens.**
+/// It is `target/`, which is build output, **and deleting it is the only destructive thing in this
+/// file.**
+fn let_anything_left_of_the_last_run() {
+    let where_it_should_be_empty = the_clone_into().where_it_lands().to_path_buf();
+    if std::fs::remove_dir_all(&where_it_should_be_empty).is_ok() {
+        eprintln!(
+            "cleared {} so this tier proves the clone rather than reusing one",
+            where_it_should_be_empty.display()
+        );
     }
 }
 
 /// The files the run will show the model, **read from the checkout the run made itself.**
 fn the_listing_a_run_shows(the_program: &mut TheProgramAsItRuns) -> Vec<String> {
+    let_anything_left_of_the_last_run();
     let the_checkout = the_run_makes_a_checkout(
         the_program,
-        &NothingStandsThereYet,
+        &WhetherAnythingStandsOnDisk,
         &WhatWeTellAProgramToDo::clone_the_repository(the_clone_into()),
     );
     let the_clone = the_checkout
