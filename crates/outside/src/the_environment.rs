@@ -10,7 +10,7 @@
 
 use std::collections::BTreeMap;
 
-/// The five variables this system reads, and the only five.
+/// The six variables this system reads, and the only six.
 ///
 /// **Four and not two, because the two that were missing are how a model gets asked at all** — and
 /// the first real run had no way to read them, so a test filled the gap with a number and `curl`
@@ -20,6 +20,7 @@ const THE_KEY_A_MODEL_ANSWERS_WITH: &str = "OPENAI_API_KEY";
 const WHERE_A_MODEL_ANSWERS: &str = "LLM_ENDPOINT";
 const WHICH_MODEL_ANSWERS_THERE: &str = "LLM_MODEL";
 const WHO_SIGNS_A_COMMENT: &str = "AISDLC_WHO_SIGNS_A_COMMENT";
+const WHAT_A_MODEL_IS_ASKED_BESIDES: &str = "LLM_HEADERS";
 
 /// What a process was told, kept whole so that a name can be asked for by name.
 #[derive(Clone, PartialEq, Eq)]
@@ -39,6 +40,7 @@ impl TheEnvironment {
             WHERE_A_MODEL_ANSWERS,
             WHICH_MODEL_ANSWERS_THERE,
             WHO_SIGNS_A_COMMENT,
+            WHAT_A_MODEL_IS_ASKED_BESIDES,
         ] {
             if let Ok(what_it_said) = std::env::var(a_name) {
                 what_it_held.insert(a_name.to_string(), what_it_said);
