@@ -9,20 +9,20 @@
 //! body somebody else has assembled.
 
 use aisdlc_domain::commissioned_request::AWhereItWasFiled;
-use aisdlc_outside::a_comment_reaches_github::ACommentReachingGitHub;
+use aisdlc_outside::a_comment_reaching_github::ACommentReachingGitHub;
 use aisdlc_run::a_git_hub_we_write_to::WhatGitHubWasAskedFor;
+use aisdlc_run::who_signs_a_comment::WhoSignsAComment;
 
+/// One comment, as GitHub is asked for it, signed by a deployment.
 fn a_comment_with_a_body_saying(the_body: &str) -> WhatGitHubWasAskedFor {
     WhatGitHubWasAskedFor::a_comment_at(
         AWhereItWasFiled::the_address_the_filing_returned(
             "https://github.com/steamnoid/ai-sdlc-app-rs-plus/issues/7",
         )
-        .expect("an address GitHub returned"),
+        .expect("an address GitHub returned is an address"),
         the_body,
-        &aisdlc_run::who_signs_a_comment::WhoSignsAComment::the_name_a_deployment_used(
-            "aisdlc-dev",
-        )
-        .expect("a deployment named one"),
+        &WhoSignsAComment::the_name_a_deployment_used("aisdlc-dev")
+            .expect("a deployment named one"),
     )
 }
 
@@ -59,9 +59,3 @@ fn a_comment_body_is_one_argument_and_is_never_split_into_its_pieces() {
          and a body re-split into its lines is a body somebody else has assembled: {the_arguments:?}"
     );
 }
-
-// **A third assertion could not be written, and its not existing is the property.** A comment with
-// nowhere to go cannot be built at all: `WhatGitHubWasAskedFor` holds an address, not an absent
-// one, because the use case refuses a request nobody filed *before* a request is built — and that
-// is already proved one layer up. **A type that could hold a comment with nowhere to put it would be
-// a type asking to be used without the guard.**
