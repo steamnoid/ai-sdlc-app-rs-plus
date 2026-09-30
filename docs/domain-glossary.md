@@ -795,6 +795,31 @@ is one no human was ever shown** — and a paraphrase of what an agent said is a
 its name. **`AJudgementNobodyMade`** is the refusal, and
 **`WHAT_MAY_BE_SAID_INSTEAD_OF_A_JUDGEMENT`** is what an agent with nothing may say instead, because
 **that is an answer and a blank is not.**
+**`WhatAnAgentOffered`** — what an agent offers a human: work it concluded is worth filing, the
+files it concluded that from, and what it said about its own reading. **The agent is `aisdlc-offer`,
+transcribed from the router of the mother project** — `THE_NEXT_ARTIFACT_IS_THE_PROPOSAL =
+"offer_the_work_item_to_the_product_analyst"` — **because the specification already names the verb
+and a name this system chose for itself would be a name nothing could be held to.**
+
+**`AnOfferNothingWasConcludedFrom` is the refusal, and it exists because an offer invents a future
+change.** A discovery report describes a repository that exists, so an empty one is a fault; an offer
+asks for a change to something that does not exist yet, **and an issue asking for a change to a file
+that is not there is indistinguishable, in an issue, from one asking for something real.** This is
+the mother's `CitedFileNotFoundError` one layer earlier — **a real run cited a directory that
+resolved to nothing while looking exactly like a link.**
+
+**One fault is enough and every offer is checked**, because a run that files four issues and gets one
+of them wrong has filed an issue about a file that is not there, **and the other three being right is
+no reason to file it.**
+
+**`AWorkAnAgentOffered` carries a title and what it asks for, and nothing else invented** — because an
+offer becomes a `CommissionedRequest` when it is filed, **and a filing with a shape this system
+chose would be a filing whose words no gate was ever shown.**
+
+**No offers at all is not a fault.** An agent that concluded there is nothing worth filing has told
+the truth and files nothing — **and it still has to say so in words, through `WhatAnAgentJudged`,
+because an empty offer list and an agent that was never asked look identical afterwards.**
+
 **`WhetherAnAgentOffers`** — whether a deployment asked for an agent that offers work of its own,
 **as a value and not as a lookup.** Read from `AISDLC_AN_AGENT_OFFERS`, which is **off unless a
 deployment says otherwise, and the only word that opens it is `yes`.**
