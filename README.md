@@ -20,7 +20,7 @@ against, and a name that is not in it does not enter the source.
 | [`tests/`](tests) | the gates, in two files named for what they are about |
 | [`scripts/gate`](scripts/gate) | the one command, and the check `main` requires |
 
-**553 tests.** The domain is complete: the six stages, the five roles, the exhaustive
+**568 tests.** The domain is complete: the six stages, the five roles, the exhaustive
 transition table, the work item and its three doors, and the approval record. `crates/run`
 carries four moves of a run, the gate that asks a person, and **a run that really clones a
 repository with `git` and reads the commit and the ref back out of the clone it made**.
@@ -42,11 +42,28 @@ says only what is true of it.
 one, after three refusals that were exactly that failure and a request body that had never been
 valid JSON.
 
-**There is no pipeline yet.** A work item is named by the run that is told the name, and it
-stands at a stage; it is **not put at a gate, and nothing is decided about it.** An artifact is
-a name this system has not been given, because the name belongs to the agent that produces one,
-and **no such agent exists.** What is proved is the round trip of a filing, and the loop above
-is its two ends joined — **not a system that works on work.**
+**A whole run, on a real filing, with a real model ruling on it — proved in one run.**
+
+    ruling on WhichArtifact("DiscoveryReport")
+    ruled false; recorded None; the work now stands at Some(AwaitingAgentPickup)
+
+A filing is read from GitHub, a work item is named and disciplined by whatever a run is told, the
+work is picked up, worked on and presented at a gate with **the artifact name and its version**,
+a real model is asked, its answer is read out of the envelope its endpoint sent, the ruling is
+recorded **under the name of whoever answered**, and the work moves where the transition table says
+a ruling moves it.
+
+**The ruling was a refusal, and that is the correct outcome.** The model was asked about a
+`DiscoveryReport` this system has never produced, and it refused; nothing was recorded, because a
+refusal leaves nothing, and the work went back for another pass — **because a work whose ruling was
+a refusal is not delivered.** A run that had approved would have been a run recording a delivery
+nobody made.
+
+**There is still no pipeline.** Every step above exists, and the steps run in order against the
+real thing, **and no agent produces the artifact the gate is asked about.** `aisdlc-discover` picks
+up the work; it does not discover anything yet, so there is no `DiscoveryReport` to approve and the
+ruling can only be a refusal. **What is proved is a run that reads, presents, asks, records and
+moves — and not one that does the work.**
 
 **Nothing in this repository reads this file, so every claim in it is a promise rather than a
 check.** The numbers that used to sit beside the crates were the most perishable facts here — two
