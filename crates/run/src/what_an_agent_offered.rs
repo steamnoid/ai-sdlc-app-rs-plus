@@ -53,25 +53,25 @@ pub struct WhatAnAgentOffered {
 }
 
 impl WhatAnAgentOffered {
-    /// The offers a model offered, **taken whole for now** — the refusal is the next commit.
+    /// The offers a model offered, **every path checked against the listing the run really showed.**
+    ///
+    /// **Checked here and not after**, because an address derived from a path that is not there is an
+    /// address that resolves to nothing — **and one that looks exactly like a link.** The address rule
+    /// stops a model inventing *where* a file is; this stops it inventing *that a file is*.
     pub fn the_offers_a_model_offered(
         of_which_repository: &Repository,
         what_the_run_saw: &[String],
         what_the_model_said: Vec<WhatAModelSaidItWouldFile>,
         judged: WhatAnAgentJudged,
     ) -> Result<WhatAnAgentOffered, AnOfferThatNamedAFileTheRunNeverShowed> {
-        let _ = (of_which_repository, what_the_run_saw);
-        Ok(WhatAnAgentOffered {
-            offers: what_the_model_said
+        WhatAnAgentOffered::an_agent_offered(
+            what_the_model_said
                 .into_iter()
-                .map(|one| AWorkAnAgentOffered {
-                    title: one.title,
-                    what_it_asks_for: one.what_it_asks_for,
-                    what_it_concluded_from: Vec::new(),
-                })
-                .collect(),
+                .map(|one| one_as_an_offer(of_which_repository, what_the_run_saw, one))
+                .collect::<Result<Vec<_>, _>>()?,
             judged,
-        })
+        )
+        .map_err(|a_fault| AnOfferThatNamedAFileTheRunNeverShowed(a_fault.0))
     }
 
     /// The evidence behind an offer, **and the only way an offer gets any.**
@@ -156,4 +156,51 @@ fn files_behind_it(one_offer: &AWorkAnAgentOffered) -> Result<(), AnOfferNothing
         )));
     }
     Ok(())
+}
+
+/// One thing a model said, as one offer with the evidence the run verified behind it.
+fn one_as_an_offer(
+    of_which_repository: &Repository,
+    what_the_run_saw: &[String],
+    what_it_said: WhatAModelSaidItWouldFile,
+) -> Result<(String, String, Vec<EvidenceFile>), AnOfferThatNamedAFileTheRunNeverShowed> {
+    let what_it_concluded_from =
+        the_evidence_behind(of_which_repository, what_the_run_saw, &what_it_said.paths)?;
+    Ok((
+        what_it_said.title,
+        what_it_said.what_it_asks_for,
+        what_it_concluded_from,
+    ))
+}
+
+/// The evidence behind one offer, **every path of which the run really showed the model.**
+fn the_evidence_behind(
+    of_which_repository: &Repository,
+    what_the_run_saw: &[String],
+    the_paths: &[String],
+) -> Result<Vec<EvidenceFile>, AnOfferThatNamedAFileTheRunNeverShowed> {
+    if the_paths.is_empty() {
+        return Err(AnOfferThatNamedAFileTheRunNeverShowed(
+            "an offer that names no file".to_string(),
+        ));
+    }
+    the_paths
+        .iter()
+        .map(|one_path| one_file_the_run_showed(of_which_repository, what_the_run_saw, one_path))
+        .collect()
+}
+
+/// One path, refused unless the run really showed it to the model, and given its derived address.
+fn one_file_the_run_showed(
+    of_which_repository: &Repository,
+    what_the_run_saw: &[String],
+    one_path: &String,
+) -> Result<EvidenceFile, AnOfferThatNamedAFileTheRunNeverShowed> {
+    if !what_the_run_saw.contains(one_path) {
+        return Err(AnOfferThatNamedAFileTheRunNeverShowed(format!(
+            "{one_path}, which the run never showed the model"
+        )));
+    }
+    WhatDiscoveryConcluded::one_file(of_which_repository, one_path)
+        .map_err(|a_path| AnOfferThatNamedAFileTheRunNeverShowed(a_path.0))
 }

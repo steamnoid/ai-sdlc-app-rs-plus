@@ -17,6 +17,17 @@ fn what_the_run_actually_saw() -> Vec<String> {
     ]
 }
 
+/// One thing a model said, about a file the run really showed it.
+fn an_offer_about_a_file_the_run_showed() -> WhatAModelSaidItWouldFile {
+    WhatAModelSaidItWouldFile {
+        title: "the offers are not read by any test".to_string(),
+        what_it_asks_for: String::from(
+            "the module deciding what an agent offered has no test naming its refusal",
+        ),
+        paths: vec!["crates/run/src/what_an_agent_offered.rs".to_string()],
+    }
+}
+
 /// The repository those files are in.
 fn the_repository_it_read() -> aisdlc_domain::repository::Repository {
     aisdlc_domain::repository::Repository::try_from("steamnoid/wellbeing-tracker-public")
@@ -58,13 +69,7 @@ fn an_offer_citing_a_file_the_run_never_showed_is_refused() {
 
 #[test]
 fn an_offer_citing_what_the_run_showed_is_kept_with_its_derived_address() {
-    let what_the_model_said = vec![WhatAModelSaidItWouldFile {
-        title: "the offers are not read by any test".to_string(),
-        what_it_asks_for: "the module deciding what an agent offered has no test naming its \
-                            refusal"
-            .to_string(),
-        paths: vec!["crates/run/src/what_an_agent_offered.rs".to_string()],
-    }];
+    let what_the_model_said = vec![an_offer_about_a_file_the_run_showed()];
 
     let the_offers = WhatAnAgentOffered::the_offers_a_model_offered(
         &the_repository_it_read(),
