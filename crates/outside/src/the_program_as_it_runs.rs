@@ -116,6 +116,10 @@ fn inside_the_clone(the_clone_of: &ARepositoryToClone, the_question: &[&str]) ->
 impl TheProgramAsItRuns {
     /// The arguments asking a model, and nothing at all when there is no credential behind them.
     ///
+    /// **`-s` first, because a program that narrates is a program whose narration can be mistaken
+    /// for what it found** — the first real run came back with curl's transfer table where the
+    /// model's words should have been.
+    ///
     /// **Nothing rather than a request without a credential.** A request that goes out
     /// unauthenticated comes back in words this system did not write, and **the one fact a caller
     /// can usefully be given is that nothing left.**
@@ -128,6 +132,7 @@ impl TheProgramAsItRuns {
             the_credential.the_key_to_authenticate_with()
         );
         vec![
+            "-s".to_string(),
             "-X".to_string(),
             "POST".to_string(),
             the_endpoint.to_string(),

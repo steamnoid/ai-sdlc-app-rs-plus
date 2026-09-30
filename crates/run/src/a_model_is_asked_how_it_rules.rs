@@ -101,6 +101,41 @@ pub struct WhereAModelIs {
     pub which_model: String,
 }
 
+impl WhereAModelIs {
+    /// Where a deployment put its model, or the variable it left unset.
+    ///
+    /// **A refusal and never a number this system chose.** The first real run fell back to
+    /// `http://localhost:11434` because nobody had read `LLM_ENDPOINT`, and the message that came
+    /// back was *Failed to connect to localhost port 11434* — a guess that costs the same time as a
+    /// refusal and says less. **A fallback is a lie with a position**, and this is the place that
+    /// used to have one.
+    pub fn where_a_deployment_put_its_model(
+        the_endpoint: Option<&str>,
+        which_model: Option<&str>,
+    ) -> Result<Self, String> {
+        let Some(the_endpoint) = the_endpoint else {
+            return Err(String::from(
+                "LLM_ENDPOINT is not set, and this system will not choose an address for a model",
+            ));
+        };
+        if !the_endpoint.ends_with("/chat/completions") {
+            return Err(format!(
+                "LLM_ENDPOINT is '{the_endpoint}', which is a base and not the address a model \
+                 answers at, and a base this system completes is a second fact this system chose"
+            ));
+        }
+        let Some(which_model) = which_model else {
+            return Err(String::from(
+                "LLM_MODEL is not set, and a model this system invented is one nobody deployed",
+            ));
+        };
+        Ok(WhereAModelIs {
+            the_endpoint: the_endpoint.to_string(),
+            which_model: which_model.to_string(),
+        })
+    }
+}
+
 /// The body a model is given, built here so the shape of the answer is ours.
 ///
 /// **The shape and not a word about who decided.** A model told to say one word and asked to say
