@@ -48,6 +48,21 @@ pub struct AnIssueToRead {
     which_issue: i64,
 }
 
+/// An address GitHub composed that is not an issue address, **quoted whole.**
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct AnAddressThatIsNotAnIssue(pub String);
+
+impl std::fmt::Display for AnAddressThatIsNotAnIssue {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            formatter,
+            "{:?} is not an address of an issue — an issue and a pull request both have a number and \
+             only one of them is the thing a filing produced",
+            self.0
+        )
+    }
+}
+
 impl AnIssueToRead {
     /// The issue a person named, refused when the number could not be one.
     ///
@@ -65,6 +80,27 @@ impl AnIssueToRead {
             of_which_repository,
             which_issue,
         })
+    }
+
+    /// The issue GitHub answered with, **read out of the address it composed.**
+    ///
+    /// **The address is the primary fact and the number is a reading of it** — the other direction
+    /// is what `CommissionedIssue` did, **and an address composed from a number resolves to a page
+    /// that does not exist while looking exactly like a link.**
+    ///
+    /// **An address that is not an issue is refused**, because `…/issues/10` and `…/pull/10` are
+    /// different things **and a work item pointed at the wrong one is a work item about somebody
+    /// else's pull request, with a number that was never wrong and an address that was.**
+    ///
+    /// **Refused for now** — the reading exists and the shape of the answer does not.
+    pub fn the_issue_an_address_returned(
+        of_which_repository: Repository,
+        what_github_answered: &str,
+    ) -> Result<Self, AnAddressThatIsNotAnIssue> {
+        let _ = (of_which_repository, what_github_answered);
+        Err(AnAddressThatIsNotAnIssue(String::from(
+            what_github_answered,
+        )))
     }
 
     /// Which issue was asked for, as a person typed it.
