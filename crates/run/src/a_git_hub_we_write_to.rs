@@ -16,6 +16,16 @@ pub struct WhereGitHubAnswered {
 
 impl WhereGitHubAnswered {
     /// GitHub's answer, at the address it composed.
+    pub fn an_answer_at(where_github_says_it_went: &str) -> Self {
+        WhereGitHubAnswered {
+            the_address: AWhereItWasFiled::the_address_the_filing_returned(
+                where_github_says_it_went,
+            )
+            .expect("GitHub answered with an address"),
+        }
+    }
+
+    /// GitHub's answer, at the address it composed.
     pub fn an_address_at(what_github_said: &str) -> Self {
         WhereGitHubAnswered {
             the_address: AWhereItWasFiled::the_address_the_filing_returned(what_github_said)
