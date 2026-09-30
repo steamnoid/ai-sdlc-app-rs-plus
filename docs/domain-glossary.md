@@ -804,6 +804,32 @@ a field instead of quoting what GitHub said throws away the only clue there was.
 refusal on the creative path: **a model whose answer could not be read, and a GitHub that refused a
 filing, arrive at the same reader and neither of them is an offer.**
 
+**`WhatTheRunWillWorkOn`** — one piece of work a run will take up, and the filing it answers. **One
+filing is one work and not one work with a list in it**, because a work item answers one
+`CommissionedRequest` — **and two issues in one work item would be two requests and one answer, which
+is not a thing a gate can ask about.**
+
+**The work is the product analyst's, and it says a model asked for it.** The creative agent decides
+*what* might be worth doing; **deciding what the work *is* is the next discipline's.** The name is the
+repository and the number GitHub returned, **because a filing a model made has no ticket and `OFFER-1`
+would collide with the next run's `OFFER-1` while telling the person judging it nothing.**
+
+**The reading is in this function's signature and not in the caller's problem.** A filing read at one
+address and paired with another is a work item about the wrong issue — **and both halves are real, so
+nothing downstream could tell.**
+
+**And the work answers the filing's own words, read back rather than remembered.** The first version
+of this composed the request from what the run had just written, **which is text GitHub never had**,
+and the two would part company **the moment a person edited one word.**
+
+**`AFilingNoWorkCanBeBuiltFrom`** — a filing this system made that no work can be built from, **and
+it quotes both halves.** The two ways it happens are a filing read at one address and paired with
+another, **and an address that is not an issue's** — and a refusal that said only "mismatched" would
+leave the reader guessing which half was wrong, **and the run was handed both.**
+
+**`CommissionedRequest::what_was_asked` and `what_was_said_besides`** exist because a work item's
+request **could not be read at all** — and the product analyst's whole question is in it.
+
 **`AnAddressThatIsNotAnIssue`** — an address GitHub composed that is not an address of an issue,
 **quoted whole.** A filing run gets an address and the reading port takes a number, **so the two have
 to meet.**

@@ -202,7 +202,7 @@ impl WorkItem {
     /// **A gate has to know whose decision it is collecting**, so a work item that could not be asked
     /// would make every approval a guess about who is approving what.
     pub fn the_role_answering(&self) -> Role {
-        self.role.clone()
+        self.role
     }
 
     /// Whoever asked for it, verbatim.

@@ -4,8 +4,10 @@
 
 use aisdlc_domain::repository::Repository;
 
+use crate::a_filing_is_answered::TheWork;
 use crate::an_issue_read::AnIssueRead;
 use crate::an_issue_to_read::AnIssueToRead;
+use crate::what_this_filing_is_about::{TheRoleThatAnswers, WhatThisFilingIsAbout};
 
 /// One piece of work the run will take up, **and the filing it answers.**
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -51,10 +53,50 @@ pub fn the_work_each_filing_becomes(
     what_was_read: &[AnIssueRead],
     where_each_filing_went: &[String],
 ) -> Result<Vec<WhatTheRunWillWorkOn>, AFilingNoWorkCanBeBuiltFrom> {
+    let mut what_the_run_will_work_on = Vec::new();
     for (one_read, one_address) in what_was_read.iter().zip(where_each_filing_went) {
-        AnIssueToRead::the_issue_an_address_returned(of_which_repository, one_address)
-            .map_err(|not_an_issue| AFilingNoWorkCanBeBuiltFrom(not_an_issue.0))?;
-        let _ = one_read;
+        what_the_run_will_work_on.push(the_work_the_product_analyst_answers(
+            of_which_repository,
+            one_read,
+            one_address,
+        )?);
     }
-    Ok(Vec::new())
+    Ok(what_the_run_will_work_on)
+}
+
+/// The work one filing becomes, **for the product analyst and at the beginning.**
+///
+/// **The filing is read, and the address is checked against what it was read at** — a read filing
+/// paired with the wrong address is a work item about the wrong issue, **and both halves are real, so
+/// nothing downstream could tell.**
+fn the_work_the_product_analyst_answers(
+    of_which: &Repository,
+    one_read: &AnIssueRead,
+    one_address: &str,
+) -> Result<WhatTheRunWillWorkOn, AFilingNoWorkCanBeBuiltFrom> {
+    if one_read.where_it_answers() != one_address.trim() {
+        return Err(AFilingNoWorkCanBeBuiltFrom(format!(
+            "{} was read at {} and paired with {}",
+            one_read.what_was_asked(),
+            one_read.where_it_answers(),
+            one_address
+        )));
+    }
+    let the_issue = AnIssueToRead::the_issue_an_address_returned(of_which, one_address)
+        .map_err(|not_an_issue| AFilingNoWorkCanBeBuiltFrom(not_an_issue.0))?;
+    let what_a_run_was_told = WhatThisFilingIsAbout::about_a_filing_a_model_made(
+        &the_name_it_was_filed_at(of_which, the_issue.which_issue()),
+        TheRoleThatAnswers::try_from("PO").expect("a discipline"),
+        of_which.clone(),
+    );
+    let the_work = TheWork::a_filing_becomes(one_read, &what_a_run_was_told);
+    Ok(WhatTheRunWillWorkOn {
+        the_work_item: the_work.work_item,
+        the_work_request: Some(the_work.requested),
+    })
+}
+
+/// The name a work item is tracked by, **which is the repository and the number GitHub returned.**
+fn the_name_it_was_filed_at(of_which: &Repository, which_issue: i64) -> String {
+    format!("{of_which}#{which_issue}")
 }
