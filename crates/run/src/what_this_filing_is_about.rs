@@ -90,3 +90,25 @@ impl AnIssueRead {
         TheWork::a_filing_becomes(self, what_a_run_was_told)
     }
 }
+
+impl WhatThisFilingIsAbout {
+    /// What a run was told about a filing **a model made**, and every one of those is a fact rather
+    /// than a choice: the name is where it was filed, **the discipline is the product analyst, the
+    /// commissioner is a model, and the repository is the one it was filed in.**
+    ///
+    /// **The commissioner is not a parameter**, because a filing this system made was made by this
+    /// system — **and a parameter here would be a way for a caller to write somebody else's name on
+    /// a filing nobody else wrote.**
+    pub fn about_a_filing_a_model_made(
+        which_work_item: &str,
+        which_role_answers: TheRoleThatAnswers,
+        of_which_repository: Repository,
+    ) -> Self {
+        WhatThisFilingIsAbout {
+            which_work_item: TheWorkItemsId::try_from(which_work_item).expect("a name"),
+            which_role_answers,
+            who_asked: WhoCommissioned::try_from("llm agent").expect("a name"),
+            which_repository: of_which_repository,
+        }
+    }
+}
