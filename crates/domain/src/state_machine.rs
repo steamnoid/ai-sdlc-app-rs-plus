@@ -26,10 +26,24 @@ impl StateMachineError {
     }
 
     /// An agent given to a stage that does not carry one.
-    pub fn for_an_agent_the_destination_refuses(to: Stage) -> Self {
-        StateMachineError {
-            why: format!("{to} does not take the agent it was given"),
-        }
+    /// A move the destination refuses on the agent, **and which way it was wrong.**
+    ///
+    /// **One sentence for both directions, because a refusal that says the opposite of what
+    /// happened sends a reader to fix the thing that was already right.** A stage that holds an
+    /// agent and was given none has been given no agent where one is required; a stage that holds
+    /// no agent and was given one has been handed an agent it cannot have.
+    pub fn for_an_agent_the_destination_refuses(to: Stage, one_was_given: bool) -> Self {
+        let why = match (to.an_agent_must_be_holding_it(), one_was_given) {
+            (true, false) => format!(
+                "{to} holds an agent, and this move was given none, so nothing is holding the work"
+            ),
+            (false, true) => format!(
+                "{to} holds no agent, and this move was given one, so an agent is holding work \
+                 that no agent may hold"
+            ),
+            _ => format!("{to} and the agent it was given do not belong together"),
+        };
+        StateMachineError { why }
     }
 }
 
@@ -83,7 +97,10 @@ pub fn transition(
         ));
     }
     if the_agent.is_some() != to.an_agent_must_be_holding_it() {
-        return Err(StateMachineError::for_an_agent_the_destination_refuses(to));
+        return Err(StateMachineError::for_an_agent_the_destination_refuses(
+            to,
+            the_agent.is_some(),
+        ));
     }
     Ok(moved_to(a_work_item, to, the_agent))
 }
