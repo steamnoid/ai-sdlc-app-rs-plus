@@ -20,6 +20,7 @@ use aisdlc_domain::work_item_id::WorkItemId;
 use crate::a_comment_is_left::{ANowhereToLeaveAComment, the_run_leaves_a_comment};
 use crate::a_git_hub_we_write_to::AGitHubWeWriteTo;
 use crate::an_issue_read::AnIssueRead;
+use crate::what_this_filing_is_about::WhatThisFilingIsAbout;
 use crate::who_signs_a_comment::WhoSignsAComment;
 
 /// The work a read filing becomes, and the words the person filed.
@@ -31,14 +32,30 @@ pub struct TheWork {
     pub requested: aisdlc_domain::commissioned_request::CommissionedRequest,
 }
 
+impl TheWork {
+    /// The work a read filing becomes, under a name and for a discipline a run was told.
+    pub fn a_filing_becomes(
+        what_was_read: &AnIssueRead,
+        which_work_item: &str,
+        which_role_answers: &str,
+    ) -> Self {
+        a_filing_is_answered_into_work(what_was_read, which_work_item, which_role_answers)
+    }
+}
+
 /// A filing that was read, written back on as a comment.
 pub fn a_filing_is_answered(
     somewhere: &mut impl AGitHubWeWriteTo,
     what_was_read: &AnIssueRead,
     what_the_run_would_say: &str,
     who_signed: &WhoSignsAComment,
+    what_a_run_was_told: &WhatThisFilingIsAbout,
 ) -> Result<(), ANowhereToLeaveAComment> {
-    let the_work = a_filing_is_answered_into_work(what_was_read, "A-1", "PO");
+    let the_work = a_filing_is_answered_into_work(
+        what_was_read,
+        what_a_run_was_told.which_work_item.as_str(),
+        what_a_run_was_told.which_role_answers.as_str(),
+    );
     the_run_leaves_a_comment(
         somewhere,
         &the_work.requested,

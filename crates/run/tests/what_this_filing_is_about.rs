@@ -50,7 +50,7 @@ fn a_filing_and_what_it_is_about_become_a_work_of_the_right_name() {
     );
 
     assert_eq!(
-        the_work.work_item.the_work_item_id().as_str(),
+        the_work.work_item.the_work_item_id().to_string().as_str(),
         "WELLBEINGT-42",
         "**because the work carries the name a run was told** — and a work item that ignores its \\
          own name is a work item that cannot be found again by anybody: {the_work:?}"
@@ -59,7 +59,7 @@ fn a_filing_and_what_it_is_about_become_a_work_of_the_right_name() {
         the_work
             .requested
             .where_it_was_filed()
-            .map(|where_it_is| where_it_is.as_str()),
+            .map(aisdlc_domain::commissioned_request::AWhereItWasFiled::as_str),
         Some("https://github.com/steamnoid/wellbeing-tracker-public/issues/8"),
         "**and the filing is still the one that was read** — the address GitHub answered at, and \\
          never one composed from a number: {the_work:?}"
