@@ -85,7 +85,7 @@ fn a_deployment_that_named_nobody_cannot_have_a_comment_written() {
 }
 
 #[test]
-fn the_name_reaches_gh_and_is_not_left_in_the_request() {
+fn gh_is_never_told_an_author_it_cannot_set_and_the_name_is_in_the_body() {
     let what_it_was_told = TheEnvironment::of(vec![(
         "AISDLC_WHO_SIGNS_A_COMMENT".to_string(),
         "aisdlc-dev".to_string(),
@@ -95,21 +95,20 @@ fn the_name_reaches_gh_and_is_not_left_in_the_request() {
     let _ = the_run_leaves_a_comment(
         &mut the_adapter,
         &a_request_that_was_filed(),
-        "a run is opening a pull request for this",
+        "a run wrote this, and it is signed by aisdlc-dev",
         &who_signed,
     );
 
     let the_arguments = the_adapter.the_arguments_of(&a_comment_about_the_filing());
-    let the_author_is_told_to_gh = the_arguments
-        .iter()
-        .any(|one| one == "--author" || one == "--author-name");
-    let the_name_is_there = the_arguments.iter().any(|one| one == "aisdlc-dev");
+    let gh_was_told_an_author = the_arguments.iter().any(|one| one.starts_with("--author"));
+    let the_name_is_somewhere_a_reader_sees =
+        the_arguments.iter().any(|one| one.contains("aisdlc-dev"));
     assert!(
-        the_author_is_told_to_gh && the_name_is_there,
-        "**because a comment whose author never reached GitHub has no author at all** — and this \
-         system removed the door that let a caller write a person's name, and then left the name \
-         sitting in a request `gh` is never shown, which is a forgery prevented in one place and \
-         reopened in the next: {the_arguments:?}"
+        !gh_was_told_an_author && the_name_is_somewhere_a_reader_sees,
+        "**because `gh issue comment` has no author flag** — a real run proved it, the program \
+         answered `unknown flag: --author-name` — and it posts as whoever the token belongs to and \
+         offers nothing to change that, **so an author this system sets is an author this system \
+         has invented**: {the_arguments:?}"
     );
 }
 

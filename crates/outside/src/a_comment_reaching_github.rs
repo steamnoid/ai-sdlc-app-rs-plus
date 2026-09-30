@@ -9,9 +9,12 @@
 //! prose has dashes and colons and backticks in it; a body re-split into its lines is a body
 //! somebody else has assembled.
 //!
-//! **The author is an argument and not a field only `gh` never sees.** The signature was carried
-//! in the request and dropped on the way out, which is a forgery prevented in one place and reopened
-//! in the next: a comment whose author never reached GitHub has no author at all.
+//! **The author is in the body and not in an argument, because `gh` has no author argument.** A real
+//! run proved it — the program answered `unknown flag: --author-name` — and it posts as whoever the
+//! token belongs to and offers nothing to change that, **so an author this system sets is an author
+//! this system has invented.** The name therefore goes in the words, where a reader can see it, and
+//! the record keeps it for the audit trail. The account is the author and this system does not get
+//! to pretend otherwise.
 
 use aisdlc_run::a_git_hub_we_write_to::{AGitHubWeWriteTo, WhatGitHubWasAskedFor};
 
@@ -22,19 +25,24 @@ pub struct ACommentReachingGitHub;
 impl ACommentReachingGitHub {
     /// What `gh` would be run with, one thing each, and nothing at all when there is no comment.
     pub fn the_arguments_of(&self, what_git_hub_is_asked: &WhatGitHubWasAskedFor) -> Vec<String> {
+        let the_body = format!(
+            "{}\n\n-- written by {}",
+            what_git_hub_is_asked.what_is_written(),
+            what_git_hub_is_asked.who_wrote_this()
+        );
         vec![
             "issue".to_string(),
             "comment".to_string(),
-            what_git_hub_is_asked
-                .where_it_is_going()
-                .as_str()
-                .to_string(),
+            what_git_hub_is_going_at(what_git_hub_is_asked),
             "--body".to_string(),
-            what_git_hub_is_asked.what_is_written().to_string(),
-            "--author-name".to_string(),
-            what_git_hub_is_asked.who_wrote_this().to_string(),
+            the_body,
         ]
     }
+}
+
+/// The address the filing returned, word for word.
+fn what_git_hub_is_going_at(what_it_is_asked: &WhatGitHubWasAskedFor) -> String {
+    what_it_is_asked.where_it_is_going().as_str().to_string()
 }
 
 impl AGitHubWeWriteTo for ACommentReachingGitHub {

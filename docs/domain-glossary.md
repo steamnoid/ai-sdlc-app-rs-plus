@@ -712,10 +712,18 @@ a name is the forgery `WhoSignsAComment` was written to remove.
 **An absent variable is a refusal and not a default, and the refusal comes before the write**,
 because a comment with an invented author is worse than no comment: it looks like a record.
 
-**And the author is an argument and not a field only `gh` never sees.** The signature was carried in
-the request and dropped on the way out — **a forgery prevented in one place and reopened in the
-next**, by the very code written to honour the signature. A comment whose author never reached GitHub
-has no author at all.
+**The author is in the body and not in an argument, because `gh` has no author argument.** A real run
+proved it: the program answered `unknown flag: --author-name`. `gh issue comment` posts as whoever
+the token belongs to and offers nothing to change that, **so an author this system sets is an author
+this system has invented** — and a test that asserted `--author-name` was in the arguments was
+asserting a flag that does not exist. The name goes in the words, where a reader can see it, and the
+record keeps it for the audit trail. The account is the author and this system does not get to
+pretend otherwise.
+
+**A comment is left on a filing somebody named, and never on one this system chose.** This repository
+has no issues at all, so the address comes from `E2E_FILING` and the test refuses to run without it —
+**a proof that comments on a repository this system has no business commenting on is not a proof, it
+is a side effect.**
 
 **`ACommentReachingGitHub`** — a comment turned into what `gh` is run with, and the answer
 `AGitHubWeWriteTo` was missing. **A port with one implementor that was a test double is a port
