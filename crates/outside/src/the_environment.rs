@@ -21,6 +21,7 @@ const WHERE_A_MODEL_ANSWERS: &str = "LLM_ENDPOINT";
 const WHICH_MODEL_ANSWERS_THERE: &str = "LLM_MODEL";
 const WHO_SIGNS_A_COMMENT: &str = "AISDLC_WHO_SIGNS_A_COMMENT";
 const WHAT_A_MODEL_IS_ASKED_BESIDES: &str = "LLM_HEADERS";
+const THE_FLAG_THAT_LETS_AN_AGENT_OFFER: &str = "AISDLC_AN_AGENT_OFFERS";
 
 /// What a process was told, kept whole so that a name can be asked for by name.
 #[derive(Clone, PartialEq, Eq)]
@@ -41,6 +42,7 @@ impl TheEnvironment {
             WHICH_MODEL_ANSWERS_THERE,
             WHO_SIGNS_A_COMMENT,
             WHAT_A_MODEL_IS_ASKED_BESIDES,
+            THE_FLAG_THAT_LETS_AN_AGENT_OFFER,
         ] {
             if let Ok(what_it_said) = std::env::var(a_name) {
                 what_it_held.insert(a_name.to_string(), what_it_said);

@@ -13,11 +13,13 @@ use std::fmt;
 
 use crate::a_credential::{ACredential, ACredentialThatIsNothing};
 use crate::whether_a_model_rules_here::WhetherAModelRulesHere;
+use crate::whether_an_agent_offers::WhetherAnAgentOffers;
 
 /// One deployment's two facts, and neither of them readable.
 #[derive(Clone, PartialEq, Eq)]
 pub struct HowThisDeploymentIsSetUp {
     may_a_model_rule: WhetherAModelRulesHere,
+    may_an_agent_offer: WhetherAnAgentOffers,
     the_credential: Option<ACredential>,
     asked_and_cannot_reach: Option<String>,
 }
@@ -55,11 +57,30 @@ impl HowThisDeploymentIsSetUp {
         may_a_model_rule: WhetherAModelRulesHere,
         the_credential: Option<ACredential>,
     ) -> Self {
+        Self::every_fact_a_deployment_was_told(
+            may_a_model_rule,
+            the_credential,
+            WhetherAnAgentOffers::No,
+        )
+    }
+
+    /// Every fact a deployment was told, **including whether it asked for an agent that offers work.**
+    pub fn every_fact_a_deployment_was_told(
+        may_a_model_rule: WhetherAModelRulesHere,
+        the_credential: Option<ACredential>,
+        may_an_agent_offer: WhetherAnAgentOffers,
+    ) -> Self {
         Self {
             may_a_model_rule,
+            may_an_agent_offer,
             the_credential,
             asked_and_cannot_reach: None,
         }
+    }
+
+    /// Whether an agent may offer work, as a value and not as a lookup.
+    pub fn may_an_agent_offer(&self) -> WhetherAnAgentOffers {
+        self.may_an_agent_offer
     }
 
     /// Whether a model may rule here, as a value and not as a lookup.
@@ -85,6 +106,7 @@ impl HowThisDeploymentIsSetUp {
         let the_credential = the_credential.and_then(Result::ok);
         Self {
             may_a_model_rule: self.may_a_model_rule,
+            may_an_agent_offer: self.may_an_agent_offer,
             the_credential,
             asked_and_cannot_reach: self.asked_and_cannot_reach,
         }
@@ -94,6 +116,7 @@ impl HowThisDeploymentIsSetUp {
     fn asking_for_a_model_it_cannot_reach(self, what_they_asked_for: &str) -> Self {
         Self {
             may_a_model_rule: self.may_a_model_rule,
+            may_an_agent_offer: self.may_an_agent_offer,
             the_credential: None,
             asked_and_cannot_reach: Some(what_they_asked_for.to_string()),
         }

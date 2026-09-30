@@ -38,6 +38,7 @@ pub mod what_the_agent_presents;
 pub mod what_this_filing_is_about;
 pub mod what_we_tell_a_program_to_do;
 pub mod whether_a_model_rules_here;
+pub mod whether_an_agent_offers;
 pub mod whether_anything_stands_there;
 pub mod who_signs_a_comment;
 
