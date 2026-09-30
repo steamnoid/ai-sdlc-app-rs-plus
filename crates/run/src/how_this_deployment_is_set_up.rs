@@ -13,6 +13,7 @@ use std::fmt;
 
 use crate::a_credential::{ACredential, ACredentialThatIsNothing};
 use crate::whether_a_model_rules_here::WhetherAModelRulesHere;
+use crate::whether_an_agent_offers::WhetherAnAgentOffers;
 
 /// One deployment's two facts, and neither of them readable.
 #[derive(Clone, PartialEq, Eq)]
@@ -60,6 +61,13 @@ impl HowThisDeploymentIsSetUp {
             the_credential,
             asked_and_cannot_reach: None,
         }
+    }
+
+    /// Whether an agent may offer work, as a value and not as a lookup.
+    ///
+    /// **Always no, for now** — the shape is here and the decision is not read yet.
+    pub fn may_an_agent_offer(&self) -> WhetherAnAgentOffers {
+        WhetherAnAgentOffers::No
     }
 
     /// Whether a model may rule here, as a value and not as a lookup.
