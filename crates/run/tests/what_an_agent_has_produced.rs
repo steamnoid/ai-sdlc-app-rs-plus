@@ -9,9 +9,7 @@
 //! the pipeline and not a fault in the run** — so the refusal says that, rather than blaming a run
 //! for a name this repository has not declared.
 
-use aisdlc_run::what_an_agent_has_produced::{
-    AnArtifactThisSystemDoesNotKnow, WhatAnAgentHasProduced,
-};
+use aisdlc_run::what_an_agent_has_produced::WhatAnAgentHasProduced;
 
 #[test]
 fn a_name_the_specification_writes_out_is_a_name_this_system_knows() {
@@ -27,12 +25,8 @@ fn a_name_the_specification_writes_out_is_a_name_this_system_knows() {
 
     let the_ones_refused: Vec<String> = every_one_the_specification_lists
         .iter()
-        .map(|one| {
-            WhatAnAgentHasProduced::new(one, 1)
-                .err()
-                .map(|why| why.to_string())
-        })
-        .filter_map(|maybe| maybe)
+        .filter_map(|one| WhatAnAgentHasProduced::new(one, 1).err())
+        .map(|why_not| why_not.to_string())
         .collect();
 
     assert!(
@@ -57,8 +51,7 @@ fn a_name_nobody_declared_is_refused_before_it_reaches_a_gate() {
 
 #[test]
 fn the_refusal_says_it_is_a_gap_here_and_not_a_fault_of_the_run() {
-    let the_way_out: Result<WhatAnAgentHasProduced, AnArtifactThisSystemDoesNotKnow> =
-        WhatAnAgentHasProduced::new("AProposalOfMine", 1);
+    let the_way_out = WhatAnAgentHasProduced::new("AProposalOfMine", 1);
 
     let the_words = the_way_out
         .expect_err("nothing declares that one")

@@ -720,6 +720,27 @@ asserting a flag that does not exist. The name goes in the words, where a reader
 record keeps it for the audit trail. The account is the author and this system does not get to
 pretend otherwise.
 
+**`WhatAnAgentHasProduced`** — the name and the version of one thing an agent produced, both
+checked. **`WhichArtifact` is an open `String` and it accepts anything**, so this is the door that is
+closed: **a gate that approves an artifact nobody here has ever heard of is a gate that approved a
+stranger's paperwork, and the record names it as approved, which is the one thing a record must
+never do.**
+
+**The seven names are the specification's, transcribed from the mother project's own router** — and
+not composed here, for the same reason the agent's name was. `DiscoveryReport`, `Requirements`,
+`QaPlan`, `ArchitectureReport`, `SecurityReport`, `ImplementationPlan`, `VerificationReport`. **A
+test refuses every one of the seven being refused**, because a run naming one and being turned away
+would mean this repository is narrower than the pipeline it is supposed to run.
+
+**`AnArtifactThisSystemDoesNotKnow`** — that refusal, and **it says the name is a gap in this
+pipeline and not a fault of the run**, because an artifact with no rule written for it is a gap in
+the pipeline — **and blaming a run for a name this repository has not declared sends somebody to fix
+the run.** **`WhatWasNotAThingThisSystemHolds`** is the closed refusal, with
+**`AnArtifactVersionBelowOne`** for the version.
+
+**Version zero is never a version**, because it is the state before there was one, **and a gate
+presented with version zero is being shown nothing and asked to rule on it.**
+
 **`WhatThisFilingIsAbout`** — which work item this run is and which discipline answers for it,
 **both given and neither guessed.** `A-1` and `PO` sat inside the function that builds the work, so
 **every run in history was a work item called `A-1` accountable to the product analyst, whatever was
