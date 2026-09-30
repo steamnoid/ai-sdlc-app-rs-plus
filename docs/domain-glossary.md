@@ -795,6 +795,36 @@ is one no human was ever shown** — and a paraphrase of what an agent said is a
 its name. **`AJudgementNobodyMade`** is the refusal, and
 **`WHAT_MAY_BE_SAID_INSTEAD_OF_A_JUDGEMENT`** is what an agent with nothing may say instead, because
 **that is an answer and a blank is not.**
+**`an_agent_is_asked_what_it_would_file`** — the whole path from a checkout's listing to offers this
+run is willing to file: **listing, question, body, request, answer, grounding — in one function.**
+
+**One function and not four seams, because the first real run in this repository was refused by an
+arity at the last step** after seven gates and six models, **and nobody had compared the seam with the
+thing it stands for until it was twenty-four minutes in. A path split across four seams is four places
+for two of them to disagree about what it takes.**
+
+**`ACreativeAgentThatCouldNotOffer`** carries the sentence and nothing else — **because a refusal that
+names a field instead of quoting the answer throws away the only clue there was.**
+
+**`the_body_a_creative_agent_is_given`** builds the body with the JSON library and **the test asserts
+it parses for a question containing a quoted word, a backslash and a newline** — because a hand-rolled
+escape is a lossy channel in both directions, **and every request this system ever sent a model was
+invalid JSON until the library built it.**
+
+**`is_a_question_about_what_it_would_file`** exists because **a question a run cannot classify is a
+question no flag can hold back**, and refusing to ask one is the whole of what `AISDLC_AN_AGENT_OFFERS`
+means. **The flag that stops an agent filing is enforced by a run being able to recognise what it is
+about to ask.**
+
+**The three judgements come from the model and are checked here**, reached through the same
+`WhatAnAgentJudged` refusal the constructor gives — **and a field is readable from anywhere, so a
+caller holding one has to be able to ask what the constructor asks.**
+
+**One module and not two, and that is a correction rather than a design.** Splitting this cycle's
+question out of the module that already parsed the answer left **`AnAnswerThatIsNotAnOffer` defined in
+both**, which is one concept with two names and breaks RULE 2 — **so the module that parsed the answer
+alone was deleted and its test now reads the surviving one.**
+
 **`the_words_inside_the_endpoints_envelope`** — the model's own words, inside the JSON the endpoint
 wraps every answer in. **One function and not one per caller, because this is where #102 and #109 were
 burned.** A reader that demanded the whole answer *be* the model's word decides no model can ever

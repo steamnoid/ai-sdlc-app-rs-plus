@@ -78,7 +78,8 @@ impl TheProgramAsItRuns {
         what_it_is_asked_to_do: &WhatWeTellAProgramToDo,
     ) -> WhichProgramWeRun {
         match what_it_is_asked_to_do {
-            WhatWeTellAProgramToDo::AskAModelHowItRules { .. } => WhichProgramWeRun::Curl,
+            WhatWeTellAProgramToDo::AskAModelHowItRules { .. }
+            | WhatWeTellAProgramToDo::AskAModelWhatItWouldFile { .. } => WhichProgramWeRun::Curl,
             _ => self.which_program,
         }
     }
@@ -95,6 +96,11 @@ impl TheProgramAsItRuns {
     pub fn the_arguments_of(&self, what_it_is_asked_to_do: &WhatWeTellAProgramToDo) -> Vec<String> {
         match what_it_is_asked_to_do {
             WhatWeTellAProgramToDo::AskAModelHowItRules {
+                the_endpoint,
+                the_body,
+                ..
+            }
+            | WhatWeTellAProgramToDo::AskAModelWhatItWouldFile {
                 the_endpoint,
                 the_body,
                 ..
@@ -123,6 +129,7 @@ fn what_git_is_asked_for(what_it_is_asked_to_do: &WhatWeTellAProgramToDo) -> Vec
             &["remote", "add", "upstream", &the_clone_of.fetch_from()],
         ),
         WhatWeTellAProgramToDo::AskAModelHowItRules { .. }
+        | WhatWeTellAProgramToDo::AskAModelWhatItWouldFile { .. }
         | WhatWeTellAProgramToDo::ReadTheFiling { .. } => Vec::new(),
     }
 }

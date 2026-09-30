@@ -45,6 +45,15 @@ pub enum WhatWeTellAProgramToDo {
         /// The question and the shape of the answer, built here and not by the model.
         the_body: String,
     },
+    /// Ask a model what work is worth filing, from the listing the run showed it.
+    AskAModelWhatItWouldFile {
+        /// Where the model is, which is a deployment fact and not a secret.
+        the_endpoint: String,
+        /// Which model, which is a deployment fact and not a secret.
+        the_model: String,
+        /// The question and the shape of the answer, built here and not by the model.
+        the_body: String,
+    },
     /// Read one filing, as a person named it.
     ReadTheFiling {
         /// Which filing, and of which repository.
@@ -90,7 +99,8 @@ impl WhatWeTellAProgramToDo {
             | WhatWeTellAProgramToDo::NameWhereTheCodeWasWrittenIn { the_clone_of } => {
                 the_clone_of.fetch_from()
             }
-            WhatWeTellAProgramToDo::AskAModelHowItRules { the_body, .. } => the_body.clone(),
+            WhatWeTellAProgramToDo::AskAModelHowItRules { the_body, .. }
+            | WhatWeTellAProgramToDo::AskAModelWhatItWouldFile { the_body, .. } => the_body.clone(),
             WhatWeTellAProgramToDo::ReadTheFiling { which_filing } => {
                 which_filing.which_issue().to_string()
             }
@@ -109,6 +119,30 @@ impl WhatWeTellAProgramToDo {
             the_model: the_model.to_string(),
             the_body: the_body.to_string(),
         }
+    }
+
+    /// Ask a model what work is worth filing.
+    pub fn ask_a_model_what_it_would_file(
+        the_endpoint: &str,
+        the_model: &str,
+        the_body: &str,
+    ) -> Self {
+        WhatWeTellAProgramToDo::AskAModelWhatItWouldFile {
+            the_endpoint: the_endpoint.to_string(),
+            the_model: the_model.to_string(),
+            the_body: the_body.to_string(),
+        }
+    }
+
+    /// This request, read as a question about what a model would file.
+    ///
+    /// **A question a run cannot classify is a question no flag can hold back**, and refusing to ask
+    /// one is the whole of what `AISDLC_AN_AGENT_OFFERS` means.
+    pub fn is_a_question_about_what_it_would_file(&self) -> bool {
+        matches!(
+            self,
+            WhatWeTellAProgramToDo::AskAModelWhatItWouldFile { .. }
+        )
     }
 
     /// This request, read as a question about a ruling.
@@ -134,6 +168,7 @@ impl WhatWeTellAProgramToDo {
                 Some(the_clone_of)
             }
             WhatWeTellAProgramToDo::AskAModelHowItRules { .. }
+            | WhatWeTellAProgramToDo::AskAModelWhatItWouldFile { .. }
             | WhatWeTellAProgramToDo::ReadTheFiling { .. } => None,
         }
     }
@@ -179,6 +214,7 @@ impl WhatWeTellAProgramToDo {
             | WhatWeTellAProgramToDo::TheRefItStandsOn { .. }
             | WhatWeTellAProgramToDo::NameWhereTheCodeWasWrittenIn { .. }
             | WhatWeTellAProgramToDo::AskAModelHowItRules { .. }
+            | WhatWeTellAProgramToDo::AskAModelWhatItWouldFile { .. }
             | WhatWeTellAProgramToDo::ReadTheFiling { .. } => None,
         }
     }
