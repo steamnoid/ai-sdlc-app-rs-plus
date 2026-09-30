@@ -49,8 +49,13 @@ pub fn the_question_an_agent_is_asked(
     format!(
         "You are looking at {owner}/{name}. Name work worth filing as issues.\n\
          You may only cite files from this listing:\n{listing}\n\
-         Answer with an offers array. Each offer has a title, what_it_asks_for, and the paths it \
-         concluded from, all three of them always present.\n\
+         Answer with an offers array, and with what_it_found, what_it_could_not_settle and \
+         what_it_expects_next.\n\
+         Each offer has a title, what_it_asks_for, and the paths it concluded from, all three of them \
+         always present.\n\
+         The three judgements are about your own reading: what you found, what you could not settle, \
+         and what you expect to happen next. All three are always present and none of them is ever \
+         empty.\n\
          An offer with no file from the listing is refused, and an empty offers array is a valid \
          answer. Do not name who decided; that is not yours to say.",
         owner = of_which_repository.owner,
