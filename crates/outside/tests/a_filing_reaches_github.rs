@@ -10,7 +10,7 @@
 //! assembled.**
 
 use aisdlc_outside::a_filing_reaching_github::AFilingReachingGitHub;
-use aisdlc_run::a_git_hub_we_write_to::{AGitHubWeWriteTo, WhatGitHubWasAskedFor};
+use aisdlc_run::a_git_hub_we_write_to::WhatGitHubWasAskedFor;
 use aisdlc_run::what_an_agent_offered::AWorkAnAgentOffered;
 
 /// The repository a filing is filed in.
@@ -97,6 +97,32 @@ fn the_address_github_returned_is_the_only_address() {
         "**because this is the address GitHub composed, not one this system assembled from a \
          repository and a number** — that composition is the thing this repository deleted once, and \
          it resolved to a page that did not exist while looking exactly like a link"
+    );
+}
+
+#[test]
+fn gh_is_run_and_says_why_when_the_repository_cannot_exist() {
+    let a_repository_that_cannot_exist =
+        aisdlc_domain::repository::Repository::try_from("no-such-owner-9f3a/no-such-name-9f3a")
+            .expect("two halves");
+    let a_filing_that_cannot_be_made =
+        aisdlc_run::an_offer_becomes_a_filing::the_filing_an_offer_becomes(
+            &a_repository_that_cannot_exist,
+            &an_offer_with_an_awkward_title(),
+        );
+
+    let how_it_went = AFilingReachingGitHub.the_filing_it_makes(&a_filing_that_cannot_be_made);
+
+    assert!(
+        how_it_went.is_err()
+            && !how_it_went
+                .as_ref()
+                .expect_err("it was refused")
+                .0
+                .is_empty(),
+        "**because this file has run `gh` and not only described it** — a repository that cannot exist \
+         is refused by gh before any of this is true of a network, and a refusal that quotes gh is the \
+         only thing a reader can act on: {how_it_went:?}"
     );
 }
 

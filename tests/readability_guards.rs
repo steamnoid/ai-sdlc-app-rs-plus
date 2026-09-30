@@ -3214,11 +3214,16 @@ mod a_test_is_not_its_own_proof {
     }
 
     /// Whether this file ever lets a program answer, in any of the ways it can.
+    ///
+    /// **Every way, and not the ways that existed when this was written** — so a name added here
+    /// without its call site is a hole, and a call site added without its name here is a file this
+    /// rule refuses for being correct.
     fn ever_runs_a_program(the_text: &str) -> bool {
         the_text.contains(".run(")
             || the_text.contains("it_is_asked_to(")
             || the_text.contains("the_outcome_of(")
             || the_text.contains("the_run_makes_a_checkout(")
+            || the_text.contains("the_filing_it_makes(")
     }
 
     #[test]

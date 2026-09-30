@@ -83,6 +83,7 @@ impl WhatGitHubWasAskedFor {
     /// a way for a caller to write somebody else's name on a filing nobody else wrote.
     pub fn a_filing_in(
         of_which_repository: &aisdlc_domain::repository::Repository,
+        what_the_filing_is_called: String,
         what_is_written: String,
     ) -> Self {
         Self {
@@ -91,7 +92,7 @@ impl WhatGitHubWasAskedFor {
             what_is_written,
             who_wrote_this: A_FILING_THIS_SYSTEM_WROTE.to_string(),
             what_it_is_called: WhatKindOfThingGitHubIsAskedFor::AFilingNotYetMade,
-            what_the_filing_is_called: None,
+            what_the_filing_is_called: Some(what_the_filing_is_called),
         }
     }
 
