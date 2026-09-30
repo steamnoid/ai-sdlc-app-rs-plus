@@ -8,20 +8,25 @@
 use crate::a_git_hub_we_write_to::WhatGitHubWasAskedFor;
 use crate::what_an_agent_offered::AWorkAnAgentOffered;
 
-/// An offer that could not become a filing, quoting what the offer was.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct AnOfferThatCouldNotBeFiled(pub String);
-
-/// The filing one offer becomes, **with nothing written, no address, and a person's name on it.**
+/// The filing one offer becomes, **carrying the words and every address the run derived.**
 ///
-/// **A `String` and not a filing, because the type is the whole claim**: a filing that carried an
-/// address would be a filing for a page that does not exist yet.
-pub fn the_filing_an_offer_becomes(one_offer: &AWorkAnAgentOffered) -> WhatGitHubWasAskedFor {
-    let _ = one_offer;
-    WhatGitHubWasAskedFor::a_filing_in(
-        String::new(),
-        String::new(),
-        &crate::who_signs_a_comment::WhoSignsAComment::the_name_a_deployment_used("a person")
-            .expect("a name"),
-    )
+/// **The evidence travels with the filing**, because the person who reads it is the one who has to
+/// check it, **and a confident claim with no way to check it is worse than no claim at all** — the
+/// grounding is invisible to a reader unless the address reaches the page.
+pub fn the_filing_an_offer_becomes(
+    of_which_repository: &aisdlc_domain::repository::Repository,
+    one_offer: &AWorkAnAgentOffered,
+) -> WhatGitHubWasAskedFor {
+    WhatGitHubWasAskedFor::a_filing_in(of_which_repository, the_body_of(one_offer))
+}
+
+/// What the issue will say, **in the order a person reads it: what it is, what it wants, and where
+/// to look.**
+fn the_body_of(one_offer: &AWorkAnAgentOffered) -> String {
+    use std::fmt::Write;
+    let mut the_body = one_offer.what_it_asks_for.clone();
+    for one_file in &one_offer.what_it_concluded_from {
+        let _ = writeln!(the_body, "\n{} — {}", one_file.path, one_file.link);
+    }
+    the_body
 }

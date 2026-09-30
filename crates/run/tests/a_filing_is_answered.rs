@@ -35,6 +35,7 @@ impl AGitHubWeWriteTo for SomewhereThatRemembers {
         self.where_it_was_asked.push(
             what_git_hub_is_asked
                 .where_it_is_going()
+                .expect("a comment has somewhere to go")
                 .as_str()
                 .to_string(),
         );

@@ -12,6 +12,7 @@ use aisdlc_domain::commissioned_request::AWhereItWasFiled;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct WhatGitHubWasAskedFor {
     where_it_is_going: Option<AWhereItWasFiled>,
+    which_repository_it_is_filed_in: Option<aisdlc_domain::repository::Repository>,
     what_is_written: String,
     who_wrote_this: String,
     what_it_is_called: WhatKindOfThingGitHubIsAskedFor,
@@ -64,28 +65,53 @@ impl WhatGitHubWasAskedFor {
     ) -> Self {
         Self {
             where_it_is_going: Some(where_it_is_going),
+            which_repository_it_is_filed_in: None,
             what_is_written: what_is_written.to_string(),
             who_wrote_this: who_wrote_this.to_string(),
             what_it_is_called: WhatKindOfThingGitHubIsAskedFor::AComment,
         }
     }
 
-    /// A filing that does not exist yet, in the repository it will be filed in and not at an
-    /// address.
+    /// A filing that does not exist yet, **in the repository it will be filed in and not at an
+    /// address.**
+    ///
+    /// **No signer and not a signer, because a filing's author is not a fact about the deployment.**
+    /// A comment's writer comes from configuration, because a person's name does; **a filing this
+    /// system writes is by definition written by this system**, and a signer parameter here would be
+    /// a way for a caller to write somebody else's name on a filing nobody else wrote.
     pub fn a_filing_in(
-        of_which_repository: String,
+        of_which_repository: &aisdlc_domain::repository::Repository,
         what_is_written: String,
-        who_wrote_this: &crate::who_signs_a_comment::WhoSignsAComment,
     ) -> Self {
-        let _ = of_which_repository;
         Self {
             where_it_is_going: None,
+            which_repository_it_is_filed_in: Some(of_which_repository.clone()),
             what_is_written,
-            who_wrote_this: who_wrote_this.to_string(),
+            who_wrote_this: A_FILING_THIS_SYSTEM_WROTE.to_string(),
             what_it_is_called: WhatKindOfThingGitHubIsAskedFor::AFilingNotYetMade,
         }
     }
+
+    /// Which repository this filing is filed in, **and nothing for a comment.**
+    ///
+    /// **`gh issue create` is asked for a repository by name and not by address**, because the filing
+    /// does not exist yet — **so the repository and the address are two different facts and only one
+    /// of them is known before the filing is made.**
+    pub fn which_repository_it_is_filed_in(
+        &self,
+    ) -> Option<&aisdlc_domain::repository::Repository> {
+        self.which_repository_it_is_filed_in.as_ref()
+    }
 }
+
+/// Who a filing this system wrote says wrote it, **and it is a fact and not a configuration.**
+///
+/// **`llm agent` and not a person, ever** — the same rule `autopilot:` follows for an approval and
+/// the same one #131 applied to the commissioning party: **a record naming a person for something a
+/// system did looks exactly like the real thing at the moment somebody needs to tell them apart.**
+/// This one carries a title and a body and an author's name, **which is the shape a reader trusts
+/// most.**
+pub const A_FILING_THIS_SYSTEM_WROTE: &str = "llm agent";
 
 /// Writing to GitHub, which is where a branch, a pull request and a comment all go.
 pub trait AGitHubWeWriteTo {

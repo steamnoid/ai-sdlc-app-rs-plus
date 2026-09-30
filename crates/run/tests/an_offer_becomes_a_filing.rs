@@ -10,6 +10,12 @@ use aisdlc_run::an_offer_becomes_a_filing::the_filing_an_offer_becomes;
 use aisdlc_run::what_an_agent_offered::AWorkAnAgentOffered;
 use aisdlc_run::what_discovery_concluded::EvidenceFile;
 
+/// The repository a filing is filed in.
+fn the_repository_it_read() -> aisdlc_domain::repository::Repository {
+    aisdlc_domain::repository::Repository::try_from("steamnoid/wellbeing-tracker-public")
+        .expect("two halves")
+}
+
 /// The address one real filing returned, for a comment that has somewhere to go.
 fn an_address_a_filing_returned() -> aisdlc_domain::commissioned_request::AWhereItWasFiled {
     aisdlc_domain::commissioned_request::AWhereItWasFiled::the_address_the_filing_returned(
@@ -53,7 +59,8 @@ crates/run/src/what_an_agent_offered.rs"
 
 #[test]
 fn the_filing_carries_the_evidence_a_reader_needs_to_check_the_claim() {
-    let the_filing = the_filing_an_offer_becomes(&an_offer_about_one_file());
+    let the_filing =
+        the_filing_an_offer_becomes(&the_repository_it_read(), &an_offer_about_one_file());
 
     assert!(
         the_filing
@@ -68,7 +75,8 @@ fn the_filing_carries_the_evidence_a_reader_needs_to_check_the_claim() {
 
 #[test]
 fn a_filing_carries_no_address_because_it_has_not_been_filed_yet() {
-    let the_filing = the_filing_an_offer_becomes(&an_offer_about_one_file());
+    let the_filing =
+        the_filing_an_offer_becomes(&the_repository_it_read(), &an_offer_about_one_file());
 
     assert!(
         the_filing.is_a_filing_not_yet_made(),
@@ -80,7 +88,8 @@ fn a_filing_carries_no_address_because_it_has_not_been_filed_yet() {
 
 #[test]
 fn a_run_can_tell_a_comment_from_a_filing() {
-    let the_filing = the_filing_an_offer_becomes(&an_offer_about_one_file());
+    let the_filing =
+        the_filing_an_offer_becomes(&the_repository_it_read(), &an_offer_about_one_file());
 
     assert!(
         the_filing.is_a_filing_not_yet_made() && !a_comment().is_a_filing_not_yet_made(),
@@ -92,7 +101,8 @@ fn a_run_can_tell_a_comment_from_a_filing() {
 
 #[test]
 fn the_filing_says_who_wrote_it_and_not_a_person() {
-    let the_filing = the_filing_an_offer_becomes(&an_offer_about_one_file());
+    let the_filing =
+        the_filing_an_offer_becomes(&the_repository_it_read(), &an_offer_about_one_file());
 
     assert_eq!(
         the_filing.who_wrote_this(),
@@ -105,7 +115,8 @@ fn the_filing_says_who_wrote_it_and_not_a_person() {
 
 #[test]
 fn the_filing_asks_for_what_the_offer_asked_for() {
-    let the_filing = the_filing_an_offer_becomes(&an_offer_about_one_file());
+    let the_filing =
+        the_filing_an_offer_becomes(&the_repository_it_read(), &an_offer_about_one_file());
 
     assert!(
         the_filing

@@ -795,6 +795,29 @@ is one no human was ever shown** — and a paraphrase of what an agent said is a
 its name. **`AJudgementNobodyMade`** is the refusal, and
 **`WHAT_MAY_BE_SAID_INSTEAD_OF_A_JUDGEMENT`** is what an agent with nothing may say instead, because
 **that is an answer and a blank is not.**
+**A comment has an address and a filing does not**, because a filing is what gives itself one —
+**so `where_it_is_going` is an `Option` and being absent is the type saying the right thing.**
+`CommissionedIssue` derived `…/issues/N` for a repository with no issues and the link resolved to
+nothing while looking exactly like a link; **the address comes back from GitHub afterwards and nowhere
+else.**
+
+**The repository and the address are two facts and only one of them is known beforehand**, because
+`gh issue create` is asked for a repository by name and not by address. **`WhatKindOfThingGitHubIsAskedFor`**
+separates the two kinds, **because one port carries both and a run that filed where it meant to
+comment has written a filing nobody asked for**, in somebody's repository, **which is the one
+consequence in this cycle a person cannot undo.**
+
+**`A_FILING_THIS_SYSTEM_WROTE` is `llm agent` and is a fact and not a configuration.** A comment's
+writer comes from configuration because a person's name does; **a filing this system writes is by
+definition written by this system**, and a signer parameter would be a way for a caller to write
+somebody else's name on a filing nobody else wrote. **This one carries a title and a body and an
+author's name, which is the shape a reader trusts most** — the same rule `autopilot:` follows for an
+approval, on a page a person reads without knowing to be suspicious.
+
+**The evidence addresses travel with the filing**, because the person who reads it is the one who has
+to check it, **and a confident claim with no way to check it is worse than no claim at all** — the
+grounding this system does in code is invisible to a reader unless the address reaches the page.
+
 **`an_agent_is_asked_what_it_would_file`** — the whole path from a checkout's listing to offers this
 run is willing to file: **listing, question, body, request, answer, grounding — in one function.**
 
