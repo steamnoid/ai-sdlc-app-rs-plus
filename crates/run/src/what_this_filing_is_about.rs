@@ -7,7 +7,9 @@
 //! **The role is the discipline that answers and not the one that notices.** An issue nobody had
 //! looked at yet has a discipline waiting, and only the work has one answering.
 
+use aisdlc_domain::repository::Repository;
 use aisdlc_domain::role::Role;
+use aisdlc_domain::who_commissioned::WhoCommissioned;
 use aisdlc_domain::work_item_id::WorkItemId;
 
 use crate::a_filing_is_answered::TheWork;
@@ -71,6 +73,11 @@ pub struct WhatThisFilingIsAbout {
     pub which_work_item: TheWorkItemsId,
     /// Which discipline answers for it.
     pub which_role_answers: TheRoleThatAnswers,
+    /// Who asked, **and a run that filed its own ideas says a model asked rather than signing a
+    /// person's name.**
+    pub who_asked: WhoCommissioned,
+    /// What is being worked on, **never one the code that builds the work item names itself.**
+    pub which_repository: Repository,
 }
 
 impl AnIssueRead {

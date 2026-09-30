@@ -192,6 +192,11 @@ impl WorkItem {
         self.the_request.clone()
     }
 
+    /// The repository this piece of work is about, **and nothing else could answer it.**
+    pub fn the_repository(&self) -> Repository {
+        self.repository.clone()
+    }
+
     /// Whoever asked for it, verbatim.
     pub fn who_asked(&self) -> WhoCommissioned {
         self.who_commissioned.clone()

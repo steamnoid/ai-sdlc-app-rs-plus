@@ -9,7 +9,12 @@
 //! **and a comment composed from a number is a comment on a page that has nothing to do with the
 //! one the run read.**
 
-use aisdlc_run::a_filing_is_answered::{a_filing_is_answered, a_filing_is_answered_into_work};
+use aisdlc_domain::repository::Repository;
+use aisdlc_domain::who_commissioned::WhoCommissioned;
+
+use aisdlc_run::a_filing_is_answered::{
+    TheWork, a_filing_is_answered, a_filing_is_answered_into_work,
+};
 use aisdlc_run::a_git_hub_we_write_to::{AGitHubWeWriteTo, WhatGitHubWasAskedFor};
 use aisdlc_run::an_issue_read::AnIssueRead;
 use aisdlc_run::what_this_filing_is_about::{
@@ -51,7 +56,39 @@ fn a_run_that_was_told_what_it_is_about() -> WhatThisFilingIsAbout {
     WhatThisFilingIsAbout {
         which_work_item: TheWorkItemsId::try_from("WELLBEINGT-42").expect("a name"),
         which_role_answers: TheRoleThatAnswers::try_from("DEV").expect("a discipline"),
+        who_asked: WhoCommissioned::try_from("llm agent").expect("a name"),
+        which_repository: Repository::try_from("steamnoid/wellbeing-tracker-public")
+            .expect("two halves"),
     }
+}
+
+#[test]
+fn a_work_item_says_who_asked_and_not_the_name_the_code_carried() {
+    let what_was_read =
+        AnIssueRead::the_issue_read(&what_github_answered_for_a_transferred_filing())
+            .expect("a filing");
+    let what_a_run_was_told = a_run_that_was_told_what_it_is_about();
+
+    let the_work = TheWork::a_filing_becomes(
+        &what_was_read,
+        what_a_run_was_told.which_work_item.as_str(),
+        what_a_run_was_told.which_role_answers.as_str(),
+    );
+
+    assert_eq!(
+        (
+            the_work.work_item.who_asked().to_string(),
+            the_work.work_item.the_repository().to_string()
+        ),
+        (
+            "llm agent".to_string(),
+            "steamnoid/wellbeing-tracker-public".to_string()
+        ),
+        "**because the code that builds a work item carried a person and `steamnoid/one` whatever \
+         the run was told** — and a run that files its own ideas would have signed somebody's name \
+         on every one of them. That is the forgery #104 closed for a comment, in the one place a \
+         record of *who asked* is read first: {the_work:?}"
+    );
 }
 
 /// The name a deployment writes its own comments under.
