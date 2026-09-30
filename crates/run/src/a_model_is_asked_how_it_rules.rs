@@ -14,6 +14,7 @@ use aisdlc_domain::work_item_id::WorkItemId;
 
 use crate::ApprovalQuestion;
 use crate::a_program_we_run::AProgramWeRun;
+use crate::the_words_inside_the_endpoints_envelope::the_words_inside_the_endpoints_envelope;
 use crate::what_we_tell_a_program_to_do::WhatWeTellAProgramToDo;
 
 /// An answer that was not the fixed form, quoting what came back.
@@ -69,18 +70,10 @@ pub fn the_question_a_model_is_asked(
 pub fn the_ruling_a_model_gave(
     what_the_endpoint_said: &str,
 ) -> Result<bool, AnAnswerThatIsNotARuling> {
-    let what_it_came_back_as: serde_json::Value = serde_json::from_str(what_the_endpoint_said)
-        .map_err(|_| AnAnswerThatIsNotARuling::because(what_the_endpoint_said))?;
-    let the_content = what_it_came_back_as
-        .get("choices")
-        .and_then(|choices| choices.get(0))
-        .and_then(|the_first| the_first.get("message"))
-        .and_then(|the_message| the_message.get("content"))
-        .and_then(|the_content| the_content.as_str());
-    let Some(the_content) = the_content else {
-        return Err(AnAnswerThatIsNotARuling::because(what_the_endpoint_said));
-    };
-    the_ruling_in(the_content)
+    let the_content = the_words_inside_the_endpoints_envelope(what_the_endpoint_said).map_err(
+        |nobody_can_read| AnAnswerThatIsNotARuling::because(nobody_can_read.what_it_said()),
+    )?;
+    the_ruling_in(&the_content)
 }
 
 /// The one word a model is held to, and nothing else.

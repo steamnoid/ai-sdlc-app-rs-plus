@@ -795,6 +795,29 @@ is one no human was ever shown** — and a paraphrase of what an agent said is a
 its name. **`AJudgementNobodyMade`** is the refusal, and
 **`WHAT_MAY_BE_SAID_INSTEAD_OF_A_JUDGEMENT`** is what an agent with nothing may say instead, because
 **that is an answer and a blank is not.**
+**`the_words_inside_the_endpoints_envelope`** — the model's own words, inside the JSON the endpoint
+wraps every answer in. **One function and not one per caller, because this is where #102 and #109 were
+burned.** A reader that demanded the whole answer *be* the model's word decides no model can ever
+rule — **and two readers of the same envelope are two places for one of them to be wrong about where
+the model's words begin.** The ruling at a gate and the offers of a creative agent now read it through
+the same door.
+
+**`AnAnswerNobodyCanRead`** is the refusal, and **every failure quotes what came back** — because
+*Failed to connect to localhost port 11434* is what the very first real run received, **and a reader
+that paraphrased it would have thrown away the only clue there was.** The words are owned rather than
+borrowed: **they are read out of a value this function parses, and a borrow of a local that outlives
+the function does not compile** — which is the one honest reason this signature is what it is.
+
+**`the_question_an_agent_is_asked`** carries **every name the model is allowed to cite**, and the
+sentence telling it not to invent is **not the check** — a run that only asked nicely and never
+compared would rely on a model to be honest about which files it invented, **and the whole of the
+grounding rule would be a sentence.** §0.4 again: quality rules live in assertions, not in prompt text.
+
+**`AnAnswerThatIsNotAnOffer`** refuses **every way of failing**, because the failure has to point one
+way: **a broken answer read as an offer files an issue nobody read.** A missing field, a field that is
+not text, and a whole answer with no `offers` are one refusal, **and each quotes the answer back
+rather than naming the field that was missing.**
+
 **`WhatAModelSaidItWouldFile`** — what a model said it would file, **in the shape it said it in:
 paths and not addresses.** **The raw answer and the offer are two types, on purpose**, and the
 address rule is only half the reason.
