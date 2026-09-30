@@ -17,7 +17,11 @@ pub fn the_filing_an_offer_becomes(
     of_which_repository: &aisdlc_domain::repository::Repository,
     one_offer: &AWorkAnAgentOffered,
 ) -> WhatGitHubWasAskedFor {
-    WhatGitHubWasAskedFor::a_filing_in(of_which_repository, the_body_of(one_offer))
+    WhatGitHubWasAskedFor::a_filing_in(
+        of_which_repository,
+        one_offer.title.clone(),
+        the_body_of(one_offer),
+    )
 }
 
 /// What the issue will say, **in the order a person reads it: what it is, what it wants, and where

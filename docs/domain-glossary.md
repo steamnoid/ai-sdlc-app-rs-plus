@@ -795,6 +795,30 @@ is one no human was ever shown** — and a paraphrase of what an agent said is a
 its name. **`AJudgementNobodyMade`** is the refusal, and
 **`WHAT_MAY_BE_SAID_INSTEAD_OF_A_JUDGEMENT`** is what an agent with nothing may say instead, because
 **that is an answer and a blank is not.**
+**`AFilingReachingGitHub`** — writing a filing to GitHub with `gh`, **which is a program and not a
+shell.** One argument each, no shell, **because a title has dashes and colons in it and a body is
+prose with backticks** — and one string re-split into two is one string somebody else assembled.
+
+**`AFilingWithNowhereToPoint`** — a filing was made and GitHub printed no address for it. **A comment
+has nowhere new to point and a filing has exactly one place to point**, because `gh issue create`
+prints the address of what it made — **and a run that filed an issue into a real repository and threw
+the address away has done the one thing a person cannot undo and cannot find.** The refusal quotes what
+GitHub said instead, because it said something wrong on every run where it failed.
+
+**`what_the_address_it_returned` reads GitHub's words and never composes one.** A repository and a
+number make an address **this repository already deleted once**, and it resolved to a page that did not
+exist **while looking exactly like a link.**
+
+**`--repo` and not an address, because the filing does not exist yet.** The repository and the
+address are two facts and **only one of them is known before the filing is made** — which is why a
+filing carries a repository and no address, and why the two are separate accessors rather than one
+optional field.
+
+**A title and a body and no title is a filing nobody can find in a list of fifty.** #137 shipped a
+filing with no title anywhere in it, **and the test that noticed is the one that reads the title back
+off the request** — an issue titled with the first words of its own paragraph is an issue a person
+cannot scan.
+
 **A comment has an address and a filing does not**, because a filing is what gives itself one —
 **so `where_it_is_going` is an `Option` and being absent is the type saying the right thing.**
 `CommissionedIssue` derived `…/issues/N` for a repository with no issues and the link resolved to
