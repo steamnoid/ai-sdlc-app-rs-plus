@@ -720,6 +720,18 @@ asserting a flag that does not exist. The name goes in the words, where a reader
 record keeps it for the audit trail. The account is the author and this system does not get to
 pretend otherwise.
 
+**`a_filing_is_read_ruled_on_recorded_and_moved_all_in_one_run`** — the only test that walks
+every part at once, and **it exists because every part was true on its own and nothing proved they
+compose.** A read and a write that did not meet, a work item that stood at `IDLE`, a gate that took
+only a person's decision, and a model that ruled with nowhere for the ruling to go — **four
+half-systems, each proved against the real thing, and no proof that they run.**
+
+**A run that dies at the eleventh step has still told the truth about where the eleventh step is**,
+which is why the assertions sit at the end and each stage prints what it has before the next begins.
+On issue `#8` the model refused, nothing was recorded, and the work went back to
+`AWAITING_AGENT_Pickup` — **which is the correct outcome, because there is no `DiscoveryReport`
+yet for it to approve.**
+
 **`the_ruling_moves_the_work`** — the work moved where its ruling says it goes, and nowhere else.
 **An approval is the only move that ends the work**, and `DONE` is the table's own destination for
 it — **not one this file chose.** A refused work goes back to `AWAITING_AGENT_PICKUP`, because **a
