@@ -20,21 +20,33 @@ against, and a name that is not in it does not enter the source.
 | [`tests/`](tests) | the gates, in two files named for what they are about |
 | [`scripts/gate`](scripts/gate) | the one command, and the check `main` requires |
 
-**536 tests.** The domain is complete: the six stages, the five roles, the exhaustive
+**553 tests.** The domain is complete: the six stages, the five roles, the exhaustive
 transition table, the work item and its three doors, and the approval record. `crates/run`
 carries four moves of a run, the gate that asks a person, and **a run that really clones a
 repository with `git` and reads the commit and the ref back out of the clone it made**.
 
-**Two things in this repository have been talked to for real, and one of them wrote on GitHub.**
+**A filing goes in, a run reads it, and a comment comes back out — all three proved against
+the real GitHub, in one run.**
 
-A model at the configured endpoint was asked how it rules on a question, and answered
-`REFUSED` — **a decision, not a failure to read one**, after three refusals that were exactly that
-failure and a body that was never valid JSON. A filed request was carried to a real GitHub
-issue and left a comment there under the name a deployment chose for itself.
+`gh` reads a number a person typed, and the address comes from GitHub rather than being
+composed from the number — **an issue that was transferred answers somewhere the number does not
+appear, and a composed address can only be right or wrong.** A pull request at that address is
+refused, because GitHub answers both from one path and a pull request's body describes a change
+rather than asking for one. A number with nothing behind it is refused as *no such filing*,
+which is not the same fact as *an answer this system cannot read* — **and a person told the
+wrong one goes to look at this system instead of at their own number.** The comment is then
+written at the address that was read, signed with the name a deployment chose for itself, and
+says only what is true of it.
 
-**There is no pipeline yet.** An artifact is a name this system has not been given, because
-the name belongs to the agent that produces one, and **no such agent exists.** The two things
-above are the two edges of it, and what is missing is everything between them.
+**A model has ruled, once, and it ruled `REFUSED`** — a decision rather than a failure to read
+one, after three refusals that were exactly that failure and a request body that had never been
+valid JSON.
+
+**There is no pipeline yet.** A work item is named by the run that is told the name, and it
+stands at a stage; it is **not put at a gate, and nothing is decided about it.** An artifact is
+a name this system has not been given, because the name belongs to the agent that produces one,
+and **no such agent exists.** What is proved is the round trip of a filing, and the loop above
+is its two ends joined — **not a system that works on work.**
 
 **Nothing in this repository reads this file, so every claim in it is a promise rather than a
 check.** The numbers that used to sit beside the crates were the most perishable facts here — two
