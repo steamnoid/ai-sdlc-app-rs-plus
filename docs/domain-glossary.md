@@ -767,6 +767,19 @@ corner**, because six of the seven entries GitHub answers with there are pull re
 describes a change rather than asking for one, and **reading it as a request hands the pipeline a
 description to work from, and every artifact after it is about work nobody asked for.**
 
+**`WhyAnAnswerIsNotAFiling`** — why an answer is not a filing, **named rather than a paragraph.**
+**"There is no filing" and "this system cannot read this" are different facts**, and one is worth
+retrying while the other is worth reading the number again. **A far end having a bad minute is not a
+filing not existing** — and telling a person their filing is gone when the far end answered nonsense
+is worse than saying nothing.
+
+**`ANoSuchFiling`** — there is nothing at the number that was asked for. GitHub answers a missing
+filing with `{"message":"Not Found","status":"404"}` on one stream and `gh: Not Found (HTTP 404)` on
+the other, and **the two streams are not concatenated**, because joining them produces something
+that is not an answer at all — so a reader that only knew how to parse would report that it cannot
+read a filing that is merely not there, **and a person told the wrong one goes to look at this
+system instead of at their own number.**
+
 **`AnAnswerThatIsNotAFiledRequest`** — that refusal, quoting the answer back **and not summarising
 it**, because a caller deciding whether to retry needs to know what GitHub actually said.
 

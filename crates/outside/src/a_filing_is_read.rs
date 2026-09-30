@@ -9,7 +9,7 @@
 //! pull requests.
 
 use aisdlc_run::a_program_we_run::AProgramWeRun;
-use aisdlc_run::an_issue_read::{AnAnswerThatIsNotAFiledRequest, AnIssueRead};
+use aisdlc_run::an_issue_read::AnIssueRead;
 use aisdlc_run::an_issue_to_read::AnIssueToRead;
 use aisdlc_run::what_we_tell_a_program_to_do::WhatWeTellAProgramToDo;
 
@@ -29,7 +29,7 @@ impl AFilingIsRead {
     pub fn the_filing_is_read(
         &mut self,
         which_filing: &AnIssueToRead,
-    ) -> Result<AnIssueRead, AnAnswerThatIsNotAFiledRequest> {
+    ) -> Result<AnIssueRead, aisdlc_run::an_issue_read::WhyAnAnswerIsNotAFiling> {
         let the_answer = self.run(&WhatWeTellAProgramToDo::read_the_filing(
             which_filing.clone(),
         ));
@@ -81,9 +81,21 @@ fn the_arguments_of(what_it_is_asked_to_do: &WhatWeTellAProgramToDo) -> Vec<Stri
     ]
 }
 
-/// What a program wrote, from both of its streams, because it may have said it on either.
+/// What a program wrote, and **the answer itself when it wrote one.**
+///
+/// **The two streams are not concatenated**, because a program that fails writes a complaint on one
+/// and a body on the other — `gh` answers a missing filing with `{"message":"Not Found","status":
+/// "404"}` on stdout and `gh: Not Found (HTTP 404)` on stderr — **and joining them produces
+/// something that is not an answer at all**, so a reader would report that it cannot read a filing
+/// that is merely not there. The complaint is kept for when there is no body to read.
 fn what_was_written(what_it_ran: &std::process::Output) -> String {
-    let the_answer = String::from_utf8_lossy(&what_it_ran.stdout);
-    let why_not = String::from_utf8_lossy(&what_it_ran.stderr);
-    format!("{the_answer}\n{why_not}").trim().to_string()
+    let the_answer = String::from_utf8_lossy(&what_it_ran.stdout)
+        .trim()
+        .to_string();
+    if !the_answer.is_empty() {
+        return the_answer;
+    }
+    String::from_utf8_lossy(&what_it_ran.stderr)
+        .trim()
+        .to_string()
 }
