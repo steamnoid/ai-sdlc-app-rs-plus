@@ -54,23 +54,67 @@ impl WhatAnAgentOffered {
             .map_err(|a_path| AnOfferNothingWasConcludedFrom(a_path.0))
     }
 
-    /// What an agent offered, **accepted whole for now** — the refusal is the next commit.
+    /// What an agent offered, **refused when any single offer names no file.**
+    ///
+    /// **One fault is enough and every offer is checked**, because a run that files four issues and
+    /// gets one of them wrong has filed an issue about a file that is not there — **and the three
+    /// beside it being right is no reason to file it.**
+    ///
+    /// **No offers at all is not a fault.** An agent that concluded there is nothing worth filing has
+    /// told the truth, **and it still has to say so in words**, because an empty offer list and an
+    /// agent that was never asked look identical afterwards.
     pub fn an_agent_offered(
         offers: Vec<(String, String, Vec<EvidenceFile>)>,
         judged: WhatAnAgentJudged,
     ) -> Result<WhatAnAgentOffered, AnOfferNothingWasConcludedFrom> {
+        let what_was_offered: Vec<AWorkAnAgentOffered> = offers
+            .into_iter()
+            .map(
+                |(title, what_it_asks_for, what_it_concluded_from)| AWorkAnAgentOffered {
+                    title,
+                    what_it_asks_for,
+                    what_it_concluded_from,
+                },
+            )
+            .collect();
+        the_fault_in(&what_was_offered)?;
         Ok(WhatAnAgentOffered {
-            offers: offers
-                .into_iter()
-                .map(
-                    |(title, what_it_asks_for, what_it_concluded_from)| AWorkAnAgentOffered {
-                        title,
-                        what_it_asks_for,
-                        what_it_concluded_from,
-                    },
-                )
-                .collect(),
+            offers: what_was_offered,
             judged,
         })
     }
+}
+
+/// The first thing wrong with an offer, **and every offer is looked at because one fault is enough.**
+fn the_fault_in(
+    what_was_offered: &[AWorkAnAgentOffered],
+) -> Result<(), AnOfferNothingWasConcludedFrom> {
+    for one_offer in what_was_offered {
+        something_to_ask_for(one_offer)?;
+        files_behind_it(one_offer)?;
+    }
+    Ok(())
+}
+
+/// An offer with no title or nothing to ask for, **and neither is a filing anybody can rule on.**
+fn something_to_ask_for(
+    one_offer: &AWorkAnAgentOffered,
+) -> Result<(), AnOfferNothingWasConcludedFrom> {
+    if one_offer.title.trim().is_empty() || one_offer.what_it_asks_for.trim().is_empty() {
+        return Err(AnOfferNothingWasConcludedFrom(
+            "an offer with no title, or nothing to ask for".to_string(),
+        ));
+    }
+    Ok(())
+}
+
+/// An offer with no file behind it, **which is a guess that would be filed as a finding.**
+fn files_behind_it(one_offer: &AWorkAnAgentOffered) -> Result<(), AnOfferNothingWasConcludedFrom> {
+    if one_offer.what_it_concluded_from.is_empty() {
+        return Err(AnOfferNothingWasConcludedFrom(format!(
+            "{}, which names no file",
+            one_offer.title
+        )));
+    }
+    Ok(())
 }
