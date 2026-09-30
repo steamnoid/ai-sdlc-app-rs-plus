@@ -16,6 +16,7 @@ pub struct WhatGitHubWasAskedFor {
     what_is_written: String,
     who_wrote_this: String,
     what_it_is_called: WhatKindOfThingGitHubIsAskedFor,
+    what_the_filing_is_called: Option<String>,
 }
 
 /// What kind of thing GitHub is being asked for, **because one port carries two and a run has to
@@ -69,6 +70,7 @@ impl WhatGitHubWasAskedFor {
             what_is_written: what_is_written.to_string(),
             who_wrote_this: who_wrote_this.to_string(),
             what_it_is_called: WhatKindOfThingGitHubIsAskedFor::AComment,
+            what_the_filing_is_called: None,
         }
     }
 
@@ -89,7 +91,16 @@ impl WhatGitHubWasAskedFor {
             what_is_written,
             who_wrote_this: A_FILING_THIS_SYSTEM_WROTE.to_string(),
             what_it_is_called: WhatKindOfThingGitHubIsAskedFor::AFilingNotYetMade,
+            what_the_filing_is_called: None,
         }
+    }
+
+    /// What this filing is called, **and nothing for a comment.**
+    ///
+    /// **A title and a body and no title is a filing nobody can find in a list of fifty**, and an
+    /// issue titled with the first words of its own paragraph is an issue a person cannot scan.
+    pub fn what_the_filing_is_called(&self) -> Option<&str> {
+        self.what_the_filing_is_called.as_deref()
     }
 
     /// Which repository this filing is filed in, **and nothing for a comment.**
