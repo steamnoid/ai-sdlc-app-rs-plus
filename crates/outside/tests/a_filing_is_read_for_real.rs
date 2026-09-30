@@ -13,7 +13,9 @@ use aisdlc_outside::a_filing_is_read::AFilingIsRead;
 use aisdlc_run::an_issue_to_read::AnIssueToRead;
 
 /// The repository this run is pointed at, and one filing of it.
-fn a_filing(number: i64) -> AnIssueToRead {
+fn a_filing(
+    number: i64,
+) -> Result<AnIssueToRead, aisdlc_run::an_issue_to_read::ANumberThatIsNotAnIssueNumber> {
     AnIssueToRead::the_issue_to_read(
         Repository::try_from("steamnoid/wellbeing-tracker-public").expect("two halves"),
         number,
@@ -25,7 +27,7 @@ fn a_filing(number: i64) -> AnIssueToRead {
 fn a_filing_is_read_and_answers_where_it_answers() {
     let mut the_reader = AFilingIsRead;
 
-    let what_was_read = the_reader.the_filing_is_read(&a_filing(8));
+    let what_was_read = the_reader.the_filing_is_read(&a_filing(8).expect("eight is a number"));
 
     let it_was_read = what_was_read.expect("issue 8 exists and was filed by a person");
     eprintln!(
@@ -46,7 +48,7 @@ fn a_filing_is_read_and_answers_where_it_answers() {
 fn a_pull_request_at_that_address_is_refused_and_not_read_as_a_filing() {
     let mut the_reader = AFilingIsRead;
 
-    let what_was_read = the_reader.the_filing_is_read(&a_filing(115));
+    let what_was_read = the_reader.the_filing_is_read(&a_filing(115).expect("a number"));
 
     assert!(
         what_was_read.is_err(),
