@@ -81,15 +81,12 @@ pub struct WhatThisFilingIsAbout {
 }
 
 impl AnIssueRead {
-    /// The work this filing becomes, under the name and for the discipline a run was told.
+    /// The work this filing becomes, **under everything a run was told about it.**
     ///
-    /// **Both given, and neither guessed here** — because a work item that ignores its own name is a
-    /// work item that cannot be found again by anybody.
-    pub fn the_work_it_becomes(
-        &self,
-        which_work_item: &TheWorkItemsId,
-        which_role_answers: &TheRoleThatAnswers,
-    ) -> TheWork {
-        TheWork::a_filing_becomes(self, which_work_item.as_str(), which_role_answers.as_str())
+    /// **The whole of what the run was told and not two fields of it** — because a seam taking a name
+    /// and a discipline with no room for who asked is exactly how a work item came to name `"a
+    /// person"` whatever the run was told, and **the name is what the seam carries.**
+    pub fn the_work_it_becomes(&self, what_a_run_was_told: &WhatThisFilingIsAbout) -> TheWork {
+        TheWork::a_filing_becomes(self, what_a_run_was_told)
     }
 }

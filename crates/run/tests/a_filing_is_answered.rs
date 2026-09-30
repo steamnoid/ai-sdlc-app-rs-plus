@@ -69,11 +69,7 @@ fn a_work_item_says_who_asked_and_not_the_name_the_code_carried() {
             .expect("a filing");
     let what_a_run_was_told = a_run_that_was_told_what_it_is_about();
 
-    let the_work = TheWork::a_filing_becomes(
-        &what_was_read,
-        what_a_run_was_told.which_work_item.as_str(),
-        what_a_run_was_told.which_role_answers.as_str(),
-    );
+    let the_work = TheWork::a_filing_becomes(&what_was_read, &what_a_run_was_told);
 
     assert_eq!(
         (
@@ -129,7 +125,8 @@ fn the_words_a_person_filed_are_the_words_the_work_carries() {
         AnIssueRead::the_issue_read(&what_github_answered_for_a_transferred_filing())
             .expect("a transferred filing is still a filing");
 
-    let the_work = a_filing_is_answered_into_work(&what_was_read, "A-1", "PO");
+    let the_work =
+        a_filing_is_answered_into_work(&what_was_read, &a_run_that_was_told_what_it_is_about());
 
     assert_eq!(
         (
