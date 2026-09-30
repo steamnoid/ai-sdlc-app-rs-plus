@@ -720,6 +720,21 @@ asserting a flag that does not exist. The name goes in the words, where a reader
 record keeps it for the audit trail. The account is the author and this system does not get to
 pretend otherwise.
 
+**`a_filing_is_answered`** — a filing that was read, written back on as a comment. **Two working
+ends and no use joining them are two proofs and not a system**: the read exists and the comment
+exists, and a run that never joins them has demonstrated a repository and a filing rather than a
+thing that works on a filing.
+
+**The comment goes to the address that was read and never to one composed from the number**, and the
+filing in the test is **transferred** — it answers at `…/issues/301` and was asked for as `8`. **An
+address composed from a number is a comment on a page that has nothing to do with the one the run
+read.** This is the same trap the domain closed once and `no_body_is_built_by_a_hand`'s sibling rule
+now holds, arriving at the last possible place to be caught.
+
+**`TheWork`** — the work a read filing becomes. **The words a person filed are the words the work
+carries**, because a work item that paraphrases a filing is a record of a different request, and the
+person who reads it later is the only one who can tell the difference.
+
 **`AFilingIsRead`** — a filing, read out of GitHub by `gh`. **This is the half that was missing
 while the writing half was finished**: a comment could go back to a filing that nothing could bring
 in, and a system with one end closed is a system that cannot be run, only demonstrated.

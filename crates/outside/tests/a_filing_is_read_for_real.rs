@@ -9,8 +9,16 @@
 //! reading itself, on a filing that really exists.
 
 use aisdlc_domain::repository::Repository;
+use aisdlc_outside::a_comment_reaching_github::ACommentReachingGitHub;
 use aisdlc_outside::a_filing_is_read::AFilingIsRead;
+use aisdlc_run::a_filing_is_answered::a_filing_is_answered;
 use aisdlc_run::an_issue_to_read::AnIssueToRead;
+
+/// The name a deployment writes its own comments under.
+fn a_signer() -> aisdlc_run::who_signs_a_comment::WhoSignsAComment {
+    aisdlc_run::who_signs_a_comment::WhoSignsAComment::the_name_a_deployment_used("aisdlc-dev")
+        .expect("a name")
+}
 
 /// The repository this run is pointed at, and one filing of it.
 fn a_filing(
@@ -55,5 +63,34 @@ fn a_pull_request_at_that_address_is_refused_and_not_read_as_a_filing() {
         "**because a pull request's body describes a change rather than asking for one** — and a \
          run that read it as a request would go on to write artifacts about work nobody asked for: \
          {what_was_read:?}"
+    );
+}
+
+#[test]
+#[ignore = "reads GitHub and writes to it, and needs gh authenticated"]
+fn a_filing_is_read_and_then_answered_on_it() {
+    let mut the_reader = AFilingIsRead;
+    let what_was_read = the_reader
+        .the_filing_is_read(&a_filing(8).expect("eight is a number"))
+        .expect("issue 8 exists and was filed by a person");
+    let who_signed = a_signer();
+    let mut the_writer = ACommentReachingGitHub;
+
+    let how_it_went = a_filing_is_answered(
+        &mut the_writer,
+        &what_was_read,
+        "A run of this system read this filing and is looking at it. No work has been done and \
+         none is claimed yet.",
+        &who_signed,
+    );
+
+    eprintln!(
+        "read {} and answered: {how_it_went:?}",
+        what_was_read.where_it_answers()
+    );
+    assert!(
+        how_it_went.is_ok(),
+        "**because a filing that can be read and cannot be answered is half a loop** — and the two \
+         halves were both proved separately before anything joined them: {how_it_went:?}"
     );
 }

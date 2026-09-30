@@ -9,8 +9,7 @@
 //! **and a comment composed from a number is a comment on a page that has nothing to do with the
 //! one the run read.**
 
-use aisdlc_run::a_comment_is_left::the_run_leaves_a_comment;
-use aisdlc_run::a_filing_is_answered::a_filing_is_answered;
+use aisdlc_run::a_filing_is_answered::{a_filing_is_answered, a_filing_is_answered_into_work};
 use aisdlc_run::a_git_hub_we_write_to::{AGitHubWeWriteTo, WhatGitHubWasAskedFor};
 use aisdlc_run::an_issue_read::AnIssueRead;
 use aisdlc_run::who_signs_a_comment::WhoSignsAComment;
@@ -90,7 +89,7 @@ fn the_words_a_person_filed_are_the_words_the_work_carries() {
             the_work
                 .requested
                 .where_it_was_filed()
-                .map(|where_it_is| where_it_is.as_str())
+                .map(aisdlc_domain::commissioned_request::AWhereItWasFiled::as_str)
         ),
         (
             "the root tsconfig covers the tests",
