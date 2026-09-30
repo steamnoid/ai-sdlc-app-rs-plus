@@ -8,6 +8,7 @@
 //! **The credential is on the program and not on the request**, and the arguments are where it
 //! finally appears — one argument each, with no shell anywhere to re-split them.
 
+use aisdlc_outside::the_environment::TheEnvironment;
 use aisdlc_outside::the_program_as_it_runs::TheProgramAsItRuns;
 use aisdlc_run::a_credential::ACredential;
 use aisdlc_run::what_we_tell_a_program_to_do::WhatWeTellAProgramToDo;
@@ -93,5 +94,67 @@ fn the_model_question_asks_to_post_and_says_where() {
         the_arguments.iter().any(|one| one == "-X")
             && the_arguments.iter().any(|one| one == "POST"),
         "**and it says what it is doing and where**, because a curl with no verb and no address is a program run for no reason at all: {the_arguments:?}"
+    );
+}
+
+/// A question to a model, and a program carrying what a deployment named.
+fn a_program_with_what_a_deployment_named(what_it_named: &str) -> TheProgramAsItRuns {
+    let the_environment =
+        TheEnvironment::of(vec![("LLM_HEADERS".to_string(), what_it_named.to_string())]);
+    let the_credential = ACredential::the_key_a_deployment_supplied("sk-a-key").expect("a key");
+    TheProgramAsItRuns::as_it_is_on_this_host(Some(the_credential))
+        .with_what_a_deployment_named(&the_environment)
+}
+
+#[test]
+fn a_header_a_deployment_named_is_one_argument_beside_the_others() {
+    let the_arguments = a_program_with_what_a_deployment_named("x-opencode-session: aisdlc")
+        .the_arguments_of(&a_question_to_a_model());
+
+    let the_header_is_whole = the_arguments
+        .iter()
+        .any(|one| one == "x-opencode-session: aisdlc");
+    let the_name_became_its_own_argument = the_arguments
+        .iter()
+        .any(|one| one == "x-opencode-session" || one == "aisdlc");
+    assert!(
+        the_header_is_whole && !the_name_became_its_own_argument,
+        "**because a header is a name and a value and not two arguments** — and a name split from \
+         its value is a header `curl` will send to a host it was not addressed to: {the_arguments:?}"
+    );
+}
+
+#[test]
+fn a_deployment_that_named_no_headers_still_asks_the_model_and_names_no_header() {
+    let the_arguments =
+        a_program_with_what_a_deployment_named("").the_arguments_of(&a_question_to_a_model());
+
+    let it_still_asks = the_arguments.iter().any(|one| one == "POST")
+        && the_arguments
+            .iter()
+            .any(|one| one == "http://localhost:11434/v1/chat/completions");
+    let an_empty_header_was_sent = the_arguments.iter().any(|one| one.is_empty());
+    assert!(
+        it_still_asks && !an_empty_header_was_sent,
+        "**because most deployments need no header at all** — and sending an empty one is a header \
+         with an empty name, which is a thing no host can be addressed by: {the_arguments:?}"
+    );
+}
+
+#[test]
+fn a_program_with_no_credential_is_asked_for_nothing_even_with_headers() {
+    let the_environment = TheEnvironment::of(vec![(
+        "LLM_HEADERS".to_string(),
+        "x-opencode-session: aisdlc".to_string(),
+    )]);
+    let program_without_a_credential = TheProgramAsItRuns::as_it_is_on_this_host(None)
+        .with_what_a_deployment_named(&the_environment);
+
+    let the_arguments = program_without_a_credential.the_arguments_of(&a_question_to_a_model());
+
+    assert!(
+        the_arguments.is_empty(),
+        "**because a header is not a credential and cannot stand in for one** — the deployment named \
+         a header and this system read it, and the request still goes nowhere: {the_arguments:?}"
     );
 }
