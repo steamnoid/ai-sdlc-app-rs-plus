@@ -34,29 +34,6 @@ impl AnAnswerThatIsNotAnOffer {
     }
 }
 
-/// The question put to a creative agent, **carrying every name it is allowed to cite.**
-///
-/// **The instruction and the listing are both here and the instruction is not the check** — a run
-/// that only asked nicely and never compared would be relying on a model to be honest about which
-/// files it invented, **and the whole of #134's rule would be a sentence.**
-pub fn the_question_an_agent_is_asked(
-    of_which_repository: &Repository,
-    what_the_run_saw: &[String],
-) -> String {
-    let the_listing = what_the_run_saw.join("\n");
-    format!(
-        "You are looking at {owner}/{name}. Name work worth filing as issues.\n\
-         You may only cite files from this listing:\n{listing}\n\
-         Answer with an offers array. Each offer has a title, what_it_asks_for, and the paths it \
-         concluded from, all three of them always present.\n\
-         An offer with no file from the listing is refused, and an empty offers array is a valid \
-         answer. Do not name who decided; that is not yours to say.",
-        owner = of_which_repository.owner,
-        name = of_which_repository.name,
-        listing = the_listing,
-    )
-}
-
 /// What a model said it would file, **read out of the envelope and held to the shape it was given.**
 ///
 /// **Every way of failing here is a refusal and never an offer**, because that is the direction the
