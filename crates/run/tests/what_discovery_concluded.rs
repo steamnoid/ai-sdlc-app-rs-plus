@@ -14,12 +14,10 @@
 //! address follows from the repository the run is about.**
 
 use aisdlc_domain::repository::Repository;
-use aisdlc_run::what_discovery_concluded::{
-    ADiscoveryReportThatSaysNothing, AnEvidenceOutsideTheRepository, WhatDiscoveryConcluded,
-};
+use aisdlc_run::what_discovery_concluded::WhatDiscoveryConcluded;
 
 /// This repository, and the branch its links are built from.
-fn this_repository() -> Repository {
+fn the_repository_this_report_is_about() -> Repository {
     Repository::try_from("steamnoid/one").expect("two halves")
 }
 
@@ -70,8 +68,12 @@ fn at_least_one_field_is_enough_because_a_repository_has_no_ci() {
 
 #[test]
 fn an_evidence_address_is_built_from_the_repository_and_the_path_not_asked_for() {
-    let the_evidence =
-        a_report_that_says_something().what_it_concluded_from(&["crates/domain/src/lib.rs"]);
+    let the_evidence = a_report_that_says_something()
+        .what_it_concluded_from(
+            &the_repository_this_report_is_about(),
+            &["crates/domain/src/lib.rs"],
+        )
+        .expect("that path is inside the repository");
 
     assert_eq!(
         the_evidence.first().map(|one| one.link.as_str()),
@@ -84,7 +86,11 @@ fn an_evidence_address_is_built_from_the_repository_and_the_path_not_asked_for()
 
 #[test]
 fn a_path_outside_the_repository_is_not_evidence_of_anything() {
-    let the_way_out = WhatDiscoveryConcluded::what_it_concluded_from(&["../../etc/passwd"]);
+    let a_report = a_report_that_says_something();
+    let the_way_out = a_report.what_it_concluded_from(
+        &the_repository_this_report_is_about(),
+        &["../../etc/passwd"],
+    );
 
     assert!(
         the_way_out.is_err(),

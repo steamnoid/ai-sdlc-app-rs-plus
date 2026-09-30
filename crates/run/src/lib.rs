@@ -32,6 +32,7 @@ pub mod the_project_on_disk;
 pub mod the_repository_to_clone_into;
 pub mod the_run_makes_a_checkout;
 pub mod what_an_agent_has_produced;
+pub mod what_discovery_concluded;
 pub mod what_the_agent_presents;
 pub mod what_this_filing_is_about;
 pub mod what_we_tell_a_program_to_do;
