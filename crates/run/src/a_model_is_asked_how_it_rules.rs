@@ -136,17 +136,24 @@ impl WhereAModelIs {
     }
 }
 
-/// The body a model is given, built here so the shape of the answer is ours.
+/// The body a model is given, built by the JSON library and not by a hand.
 ///
 /// **The shape and not a word about who decided.** A model told to say one word and asked to say
 /// whose decision it is has been asked two things, and the second one is a forgery waiting to be
 /// refused — **so the body forbids it rather than the parser catching it.**
+///
+/// **The library and not a format string.** This body was once written by hand, with the question
+/// put where a quoted string belongs and no quotes around it — **so every request this system ever
+/// sent a model was invalid JSON**, the far end answered `400` with zero bytes, and the refusal that
+/// reached us quoted an empty string. **A hand-rolled escape is a lossy channel in both directions**,
+/// and the question is a work item's name and an artifact's name, which are strings people type.
 pub fn the_body_a_model_is_given(the_question: &str, where_the_model_is: &WhereAModelIs) -> String {
-    format!(
-        "{{\"model\":\"{}\",\"temperature\":0,\"messages\":[{{\"role\":\"user\",\"content\":{}}}]}}",
-        where_the_model_is.which_model,
-        the_question.replace('\\', "\\\\").replace('"', "\\\"")
-    )
+    let the_asked = serde_json::json!({
+        "model": where_the_model_is.which_model,
+        "temperature": 0,
+        "messages": [{"role": "user", "content": the_question}],
+    });
+    the_asked.to_string()
 }
 
 /// The model is asked how it rules, and its answer becomes a decision naming the model.

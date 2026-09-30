@@ -720,6 +720,17 @@ asserting a flag that does not exist. The name goes in the words, where a reader
 record keeps it for the audit trail. The account is the author and this system does not get to
 pretend otherwise.
 
+**`the_body_a_model_is_given`** — the body a model is given, **built by the JSON library and not
+by a hand.** This body was once written by hand, with the question put where a quoted string belongs
+and no quotes around it — **so every request this system ever sent a model was invalid JSON**, the
+far end answered `400` with **zero bytes**, and the refusal that reached us quoted an empty string
+while the same curl with a hand-written body answered `APPROVED` in half a second.
+
+**Three real runs, the same refusal, and the cause was eleven characters of format string that no
+test ever looked at.** A hand-rolled escape is a lossy channel in both directions, and the question
+is a work item's name and an artifact's name, which are strings people type — **so a quote in one of
+them must not be able to break the request it is in.**
+
 **`with_what_a_deployment_named`** — what a deployment said a model must be asked besides the
 body, one header each. **A deployment fact and not a gateway's name written into this system**: a
 proxy in front of a model can require anything, so the deployment says what it requires — **and no
