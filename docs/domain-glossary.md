@@ -775,6 +775,27 @@ worked on at all. **A third RED in this repository asserted an edge the table do
 table was right** — which is the second time a test of mine was corrected by a machine rather than by
 a reader.
 
+**`WhatAnAgentJudged`** — what an agent found, what it could not settle, and what it expects
+next. **A blank is refused rather than stored, and that is the whole point of these three fields**:
+an agent with nothing to report says so **in words**, and **an empty field reads as *the agent had
+nothing to say*, which is not a thing anybody can check.** That is the same reason an ignored test
+must say why it is ignored — **a silent field and a field nobody asked for are indistinguishable
+afterwards** — and a model that fills a shape and says nothing is what this run already knows how to
+get.
+
+**The middle one is the one worth having.** A real run's implementer wrote that a plan named one path
+and no intent, so nobody could tell a rule for a file that already exists from a whole new file — a
+true sentence and not a reason to stop, **and the single most useful thing on the card**, because a
+planner reading it or a supervisor deciding whether another attempt is worth buying has no other way
+to get it. **A discovery agent is the only one that sees the whole repository**, so a doubt it writes
+down is one nothing else in the run is in a position to have.
+
+**All three are kept verbatim and not summarised**, because **a conclusion this system did not ask for
+is one no human was ever shown** — and a paraphrase of what an agent said is a second thing said in
+its name. **`AJudgementNobodyMade`** is the refusal, and
+**`WHAT_MAY_BE_SAID_INSTEAD_OF_A_JUDGEMENT`** is what an agent with nothing may say instead, because
+**that is an answer and a blank is not.**
+
 **`WhatDiscoveryConcluded`** — what a discovery agent concluded, in **the eight fields the
 specification lists**, transcribed from the glossary of the mother project: languages, frameworks,
 build system, CI system, architecture summary, key components, evidence files, suggested changes.
