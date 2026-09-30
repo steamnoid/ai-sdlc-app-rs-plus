@@ -32,6 +32,7 @@ pub mod the_path_inside_the_project;
 pub mod the_project_on_disk;
 pub mod the_repository_to_clone_into;
 pub mod the_run_makes_a_checkout;
+pub mod the_words_inside_the_endpoints_envelope;
 pub mod what_an_agent_has_produced;
 pub mod what_an_agent_judged;
 pub mod what_an_agent_offered;
