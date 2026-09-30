@@ -12,7 +12,7 @@
 use aisdlc_run::an_issue_to_read::AnIssueToRead;
 
 /// The repository these addresses are in.
-fn the_repository() -> aisdlc_domain::repository::Repository {
+fn the_repository_the_address_is_in() -> aisdlc_domain::repository::Repository {
     aisdlc_domain::repository::Repository::try_from("steamnoid/wellbeing-tracker-public")
         .expect("two halves")
 }
@@ -25,7 +25,7 @@ fn the_address_an_issue_was_filed_at() -> String {
 #[test]
 fn the_number_is_read_out_of_the_address_github_composed() {
     let the_issue = AnIssueToRead::the_issue_an_address_returned(
-        the_repository(),
+        &the_repository_the_address_is_in(),
         &the_address_an_issue_was_filed_at(),
     )
     .expect("GitHub composed this address itself");
@@ -43,7 +43,10 @@ fn the_number_is_read_out_of_the_address_github_composed() {
 fn an_address_that_is_a_pull_request_is_not_an_issue() {
     let a_pull_request = "https://github.com/steamnoid/wellbeing-tracker-public/pull/10";
 
-    let the_issue = AnIssueToRead::the_issue_an_address_returned(the_repository(), a_pull_request);
+    let the_issue = AnIssueToRead::the_issue_an_address_returned(
+        &the_repository_the_address_is_in(),
+        a_pull_request,
+    );
 
     assert!(
         the_issue.is_err(),
@@ -57,8 +60,10 @@ fn an_address_that_is_a_pull_request_is_not_an_issue() {
 fn an_address_with_no_number_in_it_is_refused() {
     let not_an_issue_at_all = "https://github.com/steamnoid/wellbeing-tracker-public";
 
-    let the_issue =
-        AnIssueToRead::the_issue_an_address_returned(the_repository(), not_an_issue_at_all);
+    let the_issue = AnIssueToRead::the_issue_an_address_returned(
+        &the_repository_the_address_is_in(),
+        not_an_issue_at_all,
+    );
 
     assert!(
         the_issue.is_err(),

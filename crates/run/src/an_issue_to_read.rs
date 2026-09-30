@@ -94,13 +94,24 @@ impl AnIssueToRead {
     ///
     /// **Refused for now** — the reading exists and the shape of the answer does not.
     pub fn the_issue_an_address_returned(
-        of_which_repository: Repository,
+        of_which_repository: &Repository,
         what_github_answered: &str,
     ) -> Result<Self, AnAddressThatIsNotAnIssue> {
         let _ = (of_which_repository, what_github_answered);
-        Err(AnAddressThatIsNotAnIssue(String::from(
-            what_github_answered,
-        )))
+        let what_github_answered = what_github_answered.trim();
+        let the_number = what_github_answered.rsplit_once("/issues/");
+        let Some((_the_repository_it_is_in, the_number)) = the_number else {
+            return Err(AnAddressThatIsNotAnIssue(String::from(
+                what_github_answered,
+            )));
+        };
+        let Ok(the_number) = the_number.parse::<i64>() else {
+            return Err(AnAddressThatIsNotAnIssue(String::from(
+                what_github_answered,
+            )));
+        };
+        AnIssueToRead::the_issue_to_read(of_which_repository.clone(), the_number)
+            .map_err(|not_a_number| AnAddressThatIsNotAnIssue(not_a_number.to_string()))
     }
 
     /// Which issue was asked for, as a person typed it.
