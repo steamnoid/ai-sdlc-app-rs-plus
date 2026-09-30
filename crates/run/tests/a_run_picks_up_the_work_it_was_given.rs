@@ -38,7 +38,7 @@ fn a_run_picks_up_the_work_and_it_moves_along_the_tables_own_edge() {
         what_it_became
             .as_ref()
             .ok()
-            .map(|it| it.the_stage_it_stands_at()),
+            .map(WorkItem::the_stage_it_stands_at),
         Some(Stage::AwaitingAgentPickup),
         "**because `IDLE -> AWAITING_AGENT_PICKUP` is the table's own edge and it is what makes the \
          record a piece of work rather than a note about one** — and a work standing at idle has not \

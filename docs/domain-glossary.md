@@ -782,6 +782,20 @@ corner**, because six of the seven entries GitHub answers with there are pull re
 describes a change rather than asking for one, and **reading it as a request hands the pipeline a
 description to work from, and every artifact after it is about work nobody asked for.**
 
+**A move the destination refuses on the agent says which way it was wrong, because a refusal that
+says the opposite of what happened sends a reader to fix the thing that was already right.** A stage
+that holds an agent and was given none has been given no agent where one is required; a stage that
+holds no agent and was given one has been handed an agent it cannot have. The old sentence said
+`AWAITING_AGENT_PICKUP does not take the agent it was given` — **and the stage requires one, so the
+one case a reader meets first was the sentence that told them the opposite of what happened.**
+
+**`a_run_picks_up_the_work_it_was_given`** — a run taking up the work it was given, along the one
+edge the table allows. **The work stands at `IDLE` and a work item there has not begun**, however
+true everything in it is, and `IDLE -> AWAITING_AGENT_PICKUP` is what makes the record a piece of
+work rather than a note about one. **The refusal is the domain's and not this file's**, because a
+move composed here would be a second transition table — and a second table is one nobody reads when
+the first one is the specification.
+
 **`WhyAnAnswerIsNotAFiling`** — why an answer is not a filing, **named rather than a paragraph.**
 **"There is no filing" and "this system cannot read this" are different facts**, and one is worth
 retrying while the other is worth reading the number again. **A far end having a bad minute is not a
