@@ -804,6 +804,24 @@ a field instead of quoting what GitHub said throws away the only clue there was.
 refusal on the creative path: **a model whose answer could not be read, and a GitHub that refused a
 filing, arrive at the same reader and neither of them is an offer.**
 
+**`AnAddressThatIsNotAnIssue`** — an address GitHub composed that is not an address of an issue,
+**quoted whole.** A filing run gets an address and the reading port takes a number, **so the two have
+to meet.**
+
+**The address is the primary fact and the number is a reading of it.** Composing an address from a
+number is what `CommissionedIssue` did and it resolved to a page that did not exist **while looking
+exactly like a link**; reading a number out of an address GitHub composed **is the safe direction of
+the same pair**, because nothing was invented to get there.
+
+**A pull request is the case that matters.** `…/issues/10` and `…/pull/10` are different things,
+**and a work item pointed at the wrong one is a work item about somebody else's pull request — with a
+number that was never wrong and an address that was.** The failure is invisible afterwards, **because
+a work item holds an issue number and an issue number is what a work item holds.**
+
+**An address with no number in it is refused too**, because a number read out of nothing is a number
+this system chose — **and a filing handed to the product analyst as issue 0 is a work item nobody can
+find again.**
+
 **`WhereGitHubAnswered`** — what GitHub answered, and the address it answered with. **It is the
 port's return type and it lives with the port**, because a return type in the module that calls it is
 a return type the next caller will not find.
