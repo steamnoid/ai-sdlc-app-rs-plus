@@ -49,12 +49,14 @@ fn a_comment_body_is_one_argument_and_is_never_split_into_its_pieces() {
     let the_arguments =
         ACommentReachingGitHub.the_arguments_of(&a_comment_with_a_body_saying(a_body));
 
-    let the_body_is_whole = the_arguments.iter().any(|one| one == a_body);
+    let the_body_is_one_argument = the_arguments
+        .iter()
+        .any(|one| one.contains(a_body) && one.ends_with("aisdlc-dev"));
     let pieces_became_arguments = the_arguments
         .iter()
         .any(|one| one == "- it found `e2e.db-wal` tracked");
     assert!(
-        the_body_is_whole && !pieces_became_arguments,
+        the_body_is_one_argument && !pieces_became_arguments,
         "**because a comment body is prose, and prose has dashes and colons and backticks in it** — \
          and a body re-split into its lines is a body somebody else has assembled: {the_arguments:?}"
     );

@@ -15,8 +15,23 @@ use aisdlc_outside::a_comment_reaching_github::ACommentReachingGitHub;
 use aisdlc_outside::the_environment::TheEnvironment;
 use aisdlc_outside::who_signed_this_deployments_comments::who_signed_these_comments;
 use aisdlc_run::a_comment_is_left::the_run_leaves_a_comment;
-use aisdlc_run::a_git_hub_we_write_to::AGitHubWeWriteTo;
 use aisdlc_run::who_signs_a_comment::WhoSignsAComment;
+
+/// A deployment that named itself, which is what a signing name is a fact about.
+fn a_deployment_that_named_itself() -> TheEnvironment {
+    TheEnvironment::of(vec![(
+        "AISDLC_WHO_SIGNS_A_COMMENT".to_string(),
+        "aisdlc-dev".to_string(),
+    )])
+}
+
+/// What the comment says, and every word of it is true.
+///
+/// **No work is claimed and none was done** — this run commented once to prove a path, and a
+/// comment that described work it did not do is the one thing this system exists not to write.
+const WHAT_THIS_COMMENT_TRUTHFULLY_SAYS: &str = "This comment was left by `aisdlc-dev`, a run of \
+    this system, to prove that a filed request reaches a comment on GitHub against the real thing \
+    rather than a double. No work was requested, none was done, and none is claimed.";
 
 /// A request filed at the address given, which is somebody else's decision and not ours.
 fn a_request_filed_at(
@@ -61,25 +76,18 @@ fn a_comment_on_a_filing_that_does_not_exist_is_a_refusal_and_not_a_quiet_succes
 fn a_comment_on_a_filing_that_exists_is_left_under_the_names_a_deployment_chose() {
     let Ok(the_address) = std::env::var("E2E_FILING") else {
         eprintln!(
-            "SKIPPED: E2E_FILING is not set, so no real filing was named and this system did not \
-             choose one for itself — a proof that comments on a repository this system has no \
-             business commenting on is not a proof, it is a side effect"
+            "SKIPPED: E2E_FILING is not set, and this system will not choose a filing to comment on"
         );
         return;
     };
-    let what_the_process_was_told = TheEnvironment::of(vec![(
-        "AISDLC_WHO_SIGNS_A_COMMENT".to_string(),
-        "aisdlc-dev".to_string(),
-    )]);
-    let who_signed = who_signed_these_comments(&what_the_process_was_told).expect("a name");
+    let who_signed = who_signed_these_comments(&a_deployment_that_named_itself())
+        .expect("a deployment that named one");
     let mut the_adapter = ACommentReachingGitHub;
 
     let how_it_went = the_run_leaves_a_comment(
         &mut the_adapter,
         &a_request_filed_at(&the_address),
-        "This comment was left by `aisdlc-dev`, a run of this system, to prove the path from a \
-         filed request to a comment on GitHub works against the real thing rather than a double. \
-         No work was requested and none is claimed.",
+        WHAT_THIS_COMMENT_TRUTHFULLY_SAYS,
         &who_signed,
     );
 
