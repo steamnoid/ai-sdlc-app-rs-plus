@@ -12,6 +12,9 @@
 use aisdlc_run::a_filing_is_answered::{a_filing_is_answered, a_filing_is_answered_into_work};
 use aisdlc_run::a_git_hub_we_write_to::{AGitHubWeWriteTo, WhatGitHubWasAskedFor};
 use aisdlc_run::an_issue_read::AnIssueRead;
+use aisdlc_run::what_this_filing_is_about::{
+    TheRoleThatAnswers, TheWorkItemsId, WhatThisFilingIsAbout,
+};
 use aisdlc_run::who_signs_a_comment::WhoSignsAComment;
 
 /// Somewhere that remembers where it was asked to write, and to whom.
@@ -43,6 +46,14 @@ fn what_github_answered_for_a_transferred_filing() -> String {
     )
 }
 
+/// What a run was told this filing is about, and **told rather than guessed in the code.**
+fn a_run_that_was_told_what_it_is_about() -> WhatThisFilingIsAbout {
+    WhatThisFilingIsAbout {
+        which_work_item: TheWorkItemsId::try_from("WELLBEINGT-42").expect("a name"),
+        which_role_answers: TheRoleThatAnswers::try_from("DEV").expect("a discipline"),
+    }
+}
+
 /// The name a deployment writes its own comments under.
 fn a_signer() -> WhoSignsAComment {
     WhoSignsAComment::the_name_a_deployment_used("aisdlc-dev").expect("a name")
@@ -62,6 +73,7 @@ fn a_comment_goes_to_the_address_that_was_read_and_not_to_one_composed() {
         &what_was_read,
         "a run is looking at this",
         &a_signer(),
+        &a_run_that_was_told_what_it_is_about(),
     );
 
     assert_eq!(

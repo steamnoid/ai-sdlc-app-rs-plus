@@ -13,6 +13,17 @@ use aisdlc_outside::a_comment_reaching_github::ACommentReachingGitHub;
 use aisdlc_outside::a_filing_is_read::AFilingIsRead;
 use aisdlc_run::a_filing_is_answered::a_filing_is_answered;
 use aisdlc_run::an_issue_to_read::AnIssueToRead;
+use aisdlc_run::what_this_filing_is_about::{
+    TheRoleThatAnswers, TheWorkItemsId, WhatThisFilingIsAbout,
+};
+
+/// What a run was told this filing is about, and **told rather than guessed in the code.**
+fn a_run_that_was_told_what_it_is_about() -> WhatThisFilingIsAbout {
+    WhatThisFilingIsAbout {
+        which_work_item: TheWorkItemsId::try_from("WELLBEINGT-42").expect("a name"),
+        which_role_answers: TheRoleThatAnswers::try_from("DEV").expect("a discipline"),
+    }
+}
 
 /// The name a deployment writes its own comments under.
 fn a_signer() -> aisdlc_run::who_signs_a_comment::WhoSignsAComment {
@@ -82,6 +93,7 @@ fn a_filing_is_read_and_then_answered_on_it() {
         "A run of this system read this filing and is looking at it. No work has been done and \
          none is claimed yet.",
         &who_signed,
+        &a_run_that_was_told_what_it_is_about(),
     );
 
     eprintln!(

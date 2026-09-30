@@ -720,6 +720,21 @@ asserting a flag that does not exist. The name goes in the words, where a reader
 record keeps it for the audit trail. The account is the author and this system does not get to
 pretend otherwise.
 
+**`WhatThisFilingIsAbout`** — which work item this run is and which discipline answers for it,
+**both given and neither guessed.** `A-1` and `PO` sat inside the function that builds the work, so
+**every run in history was a work item called `A-1` accountable to the product analyst, whatever was
+filed** — and a record that says the same thing every time is not a record of this run.
+
+**The role is the discipline that answers and not the one that notices.** An issue nobody had looked
+at yet has a discipline waiting, and only the work has one answering — which is why it is something a
+run is told and not something a file can guess.
+
+**`TheWorkItemsId`** — the name a work item will carry, **as the run wrote it and not as a type
+re-spells it**, and refused when it is blank: **a blank id is a work nothing can be found by**, and a
+run that went ahead would leave a record nothing points at. **`TheRoleThatAnswers`** is the same
+shape for a discipline, and **`AWorkItemsIdThatIsNotOne`** and **`ADisciplineThatIsNotOne`** are the
+refusals, named after what is wrong rather than after what happened.
+
 **`a_filing_is_answered`** — a filing that was read, written back on as a comment. **Two working
 ends and no use joining them are two proofs and not a system**: the read exists and the comment
 exists, and a run that never joins them has demonstrated a repository and a filing rather than a
