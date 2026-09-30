@@ -703,6 +703,23 @@ settable field, so a caller cannot fill an address in afterwards from a number i
 number instead of a sentence made a product analyst read the repository while the sentence went
 to the planner.
 
+**`ACommentReachingGitHub`** — a comment turned into what `gh` is run with, and the answer
+`AGitHubWeWriteTo` was missing. **A port with one implementor that was a test double is a port
+nothing could reach**, so a comment had never been written anywhere and the use case was proved
+against a place that accepts anything.
+
+**No shell, one argument each, and the address is one argument.** A comment body is prose, and prose
+has dashes and colons and backticks in it — **the first comment this system writes should be the
+shape that makes re-splitting impossible rather than the shape that gets away with it.** A failure
+comes back as a refusal and not as a quiet success, because a caller told a comment was written when
+it was not is a reader of a record that does not exist.
+
+**A third assertion could not be written, and its not existing is the property.** A comment with
+nowhere to go cannot be built at all: the port's request holds an address and not an absent one,
+because the use case refuses a request nobody filed *before* a request exists. **A type that could
+hold a comment with nowhere to put it would be a type asking to be used without the guard** — so the
+guard is not a check somebody can skip, it is the absence of a value.
+
 **`WhoSignsAComment`** — the name a deployment writes its own comments under, **and never a person
 and never chosen by a caller.** A comment is not a decision, so a person did not decide it and did
 not write it. **A type and not a `WhoDecided` reused**, because a type both a person's ruling and an
