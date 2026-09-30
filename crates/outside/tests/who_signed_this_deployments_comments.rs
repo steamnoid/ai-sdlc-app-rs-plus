@@ -13,7 +13,9 @@ use aisdlc_outside::a_comment_reaching_github::ACommentReachingGitHub;
 use aisdlc_outside::the_environment::TheEnvironment;
 use aisdlc_outside::who_signed_this_deployments_comments::who_signed_these_comments;
 use aisdlc_run::a_comment_is_left::the_run_leaves_a_comment;
-use aisdlc_run::a_git_hub_we_write_to::{AGitHubWeWriteTo, WhatGitHubWasAskedFor};
+use aisdlc_run::a_git_hub_we_write_to::{
+    AGitHubWeWriteTo, WhatGitHubWasAskedFor, WhereGitHubAnswered,
+};
 
 /// Somewhere that answers, and remembers that it did.
 struct SomewhereThatAnswers {
@@ -24,9 +26,11 @@ impl AGitHubWeWriteTo for SomewhereThatAnswers {
     fn it_is_asked_to(
         &mut self,
         _what_git_hub_is_asked: &WhatGitHubWasAskedFor,
-    ) -> Result<(), String> {
+    ) -> Result<WhereGitHubAnswered, String> {
         self.was_it_asked = true;
-        Ok(())
+        Ok(WhereGitHubAnswered::an_address_at(
+            "https://github.com/steamnoid/wellbeing-tracker-public/issues/1",
+        ))
     }
 }
 
