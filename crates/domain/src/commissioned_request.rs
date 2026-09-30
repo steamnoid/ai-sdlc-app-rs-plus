@@ -126,6 +126,19 @@ impl CommissionedRequest {
         })
     }
 
+    /// What was asked for, in the words somebody used.
+    ///
+    /// **The product analyst reads this and nothing else can**, and a request that could not be read
+    /// is a request no stage after filing has anything to work on.
+    pub fn what_was_asked(&self) -> &str {
+        &self.title
+    }
+
+    /// What was said besides the ask, **which may be nothing.**
+    pub fn what_was_said_besides(&self) -> &str {
+        &self.body
+    }
+
     /// Where this request was filed, and nothing when nobody filed it.
     pub fn where_it_was_filed(&self) -> Option<&AWhereItWasFiled> {
         self.filed_as.as_ref()
