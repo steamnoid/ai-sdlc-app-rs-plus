@@ -141,7 +141,7 @@ impl WhereAModelIs {
 /// **The shape and not a word about who decided.** A model told to say one word and asked to say
 /// whose decision it is has been asked two things, and the second one is a forgery waiting to be
 /// refused — **so the body forbids it rather than the parser catching it.**
-fn the_body_a_model_is_given(the_question: &str, where_the_model_is: &WhereAModelIs) -> String {
+pub fn the_body_a_model_is_given(the_question: &str, where_the_model_is: &WhereAModelIs) -> String {
     format!(
         "{{\"model\":\"{}\",\"temperature\":0,\"messages\":[{{\"role\":\"user\",\"content\":{}}}]}}",
         where_the_model_is.which_model,
