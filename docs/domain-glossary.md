@@ -775,6 +775,30 @@ worked on at all. **A third RED in this repository asserted an edge the table do
 table was right** — which is the second time a test of mine was corrected by a machine rather than by
 a reader.
 
+**`WhatDiscoveryConcluded`** — what a discovery agent concluded, in **the eight fields the
+specification lists**, transcribed from the glossary of the mother project: languages, frameworks,
+build system, CI system, architecture summary, key components, evidence files, suggested changes.
+**A name a system chose for itself would be a name nothing could be held to**, which is the only
+reason this can be written at all.
+
+**A report that says nothing at all is a fault and not an artifact**, named
+**`ADiscoveryReportThatSaysNothing`**: **silence that reached a human at a gate would carry the
+authority of a finished analysis, and a person cannot tell an empty report from a real one by looking
+at it.** **At least one field and not all of them**, because a repository with no CI has nothing to
+say about CI and must be able to say so — **absence is representable**, and a rule demanding every
+field would only ever be satisfied by a report that guesses.
+
+**`EvidenceFile`** — one path and the address a reviewer opens, **and the address is derived and
+never asked for**: the model contributes the path and the address follows from the repository the run
+is about. **An address a model may invent is worse than none, and one it may leave out is an address
+nobody can rely on clicking.** **`AnEvidenceOutsideTheRepository`** is the refusal, and every path is
+checked before any address is built, **so a set containing one bad path produces no evidence at all
+rather than a report that is partly clickable.**
+
+**The first version built the address out of a repository written into the file**, and `grep`
+found it there — **the same grudge as `A-1`, committed two cycles earlier and in a different shape.**
+The repository is now an argument.
+
 **`WhatAnAgentHasProduced`** — the name and the version of one thing an agent produced, both
 checked. **`WhichArtifact` is an open `String` and it accepts anything**, so this is the door that is
 closed: **a gate that approves an artifact nobody here has ever heard of is a gate that approved a
