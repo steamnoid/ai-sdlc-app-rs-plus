@@ -8,9 +8,20 @@
 //! **One table and not two.** The move is the domain's `transition`, and a use case that could
 //! reach any other stage would be a second transition table — and this repository has one.
 
+use aisdlc_domain::agent_identifier::AgentIdentifier;
 use aisdlc_domain::stage::Stage;
 use aisdlc_domain::state_machine::{StateMachineError, transition};
 use aisdlc_domain::work_item::WorkItem;
+
+/// The agent that picks up work, **and the name is the specification's and not this file's.**
+///
+/// §10 lists the first agent as the Repository Discovery agent, and the mother project writes that
+/// name as `aisdlc-discover`. **Transcribing it is not inventing it**, which is the whole reason
+/// this could be written at all: a name a system chose for itself would be a name nothing could be
+/// held to.
+pub fn the_agent_that_picks_up_work() -> AgentIdentifier {
+    AgentIdentifier::try_from("aisdlc-discover").expect("the specification names it")
+}
 
 /// A run taking up the work it was given, along the one edge the table allows.
 ///
@@ -19,5 +30,9 @@ use aisdlc_domain::work_item::WorkItem;
 pub fn a_run_picks_up_the_work_it_was_given(
     the_work: &WorkItem,
 ) -> Result<WorkItem, StateMachineError> {
-    transition(the_work.clone(), Stage::AwaitingAgentPickup, None)
+    transition(
+        the_work.clone(),
+        Stage::AwaitingAgentPickup,
+        Some(the_agent_that_picks_up_work()),
+    )
 }

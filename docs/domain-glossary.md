@@ -789,6 +789,12 @@ holds no agent and was given one has been handed an agent it cannot have. The ol
 `AWAITING_AGENT_PICKUP does not take the agent it was given` — **and the stage requires one, so the
 one case a reader meets first was the sentence that told them the opposite of what happened.**
 
+**`the_agent_that_picks_up_work`** — `aisdlc-discover`, **and the name is the specification's and
+not this file's.** §10 lists the first agent as the Repository Discovery agent and the mother
+project writes that name out. **Transcribing it is not inventing it**, which is the whole reason this
+could be written at all: **a name a system chose for itself would be a name nothing could be held
+to**, and the attempt to write `aisdlc-something` is what the refused move above was about.
+
 **`a_run_picks_up_the_work_it_was_given`** — a run taking up the work it was given, along the one
 edge the table allows. **The work stands at `IDLE` and a work item there has not begun**, however
 true everything in it is, and `IDLE -> AWAITING_AGENT_PICKUP` is what makes the record a piece of

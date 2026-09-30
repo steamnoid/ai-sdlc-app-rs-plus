@@ -19,6 +19,7 @@ use aisdlc_domain::work_item_id::WorkItemId;
 
 use crate::a_comment_is_left::{ANowhereToLeaveAComment, the_run_leaves_a_comment};
 use crate::a_git_hub_we_write_to::AGitHubWeWriteTo;
+use crate::a_run_picks_up_the_work::a_run_picks_up_the_work_it_was_given;
 use crate::an_issue_read::AnIssueRead;
 use crate::what_this_filing_is_about::WhatThisFilingIsAbout;
 use crate::who_signs_a_comment::WhoSignsAComment;
@@ -40,6 +41,15 @@ impl TheWork {
         which_role_answers: &str,
     ) -> Self {
         a_filing_is_answered_into_work(what_was_read, which_work_item, which_role_answers)
+    }
+}
+
+impl TheWork {
+    /// The work this run takes up, **along the one edge the table allows out of where it stands.**
+    pub fn the_run_picks_it_up(
+        &self,
+    ) -> Result<WorkItem, aisdlc_domain::state_machine::StateMachineError> {
+        a_run_picks_up_the_work_it_was_given(&self.work_item)
     }
 }
 
