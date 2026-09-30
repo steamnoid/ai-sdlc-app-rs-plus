@@ -1,11 +1,11 @@
-//! A model asked what work is worth filing, from the listing it was actually shown.
+//! What a model said it would file, read out of the envelope it arrived in.
 //!
 //! **The listing goes into the question and the refusal is not the model's to decide.** A creative
 //! agent asked to improve a project will happily invent one that does not exist, **so the run hands
 //! it the names of the files there are** and then checks the answer against that same list — **and
 //! the check is code, not the sentence in the prompt.**
 
-use aisdlc_run::a_model_is_asked_what_it_would_file::{
+use aisdlc_run::an_agent_is_asked_what_it_would_file::{
     the_question_an_agent_is_asked, what_a_model_offered,
 };
 

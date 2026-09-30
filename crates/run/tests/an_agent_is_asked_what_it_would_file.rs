@@ -12,7 +12,6 @@ use aisdlc_run::an_agent_is_asked_what_it_would_file::an_agent_is_asked_what_it_
 use aisdlc_run::an_agent_is_asked_what_it_would_file::{
     the_body_a_creative_agent_is_given, the_three_judgements_a_model_gave,
 };
-use aisdlc_run::what_an_agent_offered::WhatAnAgentOffered;
 use aisdlc_run::what_we_tell_a_program_to_do::WhatWeTellAProgramToDo;
 
 /// Where a deployment said its model is.
@@ -143,7 +142,7 @@ struct AProgramThatAnswers(String);
 impl aisdlc_run::a_program_we_run::AProgramWeRun for AProgramThatAnswers {
     fn run(
         &self,
-        what_it_is_asked: &WhatWeTellAProgramToDo,
+        _what_it_is_asked: &WhatWeTellAProgramToDo,
     ) -> aisdlc_run::a_program_we_run::WhatTheProgramSaid {
         aisdlc_run::a_program_we_run::WhatTheProgramSaid::of(true, &self.0)
     }

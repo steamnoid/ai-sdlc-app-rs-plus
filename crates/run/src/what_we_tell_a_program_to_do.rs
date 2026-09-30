@@ -134,9 +134,15 @@ impl WhatWeTellAProgramToDo {
         }
     }
 
-    /// This request, read as a question about what a model would file, **and refused for now.**
+    /// This request, read as a question about what a model would file.
+    ///
+    /// **A question a run cannot classify is a question no flag can hold back**, and refusing to ask
+    /// one is the whole of what `AISDLC_AN_AGENT_OFFERS` means.
     pub fn is_a_question_about_what_it_would_file(&self) -> bool {
-        matches!(self, WhatWeTellAProgramToDo::AskAModelHowItRules { .. })
+        matches!(
+            self,
+            WhatWeTellAProgramToDo::AskAModelWhatItWouldFile { .. }
+        )
     }
 
     /// This request, read as a question about a ruling.

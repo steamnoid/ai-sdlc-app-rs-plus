@@ -10,6 +10,7 @@ use crate::a_program_we_run::AProgramWeRun;
 use crate::the_words_inside_the_endpoints_envelope::the_words_inside_the_endpoints_envelope;
 use crate::what_an_agent_judged::WhatAnAgentJudged;
 use crate::what_an_agent_offered::{WhatAModelSaidItWouldFile, WhatAnAgentOffered};
+use crate::what_we_tell_a_program_to_do::WhatWeTellAProgramToDo;
 
 /// An answer that was not offers, quoting what came back.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -36,37 +37,70 @@ impl AnAnswerThatIsNotAnOffer {
 pub struct ACreativeAgentThatCouldNotOffer(pub String);
 
 /// The question put to a creative agent, **carrying every name it is allowed to cite.**
+///
+/// **The instruction and the listing are both here and the instruction is not the check** — a run
+/// that only asked nicely and never compared would rely on a model to be honest about which files it
+/// invented, **and the whole grounding rule would be a sentence.** §0.4: quality rules live in
+/// assertions, not in prompt text.
 pub fn the_question_an_agent_is_asked(
     of_which_repository: &Repository,
     what_the_run_saw: &[String],
 ) -> String {
-    let _ = (of_which_repository, what_the_run_saw);
-    String::new()
+    format!(
+        "You are looking at {owner}/{name}. Name work worth filing as issues.\n\
+         You may only cite files from this listing:\n{listing}\n\
+         Answer with an offers array. Each offer has a title, what_it_asks_for, and the paths it \
+         concluded from, all three of them always present.\n\
+         An offer with no file from the listing is refused, and an empty offers array is a valid \
+         answer. Do not name who decided; that is not yours to say.",
+        owner = of_which_repository.owner,
+        name = of_which_repository.name,
+        listing = what_the_run_saw.join("\n"),
+    )
 }
 
-/// The body a creative agent is given, **empty for now.**
+/// The body a creative agent is given, **built by the JSON library and not by a hand.**
+///
+/// **The library and not a format string**, because a body that leaves this system is a wire format
+/// and a wire format typed by hand is one broken by anything the hand did not think of — **and the
+/// far end answering `400` with zero bytes is a refusal that reaches us as an empty string.**
 pub fn the_body_a_creative_agent_is_given(
     the_question: &str,
     where_the_model_is: &WhereAModelIs,
 ) -> String {
-    let _ = (the_question, where_the_model_is);
-    String::new()
+    let the_asked = serde_json::json!({
+        "model": where_the_model_is.which_model,
+        "temperature": 0,
+        "messages": [{"role": "user", "content": the_question}],
+    });
+    the_asked.to_string()
 }
 
-/// What a model said it would file, **read as nothing for now.**
+/// What a model said it would file, **read out of the envelope and held to the shape it was given.**
+///
+/// **Every way of failing here is a refusal and never an offer**, because that is the direction the
+/// failure has to point: a broken answer read as an offer files an issue nobody read.
 pub fn what_a_model_offered(
     what_the_endpoint_said: &str,
 ) -> Result<Vec<WhatAModelSaidItWouldFile>, AnAnswerThatIsNotAnOffer> {
-    let _ = what_the_endpoint_said;
-    Ok(Vec::new())
+    let the_content = the_words_a_model_said(what_the_endpoint_said)?;
+    let what_it_came_back_as: serde_json::Value = serde_json::from_str(&the_content)
+        .map_err(|_| AnAnswerThatIsNotAnOffer::because(&the_content))?;
+    the_offers_in(&what_it_came_back_as, &the_content)
 }
 
-/// What a model said about its own reading, **refused for now.**
+/// The three judgements a model gave about its own reading, **refused when one is blank.**
+///
+/// **The same refusal the constructor gives**, reached through a field — and a field is readable from
+/// anywhere, **so a caller holding a `WhatAnAgentJudged` has to be able to ask what the constructor
+/// asks.**
 pub fn the_three_judgements_a_model_gave(
     what_the_endpoint_said: &str,
 ) -> Result<WhatAnAgentJudged, AnAnswerThatIsNotAnOffer> {
-    let _ = what_the_endpoint_said;
-    Err(AnAnswerThatIsNotAnOffer::because(what_the_endpoint_said))
+    let the_content = the_words_a_model_said(what_the_endpoint_said)?;
+    let what_it_came_back_as: serde_json::Value = serde_json::from_str(&the_content)
+        .map_err(|_| AnAnswerThatIsNotAnOffer::because(&the_content))?;
+    the_three_in(&what_it_came_back_as, &the_content)
 }
 
 /// A creative agent asked what work is worth filing, **offering nothing for now.**
@@ -76,24 +110,101 @@ pub fn an_agent_is_asked_what_it_would_file(
     what_the_run_saw: &[String],
     where_the_model_is: &WhereAModelIs,
 ) -> Result<WhatAnAgentOffered, ACreativeAgentThatCouldNotOffer> {
-    let _ = (
-        the_model,
-        of_which_repository,
-        what_the_run_saw,
+    let the_body = the_body_a_creative_agent_is_given(
+        &the_question_an_agent_is_asked(of_which_repository, what_the_run_saw),
         where_the_model_is,
     );
-    Ok(WhatAnAgentOffered {
-        offers: Vec::new(),
-        judged: WhatAnAgentJudged::what_an_agent_said("nothing", "nothing", "nothing")
-            .expect("three said"),
-    })
+    let what_it_said = the_model.run(&WhatWeTellAProgramToDo::ask_a_model_what_it_would_file(
+        &where_the_model_is.the_endpoint,
+        &where_the_model_is.which_model,
+        &the_body,
+    ));
+    let offered = what_a_model_offered(what_it_said.the_words())
+        .map_err(|a_fault| ACreativeAgentThatCouldNotOffer(a_fault.what_it_said().to_string()))?;
+    let judged = the_three_judgements_a_model_gave(what_it_said.the_words())
+        .map_err(|a_fault| ACreativeAgentThatCouldNotOffer(a_fault.what_it_said().to_string()))?;
+    WhatAnAgentOffered::the_offers_a_model_offered(
+        of_which_repository,
+        what_the_run_saw,
+        offered,
+        judged,
+    )
+    .map_err(|not_offered| ACreativeAgentThatCouldNotOffer(not_offered.0))
 }
 
-/// The words inside the endpoint's envelope, **re-read here so the shell has one reader left.**
+/// The words inside the endpoint's envelope, **read through the one door #102 and #109 were burned at.**
 pub fn the_words_a_model_said(
     what_the_endpoint_said: &str,
 ) -> Result<String, AnAnswerThatIsNotAnOffer> {
     the_words_inside_the_endpoints_envelope(what_the_endpoint_said).map_err(|nobody_can_read| {
         AnAnswerThatIsNotAnOffer::because(nobody_can_read.what_it_said())
     })
+}
+
+/// The offers inside what a model said, **or the refusal quoting what came back.**
+fn the_offers_in(
+    what_it_came_back_as: &serde_json::Value,
+    what_it_said: &str,
+) -> Result<Vec<WhatAModelSaidItWouldFile>, AnAnswerThatIsNotAnOffer> {
+    let Some(the_offers) = what_it_came_back_as
+        .get("offers")
+        .and_then(|offers| offers.as_array())
+    else {
+        return Err(AnAnswerThatIsNotAnOffer::because(what_it_said));
+    };
+    let mut what_was_offered = Vec::new();
+    for one_offer in the_offers {
+        what_was_offered.push(one_offer_the_model_wrote(one_offer, what_it_said)?);
+    }
+    Ok(what_was_offered)
+}
+
+/// The three judgements inside what a model said, **or the refusal quoting what came back.**
+fn the_three_in(
+    what_it_came_back_as: &serde_json::Value,
+    what_it_said: &str,
+) -> Result<WhatAnAgentJudged, AnAnswerThatIsNotAnOffer> {
+    WhatAnAgentJudged::what_an_agent_said(
+        &the_text_in(what_it_came_back_as, "what_it_found", what_it_said)?,
+        &the_text_in(
+            what_it_came_back_as,
+            "what_it_could_not_settle",
+            what_it_said,
+        )?,
+        &the_text_in(what_it_came_back_as, "what_it_expects_next", what_it_said)?,
+    )
+    .map_err(|nobody_made| AnAnswerThatIsNotAnOffer::because(&nobody_made.0))
+}
+
+/// One offer the model wrote, **refused when a field of it is missing or is not text.**
+fn one_offer_the_model_wrote(
+    one_offer: &serde_json::Value,
+    what_it_said: &str,
+) -> Result<WhatAModelSaidItWouldFile, AnAnswerThatIsNotAnOffer> {
+    let title = the_text_in(one_offer, "title", what_it_said)?;
+    let what_it_asks_for = the_text_in(one_offer, "what_it_asks_for", what_it_said)?;
+    let Some(paths) = one_offer.get("paths").and_then(|paths| paths.as_array()) else {
+        return Err(AnAnswerThatIsNotAnOffer::because(what_it_said));
+    };
+    Ok(WhatAModelSaidItWouldFile {
+        title,
+        what_it_asks_for,
+        paths: paths
+            .iter()
+            .map(|one_path| String::from(one_path.as_str().unwrap_or_default()))
+            .collect(),
+    })
+}
+
+/// One field of text in what a model wrote, **refused when it is missing or is not text.**
+fn the_text_in(
+    what_it_came_back_as: &serde_json::Value,
+    which_field: &str,
+    what_it_said: &str,
+) -> Result<String, AnAnswerThatIsNotAnOffer> {
+    what_it_came_back_as
+        .get(which_field)
+        .and_then(|said| said.as_str())
+        .map(String::from)
+        .ok_or_else(|| AnAnswerThatIsNotAnOffer::because(what_it_said))
 }
