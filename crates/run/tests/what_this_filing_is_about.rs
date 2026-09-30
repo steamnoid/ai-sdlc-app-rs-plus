@@ -8,7 +8,10 @@
 //! different questions: an issue nobody had looked at yet has a discipline waiting, and only the
 //! work has one answering.
 
+use aisdlc_domain::repository::Repository;
+use aisdlc_domain::who_commissioned::WhoCommissioned;
 use aisdlc_run::an_issue_read::AnIssueRead;
+
 use aisdlc_run::what_this_filing_is_about::{
     TheRoleThatAnswers, TheWorkItemsId, WhatThisFilingIsAbout,
 };
@@ -28,6 +31,9 @@ fn a_run_is_told_which_work_item_it_is_and_nothing_is_written_into_the_code() {
     let what_this_filing_is_about = WhatThisFilingIsAbout {
         which_work_item: TheWorkItemsId::try_from("WELLBEINGT-42").expect("a name"),
         which_role_answers: TheRoleThatAnswers::try_from("DEV").expect("a discipline"),
+        who_asked: WhoCommissioned::try_from("llm agent").expect("a name"),
+        which_repository: Repository::try_from("steamnoid/wellbeing-tracker-public")
+            .expect("two halves"),
     };
 
     assert_eq!(
@@ -44,10 +50,14 @@ fn a_run_is_told_which_work_item_it_is_and_nothing_is_written_into_the_code() {
 
 #[test]
 fn a_filing_and_what_it_is_about_become_a_work_of_the_right_name() {
-    let the_work = a_filing_somebody_wrote().the_work_it_becomes(
-        &TheWorkItemsId::try_from("WELLBEINGT-42").expect("a name"),
-        &TheRoleThatAnswers::try_from("DEV").expect("a discipline"),
-    );
+    let what_a_run_was_told = WhatThisFilingIsAbout {
+        which_work_item: TheWorkItemsId::try_from("WELLBEINGT-42").expect("a name"),
+        which_role_answers: TheRoleThatAnswers::try_from("DEV").expect("a discipline"),
+        who_asked: WhoCommissioned::try_from("llm agent").expect("a name"),
+        which_repository: Repository::try_from("steamnoid/wellbeing-tracker-public")
+            .expect("two halves"),
+    };
+    let the_work = a_filing_somebody_wrote().the_work_it_becomes(&what_a_run_was_told);
 
     assert_eq!(
         the_work.work_item.the_work_item_id().to_string().as_str(),

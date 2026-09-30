@@ -77,16 +77,37 @@ fn a_filing_the_run_was_given() -> AnIssueToRead {
     .expect("eight is an issue number")
 }
 
+/// **A run told it is working for a model on a named repository** — and the commissioner is `"llm
+/// agent"` rather than a person, because that is what a filing this system wrote says of itself.
+fn what_the_run_was_told() -> aisdlc_run::what_this_filing_is_about::WhatThisFilingIsAbout {
+    aisdlc_run::what_this_filing_is_about::WhatThisFilingIsAbout {
+        which_work_item: aisdlc_run::what_this_filing_is_about::TheWorkItemsId::try_from(
+            "WELLBEINGT-42",
+        )
+        .expect("a name"),
+        which_role_answers: aisdlc_run::what_this_filing_is_about::TheRoleThatAnswers::try_from(
+            "PO",
+        )
+        .expect("a discipline"),
+        who_asked: aisdlc_domain::who_commissioned::WhoCommissioned::try_from("llm agent")
+            .expect("a name"),
+        which_repository: aisdlc_domain::repository::Repository::try_from(
+            "steamnoid/wellbeing-tracker-public",
+        )
+        .expect("two halves"),
+    }
+}
+
 /// The work this run built out of what it read, named and picked up.
 fn the_work_this_run_built() -> aisdlc_domain::work_item::WorkItem {
     let mut the_reader = AFilingIsRead;
     let what_was_read = the_reader
         .the_filing_is_read(&a_filing_the_run_was_given())
         .expect("issue 8 exists and was filed by a person");
+    let what_a_run_was_told = what_the_run_was_told();
     let the_work = aisdlc_run::a_filing_is_answered::TheWork::a_filing_becomes(
         &what_was_read,
-        "WELLBEINGT-42",
-        "PO",
+        &what_a_run_was_told,
     );
     let picked_up = the_work
         .the_run_picks_it_up()

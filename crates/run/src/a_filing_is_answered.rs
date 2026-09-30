@@ -10,10 +10,8 @@
 //! one the run read.**
 
 use aisdlc_domain::commissioned_request::AWhereItWasFiled;
-use aisdlc_domain::repository::Repository;
 use aisdlc_domain::role::Role;
 use aisdlc_domain::stage::Stage;
-use aisdlc_domain::who_commissioned::WhoCommissioned;
 use aisdlc_domain::work_item::WorkItem;
 use aisdlc_domain::work_item_id::WorkItemId;
 
@@ -34,13 +32,13 @@ pub struct TheWork {
 }
 
 impl TheWork {
-    /// The work a read filing becomes, under a name and for a discipline a run was told.
+    /// The work a read filing becomes, **under everything a run was told about it and nothing the
+    /// code adds on its own.**
     pub fn a_filing_becomes(
         what_was_read: &AnIssueRead,
-        which_work_item: &str,
-        which_role_answers: &str,
+        what_a_run_was_told: &WhatThisFilingIsAbout,
     ) -> Self {
-        a_filing_is_answered_into_work(what_was_read, which_work_item, which_role_answers)
+        a_filing_is_answered_into_work(what_was_read, what_a_run_was_told)
     }
 }
 
@@ -61,11 +59,7 @@ pub fn a_filing_is_answered(
     who_signed: &WhoSignsAComment,
     what_a_run_was_told: &WhatThisFilingIsAbout,
 ) -> Result<(), ANowhereToLeaveAComment> {
-    let the_work = a_filing_is_answered_into_work(
-        what_was_read,
-        what_a_run_was_told.which_work_item.as_str(),
-        what_a_run_was_told.which_role_answers.as_str(),
-    );
+    let the_work = a_filing_is_answered_into_work(what_was_read, what_a_run_was_told);
     the_run_leaves_a_comment(
         somewhere,
         &the_work.requested,
@@ -75,12 +69,13 @@ pub fn a_filing_is_answered(
 }
 
 /// A work item standing where work begins, and the caller names who and what.
-fn a_work_item_standing_at(the_work_items_id: &str, the_role_answering: &str) -> WorkItem {
-    let the_role = Role::try_from(the_role_answering).expect("a discipline");
+fn a_work_item_standing_at(what_a_run_was_told: &WhatThisFilingIsAbout) -> WorkItem {
+    let the_role =
+        Role::try_from(what_a_run_was_told.which_role_answers.as_str()).expect("a discipline");
     WorkItem::standing_at(
-        WorkItemId::try_from(the_work_items_id).expect("a name"),
-        WhoCommissioned::try_from("a person").expect("a name"),
-        Repository::try_from("steamnoid/one").expect("two halves"),
+        WorkItemId::try_from(what_a_run_was_told.which_work_item.as_str()).expect("a name"),
+        what_a_run_was_told.who_asked.clone(),
+        what_a_run_was_told.which_repository.clone(),
         the_role,
         Stage::Idle,
     )
@@ -93,8 +88,7 @@ fn a_work_item_standing_at(the_work_items_id: &str, the_role_answering: &str) ->
 /// filing that was transferred answers at an address that does not carry the number asked for.
 pub fn a_filing_is_answered_into_work(
     what_was_read: &AnIssueRead,
-    the_work_items_id: &str,
-    the_role_answering: &str,
+    what_a_run_was_told: &WhatThisFilingIsAbout,
 ) -> TheWork {
     let where_it_answers =
         AWhereItWasFiled::the_address_the_filing_returned(what_was_read.where_it_answers())
@@ -106,7 +100,7 @@ pub fn a_filing_is_answered_into_work(
             where_it_answers,
         )
         .expect("a filing somebody wrote is a request");
-    let work_item = a_work_item_standing_at(the_work_items_id, the_role_answering);
+    let work_item = a_work_item_standing_at(what_a_run_was_told);
     TheWork {
         work_item,
         requested,

@@ -7,7 +7,9 @@
 //! **The role is the discipline that answers and not the one that notices.** An issue nobody had
 //! looked at yet has a discipline waiting, and only the work has one answering.
 
+use aisdlc_domain::repository::Repository;
 use aisdlc_domain::role::Role;
+use aisdlc_domain::who_commissioned::WhoCommissioned;
 use aisdlc_domain::work_item_id::WorkItemId;
 
 use crate::a_filing_is_answered::TheWork;
@@ -71,18 +73,20 @@ pub struct WhatThisFilingIsAbout {
     pub which_work_item: TheWorkItemsId,
     /// Which discipline answers for it.
     pub which_role_answers: TheRoleThatAnswers,
+    /// Who asked, **and a run that filed its own ideas says a model asked rather than signing a
+    /// person's name.**
+    pub who_asked: WhoCommissioned,
+    /// What is being worked on, **never one the code that builds the work item names itself.**
+    pub which_repository: Repository,
 }
 
 impl AnIssueRead {
-    /// The work this filing becomes, under the name and for the discipline a run was told.
+    /// The work this filing becomes, **under everything a run was told about it.**
     ///
-    /// **Both given, and neither guessed here** — because a work item that ignores its own name is a
-    /// work item that cannot be found again by anybody.
-    pub fn the_work_it_becomes(
-        &self,
-        which_work_item: &TheWorkItemsId,
-        which_role_answers: &TheRoleThatAnswers,
-    ) -> TheWork {
-        TheWork::a_filing_becomes(self, which_work_item.as_str(), which_role_answers.as_str())
+    /// **The whole of what the run was told and not two fields of it** — because a seam taking a name
+    /// and a discipline with no room for who asked is exactly how a work item came to name `"a
+    /// person"` whatever the run was told, and **the name is what the seam carries.**
+    pub fn the_work_it_becomes(&self, what_a_run_was_told: &WhatThisFilingIsAbout) -> TheWork {
+        TheWork::a_filing_becomes(self, what_a_run_was_told)
     }
 }

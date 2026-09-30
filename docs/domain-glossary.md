@@ -795,6 +795,25 @@ is one no human was ever shown** — and a paraphrase of what an agent said is a
 its name. **`AJudgementNobodyMade`** is the refusal, and
 **`WHAT_MAY_BE_SAID_INSTEAD_OF_A_JUDGEMENT`** is what an agent with nothing may say instead, because
 **that is an answer and a blank is not.**
+**Who asked is told to the run and never named by the code**, and `WhatThisFilingIsAbout` carries
+`who_asked` beside the work item's name and the discipline answering: **a work item that fills in its
+own commissioner is a work item that signs somebody's name for something a system did.** The literal
+was `"a person"` and the repository beside it was `steamnoid/one` — **two facts invented in one
+function**, which is the `A-1` grudge a third time and in the very file that fixed it a cycle earlier.
+
+**A run that files its own ideas says a model asked, and writes `llm agent`.** That is the rule
+`autopilot:` already follows for an approval: **a claim has to carry who made it, because a record
+naming a person for a system's decision looks exactly like the real thing at the moment somebody needs
+to tell them apart.** A filing this system wrote says of itself that a model wrote it, **and the only
+reader who can be harmed by getting that wrong is a person reading the audit trail later.**
+
+**`WorkItem::the_repository()`** exists because **nothing could ask a work item what it was about.**
+The field is `pub(crate)`, which is right — **and it also meant the question had no answer, which is
+not the same as the answer being private.**
+
+**The seam that builds work takes the whole of what a run was told and not two fields of it**, because
+a seam with room for a name and a discipline and nowhere to put *who asked* is exactly how `"a person"`
+got in.
 
 **`WhatDiscoveryConcluded`** — what a discovery agent concluded, in **the eight fields the
 specification lists**, transcribed from the glossary of the mother project: languages, frameworks,

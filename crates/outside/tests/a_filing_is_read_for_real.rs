@@ -9,10 +9,12 @@
 //! reading itself, on a filing that really exists.
 
 use aisdlc_domain::repository::Repository;
+use aisdlc_domain::who_commissioned::WhoCommissioned;
 use aisdlc_outside::a_comment_reaching_github::ACommentReachingGitHub;
 use aisdlc_outside::a_filing_is_read::AFilingIsRead;
 use aisdlc_run::a_filing_is_answered::a_filing_is_answered;
 use aisdlc_run::an_issue_to_read::AnIssueToRead;
+
 use aisdlc_run::what_this_filing_is_about::{
     TheRoleThatAnswers, TheWorkItemsId, WhatThisFilingIsAbout,
 };
@@ -22,6 +24,9 @@ fn a_run_that_was_told_what_it_is_about() -> WhatThisFilingIsAbout {
     WhatThisFilingIsAbout {
         which_work_item: TheWorkItemsId::try_from("WELLBEINGT-42").expect("a name"),
         which_role_answers: TheRoleThatAnswers::try_from("DEV").expect("a discipline"),
+        who_asked: WhoCommissioned::try_from("llm agent").expect("a name"),
+        which_repository: Repository::try_from("steamnoid/wellbeing-tracker-public")
+            .expect("two halves"),
     }
 }
 
