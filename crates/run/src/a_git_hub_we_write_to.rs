@@ -8,6 +8,27 @@
 
 use aisdlc_domain::commissioned_request::AWhereItWasFiled;
 
+/// What GitHub answered, and the address it answered with.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct WhereGitHubAnswered {
+    the_address: AWhereItWasFiled,
+}
+
+impl WhereGitHubAnswered {
+    /// GitHub's answer, at the address it composed.
+    pub fn an_address_at(what_github_said: &str) -> Self {
+        WhereGitHubAnswered {
+            the_address: AWhereItWasFiled::the_address_the_filing_returned(what_github_said)
+                .expect("GitHub answered with an address"),
+        }
+    }
+
+    /// The address, word for word as GitHub composed it.
+    pub fn the_address(&self) -> &AWhereItWasFiled {
+        &self.the_address
+    }
+}
+
 /// One thing asked of GitHub, carrying the address, the words and the author.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct WhatGitHubWasAskedFor {
@@ -127,9 +148,14 @@ pub const A_FILING_THIS_SYSTEM_WROTE: &str = "llm agent";
 
 /// Writing to GitHub, which is where a branch, a pull request and a comment all go.
 pub trait AGitHubWeWriteTo {
-    /// Do what it was asked, or say why it could not be done.
+    /// Do what it was asked, **and answer with what GitHub answered.**
+    ///
+    /// **A port that returns nothing cannot hand back an address**, and a filing whose address was
+    /// thrown away is a filing in a real repository that nobody can find — **so the answer travels
+    /// back through the port, for a comment as much as for a filing**, because a comment's address
+    /// was read earlier and is still the answer to where it went.
     fn it_is_asked_to(
         &mut self,
         what_it_is_asked_for: &WhatGitHubWasAskedFor,
-    ) -> Result<(), String>;
+    ) -> Result<WhereGitHubAnswered, String>;
 }

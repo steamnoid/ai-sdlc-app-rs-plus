@@ -15,7 +15,9 @@ use aisdlc_domain::who_commissioned::WhoCommissioned;
 use aisdlc_run::a_filing_is_answered::{
     TheWork, a_filing_is_answered, a_filing_is_answered_into_work,
 };
-use aisdlc_run::a_git_hub_we_write_to::{AGitHubWeWriteTo, WhatGitHubWasAskedFor};
+use aisdlc_run::a_git_hub_we_write_to::{
+    AGitHubWeWriteTo, WhatGitHubWasAskedFor, WhereGitHubAnswered,
+};
 use aisdlc_run::an_issue_read::AnIssueRead;
 use aisdlc_run::what_this_filing_is_about::{
     TheRoleThatAnswers, TheWorkItemsId, WhatThisFilingIsAbout,
@@ -31,15 +33,16 @@ impl AGitHubWeWriteTo for SomewhereThatRemembers {
     fn it_is_asked_to(
         &mut self,
         what_git_hub_is_asked: &WhatGitHubWasAskedFor,
-    ) -> Result<(), String> {
-        self.where_it_was_asked.push(
-            what_git_hub_is_asked
-                .where_it_is_going()
-                .expect("a comment has somewhere to go")
-                .as_str()
-                .to_string(),
-        );
-        Ok(())
+    ) -> Result<WhereGitHubAnswered, String> {
+        let where_it_is_going = what_git_hub_is_asked
+            .where_it_is_going()
+            .expect("a comment has somewhere to go")
+            .as_str()
+            .to_string();
+        self.where_it_was_asked.push(where_it_is_going);
+        Ok(WhereGitHubAnswered::an_address_at(
+            "https://github.com/steamnoid/wellbeing-tracker-public/issues/1",
+        ))
     }
 }
 

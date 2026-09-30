@@ -10,7 +10,9 @@
 //! forgery primitive is removed by having no door rather than by a check on the way through it.
 
 use aisdlc_run::a_comment_is_left::the_run_leaves_a_comment;
-use aisdlc_run::a_git_hub_we_write_to::{AGitHubWeWriteTo, WhatGitHubWasAskedFor};
+use aisdlc_run::a_git_hub_we_write_to::{
+    AGitHubWeWriteTo, WhatGitHubWasAskedFor, WhereGitHubAnswered,
+};
 use aisdlc_run::who_signs_a_comment::WhoSignsAComment;
 
 /// Somewhere that remembers what it was asked, and takes it.
@@ -22,9 +24,11 @@ impl AGitHubWeWriteTo for SomewhereThatRemembers {
     fn it_is_asked_to(
         &mut self,
         what_git_hub_is_asked: &WhatGitHubWasAskedFor,
-    ) -> Result<(), String> {
+    ) -> Result<WhereGitHubAnswered, String> {
         self.what_it_was_asked.push(what_git_hub_is_asked.clone());
-        Ok(())
+        Ok(WhereGitHubAnswered::an_address_at(
+            "https://github.com/steamnoid/wellbeing-tracker-public/issues/1",
+        ))
     }
 }
 

@@ -11,7 +11,9 @@
 
 use aisdlc_domain::commissioned_request::{AWhereItWasFiled, CommissionedRequest};
 use aisdlc_run::a_comment_is_left::the_run_leaves_a_comment;
-use aisdlc_run::a_git_hub_we_write_to::{AGitHubWeWriteTo, WhatGitHubWasAskedFor};
+use aisdlc_run::a_git_hub_we_write_to::{
+    AGitHubWeWriteTo, WhatGitHubWasAskedFor, WhereGitHubAnswered,
+};
 
 /// Somewhere to write, that remembers what it was asked.
 struct SomewhereThatAccepts {
@@ -30,11 +32,13 @@ impl AGitHubWeWriteTo for SomewhereThatAccepts {
     fn it_is_asked_to(
         &mut self,
         what_it_is_asked_for: &WhatGitHubWasAskedFor,
-    ) -> Result<(), String> {
+    ) -> Result<WhereGitHubAnswered, String> {
         self.what_it_was_asked
             .borrow_mut()
             .push(what_it_is_asked_for.clone());
-        Ok(())
+        Ok(WhereGitHubAnswered::an_address_at(
+            "https://github.com/steamnoid/wellbeing-tracker-public/issues/1",
+        ))
     }
 }
 

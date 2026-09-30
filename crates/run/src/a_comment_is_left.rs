@@ -52,9 +52,11 @@ pub fn the_run_leaves_a_comment(
     };
     let what_it_is_asked_for =
         WhatGitHubWasAskedFor::a_comment_at(filed_as.clone(), what_it_would_say, who_wrote_this);
-    somewhere
-        .it_is_asked_to(&what_it_is_asked_for)
-        .map_err(|why_it_failed| ANowhereToLeaveAComment {
-            the_work: why_it_failed,
-        })
+    let _where_git_hub_says_it_went =
+        somewhere
+            .it_is_asked_to(&what_it_is_asked_for)
+            .map_err(|why_it_failed| ANowhereToLeaveAComment {
+                the_work: why_it_failed,
+            })?;
+    Ok(())
 }
