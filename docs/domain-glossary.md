@@ -799,6 +799,33 @@ its name. **`AJudgementNobodyMade`** is the refusal, and
 shell.** One argument each, no shell, **because a title has dashes and colons in it and a body is
 prose with backticks** — and one string re-split into two is one string somebody else assembled.
 
+**`ACreativeAgentCouldNotFile`** carries the sentence and nothing else, **because a refusal that names
+a field instead of quoting what GitHub said throws away the only clue there was.** It is the one
+refusal on the creative path: **a model whose answer could not be read, and a GitHub that refused a
+filing, arrive at the same reader and neither of them is an offer.**
+
+**`WhereGitHubAnswered`** — what GitHub answered, and the address it answered with. **It is the
+port's return type and it lives with the port**, because a return type in the module that calls it is
+a return type the next caller will not find.
+
+**`AGitHubWeWriteTo::it_is_asked_to` answers with it, and that is a change of the port's shape.**
+A port that returns nothing cannot hand back an address, **and a filing whose address was thrown away
+is a filing in a real repository that nobody can find** — so the answer travels back through the port,
+**for a comment as much as for a filing**, because a comment's address was read earlier and is still
+the answer to where it went.
+
+**This is the seam disagreeing with the thing it stands for, in a second place.** The port returned
+`()` and the one production caller discarded the value, which was correct for a comment **and is the
+one thing a filing cannot survive.** The first real run in this repository was refused by an arity at
+the last step after seven gates and six models — **that was the same shape of finding, and nobody had
+compared the two until here.**
+
+**`a_creative_agent_files_what_it_concluded`** is the whole chain in one function: listing → question →
+answer → offers grounded in the listing → filings → **and every address back out of the port that asked
+GitHub.** **A path split across five seams is five places for two of them to disagree about what it
+takes** — and one filing per offer means one address per filing, **because an offer with no address is
+an offer a person can never look at again.**
+
 **`AFilingWithNowhereToPoint`** — a filing was made and GitHub printed no address for it. **A comment
 has nowhere new to point and a filing has exactly one place to point**, because `gh issue create`
 prints the address of what it made — **and a run that filed an issue into a real repository and threw

@@ -16,7 +16,9 @@
 //! the record keeps it for the audit trail. The account is the author and this system does not get
 //! to pretend otherwise.
 
-use aisdlc_run::a_git_hub_we_write_to::{AGitHubWeWriteTo, WhatGitHubWasAskedFor};
+use aisdlc_run::a_git_hub_we_write_to::{
+    AGitHubWeWriteTo, WhatGitHubWasAskedFor, WhereGitHubAnswered,
+};
 
 /// Writing to GitHub with `gh`, which is a program and not a shell.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -40,6 +42,19 @@ impl ACommentReachingGitHub {
     }
 }
 
+/// Where a comment went, **which the port answers with because a comment's address is still the
+/// answer to where it went** — the run read it earlier and nothing here composed it.
+fn where_git_hub_says_the_comment_went(
+    what_it_is_asked_for: &WhatGitHubWasAskedFor,
+) -> Result<WhereGitHubAnswered, String> {
+    let where_it_is_going = what_it_is_asked_for.where_it_is_going().ok_or_else(|| {
+        String::from("a comment has nowhere to go, and this program only comments")
+    })?;
+    Ok(WhereGitHubAnswered::an_address_at(
+        where_it_is_going.as_str(),
+    ))
+}
+
 /// The address the filing returned, word for word, **and nothing at all for a filing not yet made.**
 ///
 /// **Empty and not a guess.** This program comments; a filing that has not been made has no address
@@ -60,9 +75,9 @@ impl AGitHubWeWriteTo for ACommentReachingGitHub {
     /// whole claim is that a record can be followed.
     fn it_is_asked_to(
         &mut self,
-        what_git_hub_is_asked: &WhatGitHubWasAskedFor,
-    ) -> Result<(), String> {
-        let the_arguments = self.the_arguments_of(what_git_hub_is_asked);
+        what_it_is_asked_for: &WhatGitHubWasAskedFor,
+    ) -> Result<WhereGitHubAnswered, String> {
+        let the_arguments = self.the_arguments_of(what_it_is_asked_for);
         let what_it_ran = std::process::Command::new("gh")
             .args(&the_arguments)
             .output();
@@ -72,7 +87,7 @@ impl AGitHubWeWriteTo for ACommentReachingGitHub {
             ));
         };
         if what_it_ran.status.success() {
-            return Ok(());
+            return where_git_hub_says_the_comment_went(what_it_is_asked_for);
         }
         let why_not = String::from_utf8_lossy(&what_it_ran.stderr);
         Err(format!(
