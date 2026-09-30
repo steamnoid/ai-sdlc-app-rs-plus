@@ -3183,3 +3183,64 @@ mod no_body_is_built_by_a_hand {
         );
     }
 }
+
+mod a_test_is_not_its_own_proof {
+    //! A test that says what a program *would* be run with has not run the program.
+    //!
+    //! **`#107` is the finding this rule is made of.** The test asserted that `--author-name` was in
+    //! the arguments `gh` is run with — and it was, and `gh issue comment` has no such flag, and the
+    //! assertion was green the whole time. **It proved this system's own arguments and nothing
+    //! about `gh`**, and it was the only proof there was, because the file that runs the real
+    //! program is a different file.
+    //!
+    //! **A file that talks about a program's arguments and never runs a program is asserting about
+    //! the implementation and calling it a contract.** The stub was not a test double that time; it
+    //! was the code under test.
+
+    use aisdlc_gates::reading_the_checkout;
+    use aisdlc_gates::reading_the_code::every_source_file;
+
+    /// The test files, and the one place a program's own words could be.
+    fn every_test_file() -> Vec<std::path::PathBuf> {
+        every_source_file()
+            .into_iter()
+            .filter(|a_file| a_file.to_string_lossy().contains("/tests/"))
+            .collect()
+    }
+
+    /// Whether this file asserts about what a program would be run with.
+    fn speaks_about_a_programs_arguments(the_text: &str) -> bool {
+        the_text.contains("the_arguments_of")
+    }
+
+    /// Whether this file ever lets a program answer, in any of the ways it can.
+    fn ever_runs_a_program(the_text: &str) -> bool {
+        the_text.contains(".run(")
+            || the_text.contains("it_is_asked_to(")
+            || the_text.contains("the_outcome_of(")
+            || the_text.contains("the_run_makes_a_checkout(")
+    }
+
+    #[test]
+    fn no_test_file_asserts_about_a_program_it_never_runs() {
+        let the_refusals: Vec<String> = every_test_file()
+            .into_iter()
+            .filter_map(|a_file| {
+                let the_text = reading_the_checkout::the_text_at(&a_file);
+                if speaks_about_a_programs_arguments(&the_text) && !ever_runs_a_program(&the_text) {
+                    return Some(a_file.display().to_string());
+                }
+                None
+            })
+            .collect();
+
+        assert!(
+            the_refusals.is_empty(),
+            "**because a test that says what a program would be run with has not run the program** — \
+             and a file that asserts about the implementation and calls it a contract will one day \
+             be the only proof there is, of something that never worked. This happened here: a \
+             green test asserted a flag `gh` does not have, and the real program answered \
+             `unknown flag`. Let the program answer in the same file: {the_refusals:?}"
+        );
+    }
+}
