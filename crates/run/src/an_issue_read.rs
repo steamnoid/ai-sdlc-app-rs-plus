@@ -37,6 +37,18 @@ impl std::fmt::Display for AnAnswerThatIsNotAFiledRequest {
     }
 }
 
+/// The refusal for a pull request, naming where it is and quoting what came back.
+fn a_pull_request(
+    where_it_answers: Option<&str>,
+    what_github_answered: &str,
+) -> AnAnswerThatIsNotAFiledRequest {
+    let why_not = format!(
+        "{where_it_answers:?} is a pull request and not a filed request: GitHub answers both from \
+         one path, and a pull request's body describes a change rather than asking for one"
+    );
+    AnAnswerThatIsNotAFiledRequest::because(what_github_answered, &why_not)
+}
+
 /// What one field of an answer says, or nothing when it says nothing.
 ///
 /// **Empty and not refused,** because somebody filed a request with a title and nothing else, and
@@ -81,6 +93,9 @@ impl AnIssueRead {
         let where_it_answers = what_it_came_back_as
             .get("html_url")
             .and_then(|it| it.as_str());
+        if what_it_came_back_as.get("pull_request").is_some() {
+            return Err(a_pull_request(where_it_answers, what_github_answered));
+        }
         let Some(where_it_answers) = where_it_answers else {
             return Err(AnAnswerThatIsNotAFiledRequest::because(
                 what_github_answered,

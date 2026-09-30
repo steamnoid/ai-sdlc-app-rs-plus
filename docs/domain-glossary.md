@@ -737,6 +737,13 @@ this system, and a filing does not stand anywhere.
 **The body may be empty and that is a real request.** Somebody filed it with a title and nothing
 else, and refusing that would refuse the issue a person wrote in the fewest seconds.
 
+**A pull request at the address of a filing is refused rather than read as a request.** GitHub
+answers issues and pull requests from one path, so a number handed for an issue may name a pull
+request — **and in the repository this system is pointed at that is the likely reading and not a
+corner**, because six of the seven entries GitHub answers with there are pull requests. Its body
+describes a change rather than asking for one, and **reading it as a request hands the pipeline a
+description to work from, and every artifact after it is about work nobody asked for.**
+
 **`AnAnswerThatIsNotAFiledRequest`** — that refusal, quoting the answer back **and not summarising
 it**, because a caller deciding whether to retry needs to know what GitHub actually said.
 
