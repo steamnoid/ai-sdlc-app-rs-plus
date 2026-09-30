@@ -86,8 +86,7 @@ fn a_comment_carries_the_name_a_deployment_used() {
         what_it_was_asked.who_wrote_this(),
         "aisdlc-dev",
         "**because the name is a fact about the deployment and not a choice this call made** — and a \
-         name that a caller chose is a name a caller could have forged: {:?}",
-        what_it_was_asked
+         name that a caller chose is a name a caller could have forged: {what_it_was_asked:?}"
     );
 }
 

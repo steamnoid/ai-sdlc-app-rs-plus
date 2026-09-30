@@ -4,10 +4,10 @@
 //! comment on a made-up place.** A comment on a composed address is a comment on a page that does
 //! not exist, and **a link to nothing in an audit trail is worse than no link at all.**
 
-use aisdlc_domain::approval::WhoDecided;
 use aisdlc_domain::commissioned_request::CommissionedRequest;
 
 use crate::a_git_hub_we_write_to::{AGitHubWeWriteTo, WhatGitHubWasAskedFor};
+use crate::who_signs_a_comment::WhoSignsAComment;
 
 /// A request that was filed nowhere, so there is nowhere to leave a comment.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -45,7 +45,7 @@ pub fn the_run_leaves_a_comment(
     somewhere: &mut impl AGitHubWeWriteTo,
     the_request: &CommissionedRequest,
     what_it_would_say: &str,
-    who_wrote_this: &WhoDecided,
+    who_wrote_this: &WhoSignsAComment,
 ) -> Result<(), ANowhereToLeaveAComment> {
     let Some(filed_as) = the_request.where_it_was_filed() else {
         return Err(ANowhereToLeaveAComment::because(the_request));
