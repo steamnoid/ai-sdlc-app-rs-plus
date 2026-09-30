@@ -31,7 +31,14 @@ fn a_work_an_agent_is_working_on() -> WorkItem {
         Stage::Idle,
     )
     .expect("a work item may stand at idle");
-    a_run_picks_up_the_work_it_was_given(&the_work).expect("the table allows this edge")
+    let the_work =
+        a_run_picks_up_the_work_it_was_given(&the_work).expect("the table allows this edge");
+    aisdlc_domain::state_machine::transition(
+        the_work,
+        aisdlc_domain::stage::Stage::InProgressByAgent,
+        Some(aisdlc_run::a_run_picks_up_the_work::the_agent_that_picks_up_work()),
+    )
+    .expect("the table allows pickup to become work in progress")
 }
 
 #[test]
@@ -40,14 +47,20 @@ fn what_is_presented_is_exactly_what_the_gate_is_asked_about() {
     let what_it_produced =
         WhatAnAgentHasProduced::new("DiscoveryReport", 1).expect("declared here");
 
-    let the_question =
-        an_agent_presents_what_it_produced_and_the_question_is_put(&the_work, &what_it_produced)
-            .expect("the work stands at pickup, and pickup leads to the gate");
+    let the_question = an_agent_presents_what_it_produced_and_the_question_is_put(
+        &the_work,
+        &what_it_produced,
+    )
+    .expect(
+        "**and the table does not have an edge out of `AWAITING_AGENT_PICKUP` straight to the \
+         gate** — an agent presents from `IN_PROGRESS_BY_AGENT`, and a work standing at pickup has \
+         not been worked on at all",
+    );
 
     assert_eq!(
         (
-            the_question.about_which_artifact().as_str(),
-            the_question.about_which_version().value()
+            the_question.about_which_artifact().0.as_str(),
+            the_question.about_which_version().0
         ),
         ("DiscoveryReport", 1),
         "**because presenting and asking are one act** — and the artifact the gate is asked about \
@@ -64,15 +77,15 @@ fn a_second_version_is_a_second_thing_on_the_table_and_not_the_first_one() {
 
     let asked_about_the_first =
         an_agent_presents_what_it_produced_and_the_question_is_put(&the_work, &the_first)
-            .expect("the work stands at pickup");
+            .expect("an agent working on a work may present it");
     let asked_about_the_second =
         an_agent_presents_what_it_produced_and_the_question_is_put(&the_work, &the_second)
-            .expect("the work stands at pickup");
+            .expect("an agent working on a work may present it");
 
     assert_ne!(
         (
-            asked_about_the_first.about_which_version().value(),
-            asked_about_the_second.about_which_version().value()
+            asked_about_the_first.about_which_version().0,
+            asked_about_the_second.about_which_version().0
         ),
         (0, 0),
         "**because a version is what makes an approval go stale** — and a gate that cannot tell \

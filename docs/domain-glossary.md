@@ -720,6 +720,20 @@ asserting a flag that does not exist. The name goes in the words, where a reader
 record keeps it for the audit trail. The account is the author and this system does not get to
 pretend otherwise.
 
+**`an_agent_presents_what_it_produced_and_the_question_is_put`** — what an agent produced, put in
+front of the gate, and the question that asks about it. **Presenting and asking are one act**, and
+they used to be two functions that took the artifact twice: once to throw it away and once to ask
+about it — **so the thing approved and the thing ruled on were two arguments somebody had to keep
+equal by hand, and nothing checked that they ever were.** A gate that can be asked about something
+other than what was put in front of it is a gate whose approval is about an artifact nobody saw.
+**So there is nothing to keep equal: there is one value.**
+
+**The work must already be `IN_PROGRESS_BY_AGENT`, and the table is what says so.** There is no
+edge out of `AWAITING_AGENT_PICKUP` straight to the gate, and a work standing at pickup has not been
+worked on at all. **A third RED in this repository asserted an edge the table does not have, and the
+table was right** — which is the second time a test of mine was corrected by a machine rather than by
+a reader.
+
 **`WhatAnAgentHasProduced`** — the name and the version of one thing an agent produced, both
 checked. **`WhichArtifact` is an open `String` and it accepts anything**, so this is the door that is
 closed: **a gate that approves an artifact nobody here has ever heard of is a gate that approved a
