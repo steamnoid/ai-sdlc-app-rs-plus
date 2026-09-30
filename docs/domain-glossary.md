@@ -720,6 +720,21 @@ asserting a flag that does not exist. The name goes in the words, where a reader
 record keeps it for the audit trail. The account is the author and this system does not get to
 pretend otherwise.
 
+**`the_ruling_moves_the_work`** — the work moved where its ruling says it goes, and nowhere else.
+**An approval is the only move that ends the work**, and `DONE` is the table's own destination for
+it — **not one this file chose.** A refused work goes back to `AWAITING_AGENT_PICKUP`, because **a
+work whose ruling was a refusal is not delivered**, and a refusal that ended the work would record a
+delivery nobody made. That asymmetry was written down in the domain and nothing had yet performed it.
+
+**A refused work goes back to the agent the specification names, and the work could not tell this
+file which agent that was.** `AWAITING_HUMAN_APPROVAL` holds no agent — presenting drops it — **so a
+refused work has nobody recorded to return to.** That is a real gap in the work item, and it is done
+about here without changing the invariant: **the name comes from §10, so it is transcribed rather than
+chosen here**, and the gap is written down rather than papered over with a second agent field.
+
+**Both moves leave no agent holding it where the stage holds none**, and a move that carried one along
+would be refused by the invariant — **which is the point of an invariant.**
+
 **`the_gate_records_the_ruling_it_was_given`** — the record a ruling left behind, and `None` when
 it refused. **A model's ruling is a decision and never a record** until this exists: the gate's own
 recorder took what a person decided, **so a model could rule at a gate and the ruling went nowhere**,
