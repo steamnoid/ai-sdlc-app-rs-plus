@@ -9,9 +9,9 @@
 //! model.** A record that said "approved" and left the name off would be evidence with no author,
 //! and a record that put a person's name on a model's ruling would be a forged audit trail.
 
+use aisdlc_domain::approval::{Approval, ApprovalDecision};
 use aisdlc_run::a_model_is_asked_how_it_rules::the_model_is_asked_how_it_rules_on;
 use aisdlc_run::a_ruling_is_recorded::the_gate_records_the_ruling_it_was_given;
-use aisdlc_run::an_issue_read::AnIssueRead;
 use aisdlc_run::what_an_agent_has_produced::WhatAnAgentHasProduced;
 use aisdlc_run::what_the_agent_presents::an_agent_presents_what_it_produced_and_the_question_is_put;
 
@@ -44,6 +44,34 @@ impl AModelThatAnswers {
     }
 }
 
+/// Where a model that says the given word is, and who the ruling would be recorded under.
+fn a_model_that_says(what_it_says: &str) -> AModelThatAnswers {
+    AModelThatAnswers::saying(what_it_says)
+}
+
+/// The ruling a model gave, and the record it left behind.
+fn the_ruling_and_its_record(what_the_model_says: &str) -> (ApprovalDecision, Option<Approval>) {
+    let the_work = a_work_an_agent_is_working_on();
+    let what_it_produced =
+        WhatAnAgentHasProduced::new("DiscoveryReport", 1).expect("declared here");
+    let a_question =
+        an_agent_presents_what_it_produced_and_the_question_is_put(&the_work, &what_it_produced)
+            .expect("an agent working on a work may present it");
+    let the_ruling = the_model_is_asked_how_it_rules_on(
+        &a_model_that_says(what_the_model_says),
+        &a_question,
+        &aisdlc_domain::approval::WhoDecided::try_from("a model: the configured one")
+            .expect("a name"),
+        &aisdlc_run::a_model_is_asked_how_it_rules::WhereAModelIs {
+            the_endpoint: "http://localhost:11434/v1/chat/completions".to_string(),
+            which_model: "a-model".to_string(),
+        },
+    )
+    .expect("a model that answers with one word has ruled");
+    let what_it_left = the_gate_records_the_ruling_it_was_given(&the_ruling);
+    (the_ruling, what_it_left)
+}
+
 /// A work an agent is working on, with something to present.
 fn a_work_an_agent_is_working_on() -> aisdlc_domain::work_item::WorkItem {
     let the_work = aisdlc_domain::work_item::WorkItem::standing_at(
@@ -67,70 +95,26 @@ fn a_work_an_agent_is_working_on() -> aisdlc_domain::work_item::WorkItem {
 
 #[test]
 fn a_models_ruling_that_reached_the_gate_is_recorded_under_its_own_name() {
-    let the_work = a_work_an_agent_is_working_on();
-    let what_it_produced =
-        WhatAnAgentHasProduced::new("DiscoveryReport", 1).expect("declared here");
-    let a_question =
-        an_agent_presents_what_it_produced_and_the_question_is_put(&the_work, &what_it_produced)
-            .expect("an agent working on a work may present it");
-    let who_ruled = aisdlc_domain::approval::WhoDecided::try_from("a model: the configured one")
-        .expect("a name");
-    let a_model = AModelThatAnswers::saying("APPROVED");
-
-    let the_ruling = the_model_is_asked_how_it_rules_on(
-        &a_model,
-        &a_question,
-        &who_ruled,
-        &aisdlc_run::a_model_is_asked_how_it_rules::WhereAModelIs {
-            the_endpoint: "http://localhost:11434/v1/chat/completions".to_string(),
-            which_model: "a-model".to_string(),
-        },
-    )
-    .expect("a model that answers with one word has ruled");
-
-    let the_record = the_gate_records_the_ruling_it_was_given(&the_ruling);
+    let (_the_ruling, what_it_left) = the_ruling_and_its_record("APPROVED");
 
     assert_eq!(
-        the_record
+        what_it_left
             .as_ref()
-            .ok()
-            .map(|what_it_left| what_it_left.approved_by().who_decided()),
+            .map(|what_it_left| what_it_left.decided_by.0.as_str()),
         Some("a model: the configured one"),
         "**because a model can rule at a gate and the ruling must go somewhere** — and a record that \
-         said 'approved' and left the name off would be evidence with no author: {the_record:?}"
+         said 'approved' and left the name off would be evidence with no author: {what_it_left:?}"
     );
 }
 
 #[test]
 fn a_ruling_that_refused_leaves_no_record_because_a_refusal_is_a_decision_and_not_an_approval() {
-    let the_work = a_work_an_agent_is_working_on();
-    let what_it_produced =
-        WhatAnAgentHasProduced::new("DiscoveryReport", 1).expect("declared here");
-    let a_question =
-        an_agent_presents_what_it_produced_and_the_question_is_put(&the_work, &what_it_produced)
-            .expect("an agent working on a work may present it");
-    let who_ruled = aisdlc_domain::approval::WhoDecided::try_from("a model: the configured one")
-        .expect("a name");
-    let a_model = AModelThatAnswers::saying("REFUSED");
-
-    let the_ruling = the_model_is_asked_how_it_rules_on(
-        &a_model,
-        &a_question,
-        &who_ruled,
-        &aisdlc_run::a_model_is_asked_how_it_rules::WhereAModelIs {
-            the_endpoint: "http://localhost:11434/v1/chat/completions".to_string(),
-            which_model: "a-model".to_string(),
-        },
-    )
-    .expect("a model that answers with one word has ruled");
-
-    let the_record = the_gate_records_the_ruling_it_was_given(&the_ruling);
+    let (_the_ruling, what_it_left) = the_ruling_and_its_record("REFUSED");
 
     assert_eq!(
-        the_record,
-        Ok(None),
+        what_it_left, None,
         "**because a refusal is a decision and not an approval** — and a record of a refusal would be \
          a record of something that was approved, which is the one thing a record must not be: \
-         {the_record:?}"
+         {what_it_left:?}"
     );
 }

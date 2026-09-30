@@ -720,6 +720,20 @@ asserting a flag that does not exist. The name goes in the words, where a reader
 record keeps it for the audit trail. The account is the author and this system does not get to
 pretend otherwise.
 
+**`the_gate_records_the_ruling_it_was_given`** — the record a ruling left behind, and `None` when
+it refused. **A model's ruling is a decision and never a record** until this exists: the gate's own
+recorder took what a person decided, **so a model could rule at a gate and the ruling went nowhere**,
+and a run carrying a decision nobody can point at is a run whose next step has no evidence behind it.
+
+**The record names whoever answered, and that is the only difference between a person and a model.**
+A record that said "approved" and left the name off would be evidence with no author, **and a record
+that put a person's name on a model's ruling would be a forged audit trail** — the same forgery the
+comment path closed a cycle ago, on the other side of the gate.
+
+**`None` is the whole shape of a refusal**, because a refusal is a decision and not an approval, and
+a record of a refusal would be a record of something that was approved — **which is the one thing a
+record must not be.**
+
 **`an_agent_presents_what_it_produced_and_the_question_is_put`** — what an agent produced, put in
 front of the gate, and the question that asks about it. **Presenting and asking are one act**, and
 they used to be two functions that took the artifact twice: once to throw it away and once to ask
