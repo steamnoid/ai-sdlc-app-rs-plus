@@ -47,6 +47,7 @@ fn an_offer_about_one_file() -> AWorkAnAgentOffered {
 crates/run/src/what_an_agent_offered.rs"
                 .to_string(),
         }],
+        it_restates: None,
     }
 }
 

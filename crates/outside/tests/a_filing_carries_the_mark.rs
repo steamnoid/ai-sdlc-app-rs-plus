@@ -25,6 +25,7 @@ fn an_offer_about_one_file() -> aisdlc_run::what_an_agent_offered::AWorkAnAgentO
         title: "the listing: why nothing compares a path".to_string(),
         what_it_asks_for: "compare every cited path with the listing".to_string(),
         what_it_concluded_from: Vec::new(),
+        it_restates: None,
     }
 }
 

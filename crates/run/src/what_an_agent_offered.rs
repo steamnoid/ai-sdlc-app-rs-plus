@@ -19,6 +19,8 @@ pub struct AWorkAnAgentOffered {
     pub what_it_asks_for: String,
     /// Which files of the repository it concluded that from, **each with an address.**
     pub what_it_concluded_from: Vec<EvidenceFile>,
+    /// Which filing already on file this offer restates, **or `None` when it is a new finding.**
+    pub it_restates: Option<i64>,
 }
 
 /// What a model said it would file, **in the shape it said it in — paths and not addresses.**
@@ -33,6 +35,9 @@ pub struct WhatAModelSaidItWouldFile {
     pub what_it_asks_for: String,
     /// Which files it says it concluded that from.
     pub paths: Vec<String>,
+    /// Which filing already on file it restates, **or `None` for an offer that is not a
+    /// restatement.**
+    pub it_restates: Option<i64>,
 }
 
 /// An offer naming a file the run never showed the model.
@@ -103,19 +108,10 @@ impl WhatAnAgentOffered {
     /// told the truth, **and it still has to say so in words**, because an empty offer list and an
     /// agent that was never asked look identical afterwards.
     pub fn an_agent_offered(
-        offers: Vec<(String, String, Vec<EvidenceFile>)>,
+        offers: Vec<AWorkAnAgentOffered>,
         judged: WhatAnAgentJudged,
     ) -> Result<WhatAnAgentOffered, AnOfferNothingWasConcludedFrom> {
-        let what_was_offered: Vec<AWorkAnAgentOffered> = offers
-            .into_iter()
-            .map(
-                |(title, what_it_asks_for, what_it_concluded_from)| AWorkAnAgentOffered {
-                    title,
-                    what_it_asks_for,
-                    what_it_concluded_from,
-                },
-            )
-            .collect();
+        let what_was_offered = offers;
         the_fault_in(&what_was_offered)?;
         Ok(WhatAnAgentOffered {
             offers: what_was_offered,
@@ -159,18 +155,23 @@ fn files_behind_it(one_offer: &AWorkAnAgentOffered) -> Result<(), AnOfferNothing
 }
 
 /// One thing a model said, as one offer with the evidence the run verified behind it.
+///
+/// **A named offer and not a four-tuple**, **because a fourth field turned `(title, asks_for,
+/// evidence, restates)` into four positions a reader has to count** — and the run then rebuilt the
+/// same struct from it, **which is the one place `it_restates` could quietly have been dropped.**
 fn one_as_an_offer(
     of_which_repository: &Repository,
     what_the_run_saw: &[String],
     what_it_said: WhatAModelSaidItWouldFile,
-) -> Result<(String, String, Vec<EvidenceFile>), AnOfferThatNamedAFileTheRunNeverShowed> {
+) -> Result<AWorkAnAgentOffered, AnOfferThatNamedAFileTheRunNeverShowed> {
     let what_it_concluded_from =
         the_evidence_behind(of_which_repository, what_the_run_saw, &what_it_said.paths)?;
-    Ok((
-        what_it_said.title,
-        what_it_said.what_it_asks_for,
+    Ok(AWorkAnAgentOffered {
+        title: what_it_said.title,
+        what_it_asks_for: what_it_said.what_it_asks_for,
         what_it_concluded_from,
-    ))
+        it_restates: what_it_said.it_restates,
+    })
 }
 
 /// The evidence behind one offer, **every path of which the run really showed the model.**
