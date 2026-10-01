@@ -65,7 +65,7 @@ fn the_work_the_run_will_work_on(
     for where_it_went in where_each_filing_went {
         what_was_read.push(
             the_filing_a_filing_was_read_back(somewhere_else, where_it_went.as_str())
-                .map_err(|why_there_was_none| AFlagThatIsOff(why_there_was_none))?,
+                .map_err(AFlagThatIsOff)?,
         );
     }
     let where_each_went_as_a_string: Vec<String> = where_each_filing_went

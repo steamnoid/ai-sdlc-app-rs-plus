@@ -804,6 +804,27 @@ a field instead of quoting what GitHub said throws away the only clue there was.
 refusal on the creative path: **a model whose answer could not be read, and a GitHub that refused a
 filing, arrive at the same reader and neither of them is an offer.**
 
+**`AFilingIsReadFrom`** — reading a filing, **the other direction of the same boundary.** Writing and
+reading GitHub are two ports and not one, **because writing always needs a credential and reading
+sometimes does not** — and one port that needed a credential **would make every run that only reads a
+filing ask for a key it does not use.**
+
+**Asked by address and not by number**, because a run that just filed something **holds that address
+and nothing else** — and asking for the repository and the number separately **would be this system
+guessing at two facts GitHub had already written down.** Both halves are read out of GitHub's own
+address, **which is the safe direction of the pair**: composing an address from a number is what
+`CommissionedIssue` did.
+
+**`AFlagThatIsOff`** is a flag that is off, **and it carries the words that would open it.** The flag
+is read **before the model and before GitHub**, because a model asked costs money and a filing made
+lands in a real repository — **and a flag read after the model has been asked is a flag that was not
+there when it mattered.** The test that says so **asks the program whether it was asked**, because a
+return value of `Err` is what a program that *was* asked and answered nothing also returns.
+
+**`a_creative_run_files_what_it_would_file` writes and then reads, through two ports and two objects**,
+because `gh issue create` and `gh api` are two programs against one GitHub — **and one handle cannot be
+borrowed twice, which the compiler said before I did.**
+
 **`WhatTheRunWillWorkOn`** — one piece of work a run will take up, and the filing it answers. **One
 filing is one work and not one work with a list in it**, because a work item answers one
 `CommissionedRequest` — **and two issues in one work item would be two requests and one answer, which
