@@ -14,6 +14,13 @@ use aisdlc_run::a_git_hub_we_write_to::{
     AGitHubWeWriteTo, WhatGitHubWasAskedFor, WhereGitHubAnswered,
 };
 
+/// The mark every filing this system makes carries, **and it is the project's full name.**
+///
+/// **A short namespace would be unresolvable where the filing lands** — a repository this project
+/// does not live in, read by somebody who was never here — **so the eleven characters are the price
+/// of an issue anybody can attribute.**
+pub const THE_MARK_A_FILING_OF_OURS_CARRIES: &str = "ai-sdlc-app-rs-plus";
+
 /// A filing GitHub made no address for, quoting what it said instead.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AFilingWithNowhereToPoint(pub String);
@@ -57,6 +64,8 @@ impl AFilingReachingGitHub {
             String::from(what_the_filing_is_called),
             String::from("--body"),
             what_git_hub_is_asked.what_is_written().to_string(),
+            String::from("--label"),
+            String::from(THE_MARK_A_FILING_OF_OURS_CARRIES),
         ]
     }
 

@@ -50,7 +50,7 @@ fn a_filing_carries_the_title_it_was_called_and_not_only_its_words() {
 }
 
 #[test]
-fn the_arguments_name_the_repository_the_title_and_the_body_one_each() {
+fn the_arguments_name_the_repository_the_title_the_body_and_the_mark_one_each() {
     let the_filing = the_filing_being_asked_for();
 
     let the_arguments = AFilingReachingGitHub.the_arguments_of(&the_filing);
@@ -66,10 +66,14 @@ fn the_arguments_name_the_repository_the_title_and_the_body_one_each() {
             String::from("the listing: why nothing compares a path"),
             String::from("--body"),
             the_filing.what_is_written().to_string(),
+            String::from("--label"),
+            String::from(
+                aisdlc_outside::a_filing_reaching_github::THE_MARK_A_FILING_OF_OURS_CARRIES
+            ),
         ],
         "**because the repository is asked for by name and not by address** — the filing does not \
-         exist yet, so there is no address to give — **and the title and the body are one argument \
-         each, because prose re-split into two is prose somebody else assembled**"
+         exist yet, so there is no address to give — **and the title, the body and the mark are one \
+         argument each, because prose re-split into two is prose somebody else assembled**"
     );
 }
 
