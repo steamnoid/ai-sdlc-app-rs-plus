@@ -55,9 +55,16 @@ impl WhatAModelSaidWouldRestate {
         Self { it_restates: None }
     }
 
-    /// What the run does with it, **and nothing yet — the tests are what demand any of it.**
+    /// What the run does with it, **given everything already on file.**
     pub fn how_the_run_answers(&self, what_is_on_file: AFilingAlreadyOnFile) -> HowTheRunAnswers {
-        let _ = (self, what_is_on_file);
-        HowTheRunAnswers::Filed
+        let mut every_one = TheFilingsAlreadyOnFile::none_yet();
+        every_one.and_this_one_was_too(what_is_on_file);
+        match self.it_restates {
+            None => HowTheRunAnswers::Filed,
+            Some(which) if every_one.whether_it_holds(which) => {
+                HowTheRunAnswers::NotFiledBecauseItRestates(which)
+            }
+            Some(which) => HowTheRunAnswers::RefusedBecauseItNamedAFilingThatIsNotOnFile(which),
+        }
     }
 }
