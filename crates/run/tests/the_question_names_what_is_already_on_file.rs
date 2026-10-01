@@ -78,3 +78,88 @@ fn a_question_naming_what_is_on_file_says_what_to_do_with_a_duplicate() {
          lets it: {the_question}"
     );
 }
+
+#[test]
+fn the_model_is_asked_what_is_on_file_because_the_run_read_it_first() {
+    use aisdlc_run::a_filing_is_read::AFilingIsReadFrom;
+    use aisdlc_run::a_model_is_asked_how_it_rules::WhereAModelIs;
+    use aisdlc_run::a_program_we_run::{AProgramWeRun, WhatTheProgramSaid};
+    use aisdlc_run::an_issue_read::AnIssueRead;
+    use aisdlc_run::an_agent_is_asked_what_it_would_file::an_agent_is_asked_what_it_would_file;
+        use aisdlc_run::what_we_tell_a_program_to_do::WhatWeTellAProgramToDo;
+    use aisdlc_run::what_an_agent_offered::WhatAnAgentOffered;
+    use std::cell::Cell;
+    use std::rc::Rc;
+
+    /// What a tracker was asked, **and the one fact this test needs: that it was asked at all.**
+    #[derive(Clone, Default)]
+    struct ATrackerWhoseFilingsAreRemembered {
+        was_it_read: Rc<Cell<bool>>,
+    }
+
+    impl AFilingIsReadFrom for ATrackerWhoseFilingsAreRemembered {
+        fn the_filing_at(
+            &mut self,
+            _where_it_answers: &aisdlc_domain::commissioned_request::AWhereItWasFiled,
+        ) -> Result<AnIssueRead, String> {
+            unreachable!("this run asks what is on file and reads none of it back")
+        }
+
+        fn the_filings_already_on_file_of(
+            &mut self,
+            _of_which_repository: &Repository,
+        ) -> Result<TheFilingsAlreadyOnFile, String> {
+            self.was_it_read.set(true);
+            Ok(the_filings())
+        }
+    }
+
+    /// A model that remembers the body it was handed, **which is the only way a test can see a
+    /// question.**
+    struct AModelRememberingItsQuestion {
+        what_it_was_asked: Rc<Cell<String>>,
+    }
+
+    impl AProgramWeRun for AModelRememberingItsQuestion {
+        fn run(&self, what_it_was_told_to_do: &WhatWeTellAProgramToDo) -> WhatTheProgramSaid {
+            self.what_it_was_asked.set(what_it_was_told_to_do.the_body_it_carries().to_string());
+            WhatTheProgramSaid::the_words(
+                "{\"offers\":[],\"what_it_found\":\"a\",\"what_it_could_not_settle\":\"b\",\"what_it_expects_next\":\"c\"}",
+            )
+        }
+    }
+
+    let what_the_model_was_asked = Rc::new(Cell::new(String::new()));
+    let was_the_tracker_read = Rc::new(Cell::new(false));
+    let mut a_tracker = ATrackerWhoseFilingsAreRemembered {
+        was_it_read: was_the_tracker_read.clone(),
+    };
+    let the_model = AModelRememberingItsQuestion {
+        what_it_was_asked: what_the_model_was_asked.clone(),
+    };
+    let where_the_model_is = WhereAModelIs {
+        the_endpoint: String::from("http://localhost:1/v1/chat/completions"),
+        which_model: String::from("a-model"),
+    };
+
+    let offered = an_agent_is_asked_what_it_would_file(
+        &the_model,
+        &mut a_tracker,
+        &the_repository(),
+        &["src/db.ts".to_string()],
+        &where_the_model_is,
+    );
+
+    assert!(
+        offered.is_ok() && was_the_tracker_read.get(),
+        "**because the reading is the whole of this and a question naming nothing read is a question \\
+         about a tracker this system never opened** — the third argument is a hardcoded `none_yet()` \\
+         today, which is this system telling a model that thirty issues are not there"
+    );
+    assert!(
+        what_the_model_was_asked.get().contains("#12"),
+        "**because the model's question is the only place a filing on file can reach a model**, and \
+         the run reading it proves nothing if the question drops it: {}",
+        what_the_model_was_asked.get()
+    );
+}

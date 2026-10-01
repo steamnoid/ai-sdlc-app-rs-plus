@@ -35,6 +35,7 @@ pub fn a_creative_agent_files_what_it_concluded(
     let what_it_concluded =
         an_agent_is_asked_what_it_would_file::an_agent_is_asked_what_it_would_file(
             the_model,
+            &crate::the_filings_already_on_file::TheFilingsAlreadyOnFile::none_yet(),
             of_which_repository,
             what_the_run_saw,
             where_the_model_is,

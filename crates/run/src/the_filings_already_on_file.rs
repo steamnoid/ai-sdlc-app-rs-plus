@@ -58,4 +58,21 @@ impl TheFilingsAlreadyOnFile {
     pub fn whether_it_holds(&self, which: i64) -> bool {
         self.every_one.iter().any(|one| one.which == which)
     }
+
+    /// How many are on file, **and this is what the question says before listing them.**
+    pub fn how_many(&self) -> usize {
+        self.every_one.len()
+    }
+
+    /// The filings on file as the question's own lines, **one per filing.**
+    ///
+    /// **Numbers and titles and nothing else**, because the words a person wrote inside their own
+    /// filing are theirs — **and this system's prompt has no business carrying them anywhere.**
+    pub fn as_lines_for_the_question(&self) -> String {
+        self.every_one
+            .iter()
+            .map(|one| format!("#{} {}", one.which, one.what_it_is_called))
+            .collect::<Vec<String>>()
+            .join("\n")
+    }
 }

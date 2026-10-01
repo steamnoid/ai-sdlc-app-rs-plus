@@ -52,12 +52,23 @@ pub struct ACreativeAgentThatCouldNotOffer(pub String);
 pub fn the_question_an_agent_is_asked(
     of_which_repository: &Repository,
     what_the_run_saw: &[String],
+    what_is_already_on_file: &crate::the_filings_already_on_file::TheFilingsAlreadyOnFile,
 ) -> String {
+    let what_is_on_file = if what_is_already_on_file.how_many() == 0 {
+        String::from("no issues are open on this repository")
+    } else {
+        what_is_already_on_file.as_lines_for_the_question()
+    };
     format!(
         "The keys of your answer are these, written exactly, at the top level: offers, \
          what_it_found, what_it_could_not_settle, what_it_expects_next.\n\
          offers is an array. Each key of an offer is these three, written exactly: title, \
          what_it_asks_for, paths.\n\
+         These issues are already on file, and an offer that repeats one of them has nothing to add: \
+{what_is_on_file}\n\
+         If an offer restates one of them, name its number in a key of that offer written exactly: \
+it_restates. If it restates nothing, it_restates is null. An offer naming a filing that is not on \
+file is refused, so name a number you were shown or null.\n\
          The three judgements are keys of your answer and not text inside any offer. what_it_found \
          is what you found, what_it_could_not_settle is what you could not settle, and \
          what_it_expects_next is what you expect to happen next. None of the three is ever empty.\n\
@@ -68,6 +79,7 @@ pub fn the_question_an_agent_is_asked(
         owner = of_which_repository.owner,
         name = of_which_repository.name,
         listing = what_the_run_saw.join("\n"),
+        what_is_on_file = what_is_on_file,
     )
 }
 
@@ -118,12 +130,17 @@ pub fn the_three_judgements_a_model_gave(
 /// A creative agent asked what work is worth filing, **offering nothing for now.**
 pub fn an_agent_is_asked_what_it_would_file(
     the_model: &impl AProgramWeRun,
+    what_is_already_on_file: &crate::the_filings_already_on_file::TheFilingsAlreadyOnFile,
     of_which_repository: &Repository,
     what_the_run_saw: &[String],
     where_the_model_is: &WhereAModelIs,
 ) -> Result<WhatAnAgentOffered, ACreativeAgentThatCouldNotOffer> {
     let the_body = the_body_a_creative_agent_is_given(
-        &the_question_an_agent_is_asked(of_which_repository, what_the_run_saw),
+        &the_question_an_agent_is_asked(
+            of_which_repository,
+            what_the_run_saw,
+            what_is_already_on_file,
+        ),
         where_the_model_is,
     );
     let what_it_said = the_model.run(&WhatWeTellAProgramToDo::ask_a_model_what_it_would_file(
