@@ -112,6 +112,9 @@ impl TheProgramAsItRuns {
 
 /// The arguments of everything `git` is asked for, one thing each and never a line.
 fn what_git_is_asked_for(what_it_is_asked_to_do: &WhatWeTellAProgramToDo) -> Vec<String> {
+    if what_it_is_asked_to_do.is_answered_by_gh() {
+        return Vec::new();
+    }
     match what_it_is_asked_to_do {
         WhatWeTellAProgramToDo::CloneTheRepository { the_clone_of } => vec![
             "clone".to_string(),
@@ -124,14 +127,23 @@ fn what_git_is_asked_for(what_it_is_asked_to_do: &WhatWeTellAProgramToDo) -> Vec
         WhatWeTellAProgramToDo::TheRefItStandsOn { the_clone_of } => {
             inside_the_clone(the_clone_of, &["rev-parse", "--abbrev-ref", "HEAD"])
         }
-        WhatWeTellAProgramToDo::NameWhereTheCodeWasWrittenIn { the_clone_of } => inside_the_clone(
-            the_clone_of,
-            &["remote", "add", "upstream", &the_clone_of.fetch_from()],
-        ),
-        WhatWeTellAProgramToDo::AskAModelHowItRules { .. }
-        | WhatWeTellAProgramToDo::AskAModelWhatItWouldFile { .. }
-        | WhatWeTellAProgramToDo::ReadTheFiling { .. } => Vec::new(),
+        WhatWeTellAProgramToDo::NameWhereTheCodeWasWrittenIn { the_clone_of } => {
+            to_name_where_the_code_was_written_in(the_clone_of)
+        }
+        _ => Vec::new(),
     }
+}
+
+/// The arguments that name the origin of a clone, **run inside the clone that was already made.**
+///
+/// **And not in the match that builds every other git argument**, because adding one request to
+/// `gh` had already made one function longer than a reader may hold **and the reason was three lines
+/// away from where anyone would look.**
+fn to_name_where_the_code_was_written_in(the_clone_of: &ARepositoryToClone) -> Vec<String> {
+    inside_the_clone(
+        the_clone_of,
+        &["remote", "add", "upstream", &the_clone_of.fetch_from()],
+    )
 }
 
 /// The arguments of a question about a clone that already exists, run inside it.

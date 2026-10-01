@@ -52,12 +52,23 @@ pub struct ACreativeAgentThatCouldNotOffer(pub String);
 pub fn the_question_an_agent_is_asked(
     of_which_repository: &Repository,
     what_the_run_saw: &[String],
+    what_is_already_on_file: &crate::the_filings_already_on_file::TheFilingsAlreadyOnFile,
 ) -> String {
+    let what_is_on_file = if what_is_already_on_file.how_many() == 0 {
+        String::from("no issues are open on this repository")
+    } else {
+        what_is_already_on_file.as_lines_for_the_question()
+    };
     format!(
         "The keys of your answer are these, written exactly, at the top level: offers, \
          what_it_found, what_it_could_not_settle, what_it_expects_next.\n\
          offers is an array. Each key of an offer is these three, written exactly: title, \
          what_it_asks_for, paths.\n\
+         These issues are already on file, and an offer that repeats one of them has nothing to add: \
+{what_is_on_file}\n\
+         If an offer restates one of them, name its number in a key of that offer written exactly: \
+it_restates. If it restates nothing, it_restates is null. An offer naming a filing that is not on \
+file is refused, so name a number you were shown or null.\n\
          The three judgements are keys of your answer and not text inside any offer. what_it_found \
          is what you found, what_it_could_not_settle is what you could not settle, and \
          what_it_expects_next is what you expect to happen next. None of the three is ever empty.\n\
@@ -68,6 +79,7 @@ pub fn the_question_an_agent_is_asked(
         owner = of_which_repository.owner,
         name = of_which_repository.name,
         listing = what_the_run_saw.join("\n"),
+        what_is_on_file = what_is_on_file,
     )
 }
 
@@ -118,22 +130,22 @@ pub fn the_three_judgements_a_model_gave(
 /// A creative agent asked what work is worth filing, **offering nothing for now.**
 pub fn an_agent_is_asked_what_it_would_file(
     the_model: &impl AProgramWeRun,
+    what_is_already_on_file: &mut impl crate::a_filing_is_read::AFilingIsReadFrom,
     of_which_repository: &Repository,
     what_the_run_saw: &[String],
     where_the_model_is: &WhereAModelIs,
 ) -> Result<WhatAnAgentOffered, ACreativeAgentThatCouldNotOffer> {
-    let the_body = the_body_a_creative_agent_is_given(
-        &the_question_an_agent_is_asked(of_which_repository, what_the_run_saw),
-        where_the_model_is,
-    );
-    let what_it_said = the_model.run(&WhatWeTellAProgramToDo::ask_a_model_what_it_would_file(
-        &where_the_model_is.the_endpoint,
-        &where_the_model_is.which_model,
-        &the_body,
-    ));
-    let offered = what_a_model_offered(what_it_said.the_words())
+    let what_is_on_file = what_is_already_on_file
+        .the_filings_already_on_file_of(of_which_repository)
+        .map_err(ACreativeAgentThatCouldNotOffer)?;
+    let the_question =
+        the_question_an_agent_is_asked(of_which_repository, what_the_run_saw, &what_is_on_file);
+    let the_body = the_body_a_creative_agent_is_given(&the_question, where_the_model_is);
+    let what_the_model_said =
+        what_the_model_answered_about_what_it_would_file(the_model, &the_body, where_the_model_is);
+    let offered = what_a_model_offered(&what_the_model_said)
         .map_err(|a_fault| ACreativeAgentThatCouldNotOffer(a_fault.what_it_said().to_string()))?;
-    let judged = the_three_judgements_a_model_gave(what_it_said.the_words())
+    let judged = the_three_judgements_a_model_gave(&what_the_model_said)
         .map_err(|a_fault| ACreativeAgentThatCouldNotOffer(a_fault.what_it_said().to_string()))?;
     WhatAnAgentOffered::the_offers_a_model_offered(
         of_which_repository,
@@ -142,6 +154,20 @@ pub fn an_agent_is_asked_what_it_would_file(
         judged,
     )
     .map_err(|not_offered| ACreativeAgentThatCouldNotOffer(not_offered.0))
+}
+
+/// What the model said when asked what it would file, **and the question is not repeated here.**
+fn what_the_model_answered_about_what_it_would_file(
+    the_model: &impl AProgramWeRun,
+    the_body: &str,
+    where_the_model_is: &WhereAModelIs,
+) -> String {
+    let what_it_said = the_model.run(&WhatWeTellAProgramToDo::ask_a_model_what_it_would_file(
+        &where_the_model_is.the_endpoint,
+        &where_the_model_is.which_model,
+        the_body,
+    ));
+    what_it_said.the_words().to_string()
 }
 
 /// The words inside the endpoint's envelope, **read through the one door #102 and #109 were burned at.**

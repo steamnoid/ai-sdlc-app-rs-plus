@@ -115,13 +115,36 @@ fn the_request_is_a_question_about_what_the_agent_would_file() {
     );
 }
 
+/// A tracker with nothing on file, **and nothing here is about the tracker.**
+struct ATrackerWithNothingOnFile;
+
+impl aisdlc_run::a_filing_is_read::AFilingIsReadFrom for ATrackerWithNothingOnFile {
+    fn the_filing_at(
+        &mut self,
+        _where_it_answers: &aisdlc_domain::commissioned_request::AWhereItWasFiled,
+    ) -> Result<aisdlc_run::an_issue_read::AnIssueRead, String> {
+        Err(String::from(
+            "this run asks what to file and reads nothing back, so asking is a bug and not a step",
+        ))
+    }
+
+    fn the_filings_already_on_file_of(
+        &mut self,
+        _of_which_repository: &aisdlc_domain::repository::Repository,
+    ) -> Result<aisdlc_run::the_filings_already_on_file::TheFilingsAlreadyOnFile, String> {
+        Ok(aisdlc_run::the_filings_already_on_file::TheFilingsAlreadyOnFile::none_yet())
+    }
+}
+
 #[test]
 fn the_whole_path_from_a_listing_to_grounded_offers() {
     let its_content = r#"{"offers":[{"title":"an offer path is never checked","what_it_asks_for":"compare each cited path with the listing","paths":["crates/run/src/what_an_agent_offered.rs"]}],"what_it_found":"nothing compares the paths","what_it_could_not_settle":"nothing","what_it_expects_next":"add the comparison"}"#;
     let the_program = AProgramThatAnswers(what_the_endpoint_said(its_content));
 
+    let mut a_tracker = ATrackerWithNothingOnFile;
     let what_was_offered = an_agent_is_asked_what_it_would_file(
         &the_program,
+        &mut a_tracker,
         &the_repository_it_read(),
         &what_the_run_actually_saw(),
         &where_the_model_is(),

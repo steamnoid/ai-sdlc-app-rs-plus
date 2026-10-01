@@ -13,3 +13,4 @@ workspace = true
 [dependencies]
 aisdlc-domain = { path = "../domain" }
 aisdlc-run = { path = "../run" }
+serde_json = "1"

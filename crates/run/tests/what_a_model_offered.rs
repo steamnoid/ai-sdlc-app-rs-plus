@@ -8,6 +8,7 @@
 use aisdlc_run::an_agent_is_asked_what_it_would_file::{
     the_question_an_agent_is_asked, what_a_model_offered,
 };
+use aisdlc_run::the_filings_already_on_file::TheFilingsAlreadyOnFile;
 
 /// The repository whose work is being offered.
 fn the_repository_it_read() -> aisdlc_domain::repository::Repository {
@@ -33,8 +34,11 @@ fn what_the_endpoint_said(its_content: &str) -> String {
 
 #[test]
 fn the_question_hands_the_model_the_listing_it_may_cite() {
-    let the_question =
-        the_question_an_agent_is_asked(&the_repository_it_read(), &what_the_run_actually_saw());
+    let the_question = the_question_an_agent_is_asked(
+        &the_repository_it_read(),
+        &what_the_run_actually_saw(),
+        &TheFilingsAlreadyOnFile::none_yet(),
+    );
 
     for one_path in what_the_run_actually_saw() {
         assert!(

@@ -41,6 +41,28 @@ impl AFilingIsRead {
 }
 
 impl aisdlc_run::a_filing_is_read::AFilingIsReadFrom for AFilingIsRead {
+    /// Every filing already on file, **asked for by GitHub and read out of what it wrote.**
+    ///
+    /// **`--state all` and not `open`**, because the point is not to duplicate what somebody is
+    /// working on **but what somebody already answered.** Filing thirty-one of the same observation
+    /// because the earlier ones were closed is the same duplication with a longer fuse.
+    fn the_filings_already_on_file_of(
+        &mut self,
+        of_which_repository: &aisdlc_domain::repository::Repository,
+    ) -> Result<aisdlc_run::the_filings_already_on_file::TheFilingsAlreadyOnFile, String> {
+        let the_answer = self.run(&WhatWeTellAProgramToDo::list_the_filings_already_on_file(
+            of_which_repository,
+        ));
+        if !the_answer.did_it_work() {
+            return Err(format!(
+                "the filings already on file could not be read, so this run cannot tell a new \
+                 finding from a repeated one: {}",
+                the_answer.the_words()
+            ));
+        }
+        the_filings_in(the_answer.the_words())
+    }
+
     /// The filing at one address, **asked for by address because a run that filed one holds that and
     /// not a number** — asking for the number again would be this system guessing at a fact GitHub
     /// already composed.
@@ -126,6 +148,9 @@ impl AProgramWeRun for AFilingIsRead {
 
 /// What `gh` would be run with, one thing each, and nothing at all when there is no filing to read.
 fn the_arguments_of(what_it_is_asked_to_do: &WhatWeTellAProgramToDo) -> Vec<String> {
+    if let Some(the_repository) = what_it_is_asked_to_do.the_repository_it_lists() {
+        return the_arguments_for_a_listing(the_repository);
+    }
     let WhatWeTellAProgramToDo::ReadTheFiling { which_filing } = what_it_is_asked_to_do else {
         return Vec::new();
     };
@@ -138,6 +163,26 @@ fn the_arguments_of(what_it_is_asked_to_do: &WhatWeTellAProgramToDo) -> Vec<Stri
             the_repository.name,
             which_filing.which_issue()
         ),
+    ]
+}
+
+/// What `gh issue list` would be run with, **and every filing on file and not a page of them.**
+///
+/// **`--state all` and not `open`,** because the point is not to duplicate what somebody is working
+/// on **but what somebody already answered** — and filing the fourth copy of a closed observation is
+/// the same duplication with a longer fuse.
+fn the_arguments_for_a_listing(whose_filings: &Repository) -> Vec<String> {
+    vec![
+        "issue".to_string(),
+        "list".to_string(),
+        "--repo".to_string(),
+        format!("{}/{}", whose_filings.owner, whose_filings.name),
+        "--state".to_string(),
+        "all".to_string(),
+        "--limit".to_string(),
+        "200".to_string(),
+        "--json".to_string(),
+        "number,title".to_string(),
     ]
 }
 
@@ -158,4 +203,48 @@ fn what_was_written(what_it_ran: &std::process::Output) -> String {
     String::from_utf8_lossy(&what_it_ran.stderr)
         .trim()
         .to_string()
+}
+
+/// Every filing GitHub listed, **and a refusal when GitHub said something else.**
+///
+/// **Two fields per filing and not more.** A number and a title are what lets a model judge
+/// whether it is the same finding; **a body is somebody else's prose and this system's prompt has
+/// no business carrying it anywhere.**
+fn the_filings_in(
+    what_gh_wrote: &str,
+) -> Result<aisdlc_run::the_filings_already_on_file::TheFilingsAlreadyOnFile, String> {
+    let every_one = the_list_in(what_gh_wrote)?;
+    let mut all_of_them =
+        aisdlc_run::the_filings_already_on_file::TheFilingsAlreadyOnFile::none_yet();
+    for one in &every_one {
+        all_of_them.and_this_one_was_too(the_filing_in(one));
+    }
+    Ok(all_of_them)
+}
+
+/// GitHub's own answer, **parsed by the JSON library and not by a hand.**
+fn the_list_in(what_gh_wrote: &str) -> Result<Vec<serde_json::Value>, String> {
+    let what_it_came_back_as: serde_json::Value =
+        serde_json::from_str(what_gh_wrote).map_err(|_| {
+            format!("GitHub's answer about the filings on file was not JSON: {what_gh_wrote}")
+        })?;
+    what_it_came_back_as
+        .as_array()
+        .cloned()
+        .ok_or_else(|| String::from("GitHub's answer about the filings on file was not a list"))
+}
+
+/// One filing GitHub listed, **read out of its own two fields and never out of a hand.**
+fn the_filing_in(
+    one: &serde_json::Value,
+) -> aisdlc_run::the_filings_already_on_file::AFilingAlreadyOnFile {
+    let number = one
+        .get("number")
+        .and_then(serde_json::Value::as_i64)
+        .unwrap_or_default();
+    let title = one
+        .get("title")
+        .and_then(serde_json::Value::as_str)
+        .unwrap_or_default();
+    aisdlc_run::the_filings_already_on_file::AFilingAlreadyOnFile::that_is_open(number, title)
 }
