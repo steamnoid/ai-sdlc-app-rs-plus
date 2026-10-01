@@ -825,6 +825,39 @@ return value of `Err` is what a program that *was* asked and answered nothing al
 because `gh issue create` and `gh api` are two programs against one GitHub — **and one handle cannot be
 borrowed twice, which the compiler said before I did.**
 
+**`WhatAModelSaid`** — what a run asked a model, what it answered and how long it took, said as it
+happens. **Not to be confused with the durable record of a whole run**, which is written afterwards;
+**this is one call, alive while it is happening.**
+
+**`AWhomARunTellsWhatItIsDoing`** is where the lines go, and it is **appended to and never
+overwritten** — a run that overwrites answers *where is it now* and loses the rest, **which is the whole
+history a reader of a stuck run needs.**
+
+**Every line carries the elapsed time, because a label alone says nothing while the thing it labels is
+still happening.** `planning` says a call is outstanding; `planned in 41s` says the model answered.
+**Two shapes and not one**, because those are different truths about the world **and a template with an
+empty duration in it would print a number nobody measured.** A tenth of a second, **because a whole
+second prints 0.4s and 0.0s as the same thing** — a line reporting a measurement it did not take.
+
+**The size of a question and never its text.** A 400-character prompt and a 40 000-character one are
+two different lengths of wait, **and the number tells them apart without putting a repository's
+contents into somebody's terminal.** The size is on the line **and the words are not**, because
+*never contains the text* is satisfied by an empty line.
+
+**A refusal names the artifact and the field, and the model is an argument.** The model is the same on
+every call, **so the model cannot stand in for which artifact was refused** — and a line naming the
+wrong model is worse than no line, **because the question the line exists to answer is which model
+was that.**
+
+**`HowItEnded`** — how one call ended, **and the three shapes a reader has to tell apart.**
+`Outstanding` means the model has not answered, `Answered` carries the duration, **and `Refused`
+carries the field that could not be read** — a refusal naming only the model answers none of the
+questions it exists to answer.
+
+**`HowLongItTook`** is milliseconds **and is never measured here**, because `std::time` reaches the
+world and the clock is a port. **A tenth of a second and not a whole one**, because a whole second
+prints 0.4s and 0.0s as the same thing — **a line reporting a measurement it did not take.**
+
 **`the_agent_that_answers_for`** — which agent answers for a discipline, **transcribed from §10**
 because transcribing a name is not inventing one.
 

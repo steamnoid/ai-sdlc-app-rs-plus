@@ -71,7 +71,9 @@ fn a_line_carries_the_size_of_a_question_and_never_a_word_of_it() {
     .as_a_line();
 
     assert!(
-        !the_line.is_empty() && the_line.contains("2000") && !the_line.contains("private"),
+        !the_line.is_empty()
+            && the_line.contains(&a_question_nobody_should_see.len().to_string())
+            && !the_line.contains("private"),
         "**because a line is written where anybody can read it, and a repository's contents in \
          somebody's terminal is a leak the run did not ask to make** — the size alone tells a 400 \
          from a 40 000, which is the only thing the number is for. **And an empty line passes this \
@@ -123,7 +125,7 @@ fn a_run_that_overwrites_its_lines_answers_where_it_is_now_and_loses_the_rest() 
 
     assert_eq!(
         somewhere.what_it_was_told.len(),
-        1,
+        2,
         "**because a run's lines are appended and never overwritten** — and a run that overwrites \
          answers *where is it now* and loses the rest, which is the whole history a reader of a stuck \
          run needs: {:?}",
