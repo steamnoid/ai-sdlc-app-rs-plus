@@ -8,6 +8,9 @@
 //! corner:** six of the seven entries GitHub answers with in the repository this is pointed at are
 //! pull requests.
 
+use aisdlc_domain::commissioned_request::AWhereItWasFiled;
+use aisdlc_domain::repository::Repository;
+
 use aisdlc_run::a_program_we_run::AProgramWeRun;
 use aisdlc_run::an_issue_read::AnIssueRead;
 use aisdlc_run::an_issue_to_read::AnIssueToRead;
@@ -35,6 +38,46 @@ impl AFilingIsRead {
         ));
         AnIssueRead::the_issue_read(the_answer.the_words())
     }
+}
+
+impl aisdlc_run::a_filing_is_read::AFilingIsReadFrom for AFilingIsRead {
+    /// The filing at one address, **asked for by address because a run that filed one holds that and
+    /// not a number** — asking for the number again would be this system guessing at a fact GitHub
+    /// already composed.
+    fn the_filing_at(
+        &mut self,
+        where_it_answers: &AWhereItWasFiled,
+    ) -> Result<AnIssueRead, String> {
+        let (of_which, which_issue) = what_an_address_names(where_it_answers.as_str())?;
+        let which_filing = AnIssueToRead::the_issue_to_read(of_which, which_issue)
+            .map_err(|not_a_number| not_a_number.to_string())?;
+        self.the_filing_is_read(&which_filing)
+            .map_err(|why_not| why_not.to_string())
+    }
+}
+
+/// What one of GitHub's own addresses names, **read out of it and never composed into one.**
+///
+/// **Both halves come from the address**, because a run that just filed something holds that address
+/// and nothing else — **and asking for the repository and the number separately would be this system
+/// guessing at two facts GitHub had already written down.**
+fn what_an_address_names(where_it_answers: &str) -> Result<(Repository, i64), String> {
+    let the_address = where_it_answers.trim();
+    let Some((_before, the_number)) = the_address.rsplit_once("/issues/") else {
+        return Err(format!("{the_address} is not the address of an issue"));
+    };
+    let which_issue = the_number
+        .parse::<i64>()
+        .map_err(|_| format!("{the_address} carries no issue number"))?;
+    let Some((_scheme, the_owner_and_name)) = the_address.split_once("github.com/") else {
+        return Err(format!("{the_address} is not an address on GitHub"));
+    };
+    let (the_owner, the_name) = the_owner_and_name
+        .rsplit_once('/')
+        .ok_or_else(|| format!("{the_address} names no repository"))?;
+    let of_which = Repository::try_from(format!("{the_owner}/{the_name}").as_str())
+        .map_err(|two_halves| two_halves.to_string())?;
+    Ok((of_which, which_issue))
 }
 
 impl AProgramWeRun for AFilingIsRead {
