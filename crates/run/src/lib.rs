@@ -38,6 +38,7 @@ pub mod the_repository_to_clone_into;
 pub mod the_run_makes_a_checkout;
 pub mod the_words_inside_the_endpoints_envelope;
 pub mod the_work_each_filing_becomes;
+pub mod what_a_model_said;
 pub mod what_an_agent_has_produced;
 pub mod what_an_agent_judged;
 pub mod what_an_agent_offered;
