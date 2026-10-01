@@ -42,20 +42,27 @@ pub struct ACreativeAgentThatCouldNotOffer(pub String);
 /// that only asked nicely and never compared would rely on a model to be honest about which files it
 /// invented, **and the whole grounding rule would be a sentence.** §0.4: quality rules live in
 /// assertions, not in prompt text.
+///
+/// **The three keys are named as identifiers and not described in prose, and a real run is why.** The
+/// first real run answered with no judgements at all, **because the question described them in words
+/// and never wrote their names.** The second answered with all four and called the paths
+/// `paths_it_concluded_from`, **because the question said "the paths it concluded from" and the model
+/// named the field after the sentence.** A field named in prose is a field the model names, **and
+/// describing a shape is not the same as stating it.**
 pub fn the_question_an_agent_is_asked(
     of_which_repository: &Repository,
     what_the_run_saw: &[String],
 ) -> String {
     format!(
-        "You are looking at {owner}/{name}. Name work worth filing as issues.\n\
+        "The keys of your answer are these, written exactly, at the top level: offers, \
+         what_it_found, what_it_could_not_settle, what_it_expects_next.\n\
+         offers is an array. Each key of an offer is these three, written exactly: title, \
+         what_it_asks_for, paths.\n\
+         The three judgements are keys of your answer and not text inside any offer. what_it_found \
+         is what you found, what_it_could_not_settle is what you could not settle, and \
+         what_it_expects_next is what you expect to happen next. None of the three is ever empty.\n\
+         You are looking at {owner}/{name}. Name work worth filing as issues.\n\
          You may only cite files from this listing:\n{listing}\n\
-         Answer with an offers array, and with what_it_found, what_it_could_not_settle and \
-         what_it_expects_next.\n\
-         Each offer has a title, what_it_asks_for, and the paths it concluded from, all three of them \
-         always present.\n\
-         The three judgements are about your own reading: what you found, what you could not settle, \
-         and what you expect to happen next. All three are always present and none of them is ever \
-         empty.\n\
          An offer with no file from the listing is refused, and an empty offers array is a valid \
          answer. Do not name who decided; that is not yours to say.",
         owner = of_which_repository.owner,
