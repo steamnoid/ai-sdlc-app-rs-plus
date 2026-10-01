@@ -12,21 +12,28 @@
 //! that.** The judgement of what counts as a duplicate is a model's; **the rule about what happens
 //! afterwards is not.**
 
+use aisdlc_run::the_filings_already_on_file::{AFilingAlreadyOnFile, TheFilingsAlreadyOnFile};
 use aisdlc_run::what_a_model_said_would_restate::WhatAModelSaidWouldRestate;
 
-/// A filing already on file, **which is a number and a title and nothing else.**
-fn a_filing_already_on_file() -> aisdlc_run::the_filings_already_on_file::AFilingAlreadyOnFile {
-    aisdlc_run::the_filings_already_on_file::AFilingAlreadyOnFile::that_is_open(
+/// Everything already on file, **which is one filing and a list of one.**
+///
+/// **A list and not a single filing**, because a run asks *what is on file* and not *what is this
+/// one filing* — **and a signature that took a single filing could never answer for a run that
+/// weighed four.** It is the whole list or the question is asked about the wrong thing.
+fn what_is_on_file() -> TheFilingsAlreadyOnFile {
+    let mut every_one = TheFilingsAlreadyOnFile::none_yet();
+    every_one.and_this_one_was_too(AFilingAlreadyOnFile::that_is_open(
         15,
         "Make the E2E SQLite database hermetic and remove WAL/SHM artifacts",
-    )
+    ));
+    every_one
 }
 
 #[test]
 fn an_offer_restating_a_filing_on_file_names_it_and_is_not_filed() {
     let what_it_would_restate = WhatAModelSaidWouldRestate::the_filing_already_on_file(15);
 
-    let how_it_went = what_it_would_restate.how_the_run_answers(a_filing_already_on_file());
+    let how_it_went = what_it_would_restate.how_the_run_answers(&what_is_on_file());
 
     assert!(
         how_it_went.is_not_filed_because_it_restates(),
@@ -40,7 +47,7 @@ fn an_offer_restating_a_filing_on_file_names_it_and_is_not_filed() {
 fn an_offer_restating_a_filing_that_is_not_on_file_is_refused_rather_than_filed() {
     let what_it_would_restate = WhatAModelSaidWouldRestate::the_filing_already_on_file(99);
 
-    let how_it_went = what_it_would_restate.how_the_run_answers(a_filing_already_on_file());
+    let how_it_went = what_it_would_restate.how_the_run_answers(&what_is_on_file());
 
     assert!(
         how_it_went.is_refused_because_it_named_a_filing_that_is_not_on_file(),
@@ -54,7 +61,7 @@ fn an_offer_restating_a_filing_that_is_not_on_file_is_refused_rather_than_filed(
 fn an_offer_restating_nothing_is_filed_and_that_is_the_usual_case() {
     let what_it_would_restate = WhatAModelSaidWouldRestate::nothing_already_on_file();
 
-    let how_it_went = what_it_would_restate.how_the_run_answers(a_filing_already_on_file());
+    let how_it_went = what_it_would_restate.how_the_run_answers(&what_is_on_file());
 
     assert!(
         how_it_went.is_filed(),

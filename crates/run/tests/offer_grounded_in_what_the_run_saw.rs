@@ -25,6 +25,7 @@ fn an_offer_about_a_file_the_run_showed() -> WhatAModelSaidItWouldFile {
             "the module deciding what an agent offered has no test naming its refusal",
         ),
         paths: vec!["crates/run/src/what_an_agent_offered.rs".to_string()],
+        it_restates: None,
     }
 }
 
@@ -50,6 +51,7 @@ fn an_offer_citing_a_file_the_run_never_showed_is_refused() {
         title: "an entry point to start from".to_string(),
         what_it_asks_for: "add src/main.rs so the project has somewhere to begin".to_string(),
         paths: vec!["src/main.rs".to_string()],
+        it_restates: None,
     }];
 
     let the_offers = WhatAnAgentOffered::the_offers_a_model_offered(

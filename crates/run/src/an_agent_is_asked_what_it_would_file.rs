@@ -130,16 +130,16 @@ pub fn the_three_judgements_a_model_gave(
 /// A creative agent asked what work is worth filing, **offering nothing for now.**
 pub fn an_agent_is_asked_what_it_would_file(
     the_model: &impl AProgramWeRun,
-    what_is_already_on_file: &mut impl crate::a_filing_is_read::AFilingIsReadFrom,
+    what_is_already_on_file: &crate::the_filings_already_on_file::TheFilingsAlreadyOnFile,
     of_which_repository: &Repository,
     what_the_run_saw: &[String],
     where_the_model_is: &WhereAModelIs,
 ) -> Result<WhatAnAgentOffered, ACreativeAgentThatCouldNotOffer> {
-    let what_is_on_file = what_is_already_on_file
-        .the_filings_already_on_file_of(of_which_repository)
-        .map_err(ACreativeAgentThatCouldNotOffer)?;
-    let the_question =
-        the_question_an_agent_is_asked(of_which_repository, what_the_run_saw, &what_is_on_file);
+    let the_question = the_question_an_agent_is_asked(
+        of_which_repository,
+        what_the_run_saw,
+        what_is_already_on_file,
+    );
     let the_body = the_body_a_creative_agent_is_given(&the_question, where_the_model_is);
     let what_the_model_said =
         what_the_model_answered_about_what_it_would_file(the_model, &the_body, where_the_model_is);
@@ -231,6 +231,9 @@ fn one_offer_the_model_wrote(
             .iter()
             .map(|one_path| String::from(one_path.as_str().unwrap_or_default()))
             .collect(),
+        it_restates: one_offer
+            .get("it_restates")
+            .and_then(serde_json::Value::as_i64),
     })
 }
 

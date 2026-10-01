@@ -3,7 +3,7 @@
 //! **The judgement of what counts as a duplicate is a model's; the rule about what happens afterwards
 //! is not.**
 
-use crate::the_filings_already_on_file::{AFilingAlreadyOnFile, TheFilingsAlreadyOnFile};
+use crate::the_filings_already_on_file::TheFilingsAlreadyOnFile;
 
 /// What a model said one of its offers would restate.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -56,15 +56,26 @@ impl WhatAModelSaidWouldRestate {
     }
 
     /// What the run does with it, **given everything already on file.**
-    pub fn how_the_run_answers(&self, what_is_on_file: AFilingAlreadyOnFile) -> HowTheRunAnswers {
-        let mut every_one = TheFilingsAlreadyOnFile::none_yet();
-        every_one.and_this_one_was_too(what_is_on_file);
+    pub fn how_the_run_answers(
+        &self,
+        what_is_on_file: &TheFilingsAlreadyOnFile,
+    ) -> HowTheRunAnswers {
         match self.it_restates {
             None => HowTheRunAnswers::Filed,
-            Some(which) if every_one.whether_it_holds(which) => {
-                HowTheRunAnswers::NotFiledBecauseItRestates(which)
-            }
-            Some(which) => HowTheRunAnswers::RefusedBecauseItNamedAFilingThatIsNotOnFile(which),
+            Some(which) => the_verdict_about(which, what_is_on_file),
         }
     }
+}
+
+/// The verdict about one filing, **and the guard arm split out because it wrapped onto four lines —
+/// which put a statement three deep in a body that may sit two.**
+///
+/// **A free function and not a method**, because a method would have to take `&self` **and the
+/// only thing it reads is the number it was handed** — a `self` that carries nothing is a reader
+/// asking where the rest of it went.
+fn the_verdict_about(which: i64, what_is_on_file: &TheFilingsAlreadyOnFile) -> HowTheRunAnswers {
+    if what_is_on_file.whether_it_holds(which) {
+        return HowTheRunAnswers::NotFiledBecauseItRestates(which);
+    }
+    HowTheRunAnswers::RefusedBecauseItNamedAFilingThatIsNotOnFile(which)
 }

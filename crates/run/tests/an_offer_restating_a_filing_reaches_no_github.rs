@@ -18,7 +18,7 @@ use aisdlc_run::a_program_we_run::{AProgramWeRun, WhatTheProgramSaid};
 use aisdlc_run::the_filings_already_on_file::{AFilingAlreadyOnFile, TheFilingsAlreadyOnFile};
 use aisdlc_run::what_we_tell_a_program_to_do::WhatWeTellAProgramToDo;
 
-fn the_repository() -> Repository {
+fn the_repository_it_files_into() -> Repository {
     Repository {
         owner: String::from("steamnoid"),
         name: String::from("ai-sdlc-app-rs-plus-selfaware"),
@@ -123,7 +123,7 @@ fn an_offer_restating_a_filing_is_not_filed_and_the_new_one_beside_it_is() {
         &AProgramThatAnswers(a_model_offering_a_restatement_and_something_new()),
         &mut github,
         &mut tracker,
-        &the_repository(),
+        &the_repository_it_files_into(),
         &the_listing(),
         &where_the_model_is(),
     );
@@ -145,12 +145,12 @@ fn a_model_restating_everything_files_nothing_and_says_so_rather_than_failing() 
         &AProgramThatAnswers(a_model_offering_only_restatements()),
         &mut github,
         &mut tracker,
-        &the_repository(),
+        &the_repository_it_files_into(),
         &the_listing(),
         &where_the_model_is(),
     );
 
-    let was_there_nothing_to_file = what_the_run_filed.map(|it| it.is_empty()).unwrap_or(false);
+    let was_there_nothing_to_file = what_the_run_filed.as_ref().is_ok_and(Vec::is_empty);
     assert!(
         github.how_many_were_asked_for == 0 && was_there_nothing_to_file,
         "**because a model that weighed two filings and restedated one has done the job correctly** — \
@@ -160,20 +160,24 @@ fn a_model_restating_everything_files_nothing_and_says_so_rather_than_failing() 
     );
 }
 
+/// A model claiming a restatement of filing 4242, **which nobody has ever filed here.**
+fn a_model_claiming_a_filing_nobody_has() -> AProgramThatAnswers {
+    AProgramThatAnswers(
+        a_model_offering_a_restatement_and_something_new()
+            .replace("\\\"it_restates\\\":12", "\\\"it_restates\\\":4242"),
+    )
+}
+
 #[test]
 fn an_offer_naming_a_filing_that_is_not_on_file_is_refused_rather_than_filed() {
     let mut github = AGitHubCountingWhatItWasAskedFor::default();
     let mut tracker = ATrackerHoldingTwoFilings;
-    let mut a_model_claiming_a_filing_nobody_has = AProgramThatAnswers(
-        a_model_offering_a_restatement_and_something_new()
-            .replace("\\\"it_restates\\\":12", "\\\"it_restates\\\":4242"),
-    );
 
     let what_the_run_filed = a_creative_agent_files_what_it_concluded(
-        &mut a_model_claiming_a_filing_nobody_has,
+        &a_model_claiming_a_filing_nobody_has(),
         &mut github,
         &mut tracker,
-        &the_repository(),
+        &the_repository_it_files_into(),
         &the_listing(),
         &where_the_model_is(),
     );

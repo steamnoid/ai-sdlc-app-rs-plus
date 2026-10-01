@@ -7,7 +7,8 @@
 //! whole reason the evidence is not optional here.
 
 use aisdlc_run::what_an_agent_judged::WhatAnAgentJudged;
-use aisdlc_run::what_an_agent_offered::WhatAnAgentOffered;
+use aisdlc_run::what_an_agent_offered::{AWorkAnAgentOffered, WhatAnAgentOffered};
+use aisdlc_run::what_discovery_concluded::EvidenceFile;
 
 /// What an agent said about its own reading, for a test that is not about that.
 fn what_it_said_about_its_own_work() -> WhatAnAgentJudged {
@@ -25,13 +26,20 @@ fn a_repository_it_read() -> aisdlc_domain::repository::Repository {
         .expect("two halves")
 }
 
+/// One offer grounded in the evidence behind it, **and `None` for a filing it does not restate.**
+fn an_offer_with(what_it_concluded_from: Vec<EvidenceFile>) -> AWorkAnAgentOffered {
+    AWorkAnAgentOffered {
+        title: "the tests every run collects".to_string(),
+        what_it_asks_for: "the suite collects tests/ and leaves the e2e directory alone"
+            .to_string(),
+        what_it_concluded_from,
+        it_restates: None,
+    }
+}
+
 #[test]
 fn an_offer_that_names_no_file_is_refused() {
-    let one_offer_with_nothing_behind_it = vec![(
-        "the tests every run collects".to_string(),
-        "the suite collects tests/ and leaves the e2e directory alone".to_string(),
-        Vec::new(),
-    )];
+    let one_offer_with_nothing_behind_it = vec![an_offer_with(Vec::new())];
 
     let the_offer = WhatAnAgentOffered::an_agent_offered(
         one_offer_with_nothing_behind_it,
@@ -57,11 +65,7 @@ fn an_offer_that_names_where_it_concluded_from_is_kept_whole() {
     .expect("a file of the repository");
 
     let the_offer = WhatAnAgentOffered::an_agent_offered(
-        vec![(
-            "the tests every run collects".to_string(),
-            "the suite collects tests/ and leaves the e2e directory alone".to_string(),
-            evidence,
-        )],
+        vec![an_offer_with(evidence)],
         what_it_said_about_its_own_work(),
     );
 

@@ -9,12 +9,14 @@
 //! first and read afterwards has already paid for an answer **that cannot have known**.
 
 use aisdlc_domain::repository::Repository;
+use aisdlc_run::a_creative_agent_files_what_it_concluded::a_creative_agent_files_what_it_concluded;
 use aisdlc_run::a_filing_is_read::AFilingIsReadFrom;
+use aisdlc_run::a_git_hub_we_write_to::{
+    AGitHubWeWriteTo, WhatGitHubWasAskedFor, WhereGitHubAnswered,
+};
 use aisdlc_run::a_model_is_asked_how_it_rules::WhereAModelIs;
 use aisdlc_run::a_program_we_run::{AProgramWeRun, WhatTheProgramSaid};
-use aisdlc_run::an_agent_is_asked_what_it_would_file::{
-    an_agent_is_asked_what_it_would_file, the_question_an_agent_is_asked,
-};
+use aisdlc_run::an_agent_is_asked_what_it_would_file::the_question_an_agent_is_asked;
 use aisdlc_run::an_issue_read::AnIssueRead;
 use aisdlc_run::the_filings_already_on_file::{AFilingAlreadyOnFile, TheFilingsAlreadyOnFile};
 use aisdlc_run::what_we_tell_a_program_to_do::WhatWeTellAProgramToDo;
@@ -150,19 +152,21 @@ struct WhatTheWholeRunDid {
 
 /// One whole run, from a tracker holding two filings to whatever the model was asked.
 ///
+/// **Through the whole chain and not through the question builder**, because the reading moved up
+/// out of the asking and into the run **when #85 needed the same filings for the duplicate rule** —
+/// and a test that drove the asking alone would never see the run read anything at all.
+///
 /// **In one function because the three facts are only together in one place** — and a test that
 /// read the tracker in one call and the question in another could pass on a run that never did both.
 fn what_the_whole_run_did() -> WhatTheWholeRunDid {
     let what_the_model_was_asked = Rc::new(RefCell::new(String::new()));
     let was_the_tracker_read = Rc::new(Cell::new(false));
-    let mut a_tracker = ATrackerWhoseFilingsAreRemembered {
-        was_it_read: was_the_tracker_read.clone(),
-    };
-    let the_model = AModelRememberingItsQuestion {
-        what_it_was_asked: what_the_model_was_asked.clone(),
-    };
-    let offered = an_agent_is_asked_what_it_would_file(
+    let the_model = the_model_remembering(what_the_model_was_asked.clone());
+    let mut a_tracker = a_tracker_remembering(was_the_tracker_read.clone());
+    let mut github = AGitHubThatFilesNothing;
+    let filed = a_creative_agent_files_what_it_concluded(
         &the_model,
+        &mut github,
         &mut a_tracker,
         &the_repository_the_run_reads(),
         &the_listing(),
@@ -171,7 +175,31 @@ fn what_the_whole_run_did() -> WhatTheWholeRunDid {
     WhatTheWholeRunDid {
         was_the_tracker_read: was_the_tracker_read.get(),
         what_the_model_was_asked: what_the_model_was_asked.borrow().clone(),
-        why_the_run_refused: offered.err().map(|it| it.0).unwrap_or_default(),
+        why_the_run_refused: filed.err().map(|it| it.0).unwrap_or_default(),
+    }
+}
+
+/// A model that keeps the question it was handed.
+fn the_model_remembering(what_it_was_asked: Rc<RefCell<String>>) -> AModelRememberingItsQuestion {
+    AModelRememberingItsQuestion { what_it_was_asked }
+}
+
+/// A tracker that remembers whether it was asked.
+fn a_tracker_remembering(was_it_read: Rc<Cell<bool>>) -> ATrackerWhoseFilingsAreRemembered {
+    ATrackerWhoseFilingsAreRemembered { was_it_read }
+}
+
+/// GitHub that filed the last offer there was, **and this run concludes nothing is worth filing.**
+struct AGitHubThatFilesNothing;
+
+impl AGitHubWeWriteTo for AGitHubThatFilesNothing {
+    fn it_is_asked_to(
+        &mut self,
+        _what_it_is_asked_for: &WhatGitHubWasAskedFor,
+    ) -> Result<WhereGitHubAnswered, String> {
+        Ok(WhereGitHubAnswered::an_address_at(
+            "https://github.com/steamnoid/ai-sdlc-app-rs-plus-selfaware/issues/1",
+        ))
     }
 }
 
