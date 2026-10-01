@@ -63,21 +63,38 @@ impl aisdlc_run::a_filing_is_read::AFilingIsReadFrom for AFilingIsRead {
 /// guessing at two facts GitHub had already written down.**
 fn what_an_address_names(where_it_answers: &str) -> Result<(Repository, i64), String> {
     let the_address = where_it_answers.trim();
-    let Some((_before, the_number)) = the_address.rsplit_once("/issues/") else {
+    let Some((the_repository_part, the_number)) = the_address.rsplit_once("/issues/") else {
         return Err(format!("{the_address} is not the address of an issue"));
     };
     let which_issue = the_number
         .parse::<i64>()
         .map_err(|_| format!("{the_address} carries no issue number"))?;
-    let Some((_scheme, the_owner_and_name)) = the_address.split_once("github.com/") else {
-        return Err(format!("{the_address} is not an address on GitHub"));
-    };
-    let (the_owner, the_name) = the_owner_and_name
-        .rsplit_once('/')
-        .ok_or_else(|| format!("{the_address} names no repository"))?;
+    let (the_owner, the_name) = the_owner_and_the_name_out_of(the_repository_part, the_address)?;
     let of_which = Repository::try_from(format!("{the_owner}/{the_name}").as_str())
         .map_err(|two_halves| two_halves.to_string())?;
     Ok((of_which, which_issue))
+}
+
+/// The owner and the name, **from either form the address is held in.**
+///
+/// **GitHub's `html_url` carries a scheme and `gh issue create` prints one, and this system stores
+/// the bare `owner/name/issues/N`** — a real run answered with the bare form and this parser was
+/// written for the other, **so it now reads the last two segments rather than a shape.**
+fn the_owner_and_the_name_out_of<'a>(
+    the_repository_part: &'a str,
+    the_address: &'a str,
+) -> Result<(&'a str, &'a str), String> {
+    let what_is_left = match the_repository_part.rsplit_once("github.com/") {
+        Some((_scheme, what_is_after)) => what_is_after,
+        None => the_repository_part,
+    };
+    let Some((the_owner, the_name)) = what_is_left.rsplit_once('/') else {
+        return Err(format!("{the_address} names no repository"));
+    };
+    if the_owner.is_empty() || the_name.is_empty() {
+        return Err(format!("{the_address} names no repository"));
+    }
+    Ok((the_owner, the_name))
 }
 
 impl AProgramWeRun for AFilingIsRead {
