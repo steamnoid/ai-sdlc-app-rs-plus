@@ -28,6 +28,7 @@ pub struct ACreativeAgentCouldNotFile(pub String);
 pub fn a_creative_agent_files_what_it_concluded(
     the_model: &impl AProgramWeRun,
     somewhere: &mut impl AGitHubWeWriteTo,
+    somewhere_else: &mut impl crate::a_filing_is_read::AFilingIsReadFrom,
     of_which_repository: &Repository,
     what_the_run_saw: &[String],
     where_the_model_is: &WhereAModelIs,
@@ -35,7 +36,7 @@ pub fn a_creative_agent_files_what_it_concluded(
     let what_it_concluded =
         an_agent_is_asked_what_it_would_file::an_agent_is_asked_what_it_would_file(
             the_model,
-            &crate::the_filings_already_on_file::TheFilingsAlreadyOnFile::none_yet(),
+            somewhere_else,
             of_which_repository,
             what_the_run_saw,
             where_the_model_is,

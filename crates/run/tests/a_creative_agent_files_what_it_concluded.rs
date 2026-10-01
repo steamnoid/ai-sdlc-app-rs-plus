@@ -99,6 +99,27 @@ fn a_program_answered_with_no_offer() -> String {
     )
 }
 
+/// A tracker with nothing on file, **and the run asks it before it asks the model.**
+struct ATrackerWithNothingOnFile;
+
+impl aisdlc_run::a_filing_is_read::AFilingIsReadFrom for ATrackerWithNothingOnFile {
+    fn the_filing_at(
+        &mut self,
+        _where_it_answers: &aisdlc_domain::commissioned_request::AWhereItWasFiled,
+    ) -> Result<aisdlc_run::an_issue_read::AnIssueRead, String> {
+        Err(String::from(
+            "this run files issues and reads none of them back, so asking is a bug and not a step",
+        ))
+    }
+
+    fn the_filings_already_on_file_of(
+        &mut self,
+        _of_which_repository: &aisdlc_domain::repository::Repository,
+    ) -> Result<aisdlc_run::the_filings_already_on_file::TheFilingsAlreadyOnFile, String> {
+        Ok(aisdlc_run::the_filings_already_on_file::TheFilingsAlreadyOnFile::none_yet())
+    }
+}
+
 /// A program that answers with a fixed answer.
 struct AProgramThatAnswers(String);
 
@@ -138,9 +159,11 @@ fn the_whole_creative_run_files_one_filing_and_returns_its_address() {
     let mut somewhere = ARunRememberingWhatGitHubSaid::one_that_answers();
     let the_model = AProgramThatAnswers(a_program_answered_with_one_offer());
 
+    let mut a_tracker = ATrackerWithNothingOnFile;
     let what_it_filed = a_creative_agent_files_what_it_concluded(
         &the_model,
         &mut somewhere,
+        &mut a_tracker,
         &the_repository_it_is_filed_in(),
         &the_listing(),
         &where_the_model_is(),
@@ -166,9 +189,11 @@ fn a_run_that_is_asked_to_file_nothing_files_nothing() {
     let mut somewhere = ARunRememberingWhatGitHubSaid::one_that_answers();
     let the_model = AProgramThatAnswers(a_program_answered_with_no_offer());
 
+    let mut a_tracker = ATrackerWithNothingOnFile;
     let what_it_filed = a_creative_agent_files_what_it_concluded(
         &the_model,
         &mut somewhere,
+        &mut a_tracker,
         &the_repository_it_is_filed_in(),
         &the_listing(),
         &where_the_model_is(),

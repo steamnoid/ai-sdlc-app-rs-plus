@@ -78,6 +78,14 @@ impl aisdlc_run::a_filing_is_read::AFilingIsReadFrom for AGitHubThatReadsBack {
         aisdlc_run::an_issue_read::AnIssueRead::the_issue_read(&self.what_github_holds.0.borrow())
             .map_err(|why_not| why_not.to_string())
     }
+
+    /// Nothing on file, **because this test is about what the run does with an answer.**
+    fn the_filings_already_on_file_of(
+        &mut self,
+        _of_which_repository: &aisdlc_domain::repository::Repository,
+    ) -> Result<aisdlc_run::the_filings_already_on_file::TheFilingsAlreadyOnFile, String> {
+        Ok(aisdlc_run::the_filings_already_on_file::TheFilingsAlreadyOnFile::none_yet())
+    }
 }
 
 impl AGitHubWeWriteTo for AGitHubThatFiles {

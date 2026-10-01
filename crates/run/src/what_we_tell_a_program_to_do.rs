@@ -9,6 +9,7 @@
 //! does things with the history — a diff against a base, `git log` for how a file got the way it
 //! is — and a shallow clone answers none of them.
 
+use aisdlc_domain::repository::Repository;
 use std::path::Path;
 
 use crate::the_repository_to_clone_into::ARepositoryToClone;
@@ -54,6 +55,12 @@ pub enum WhatWeTellAProgramToDo {
         /// The question and the shape of the answer, built here and not by the model.
         the_body: String,
     },
+    /// Every filing already on file, so a run can tell a new finding from a repeated one.
+    ListTheFilingsAlreadyOnFile {
+        /// Which repository's filings are being listed.
+        of_which_repository: Repository,
+    },
+
     /// Read one filing, as a person named it.
     ReadTheFiling {
         /// Which filing, and of which repository.
@@ -99,6 +106,11 @@ impl WhatWeTellAProgramToDo {
             | WhatWeTellAProgramToDo::NameWhereTheCodeWasWrittenIn { the_clone_of } => {
                 the_clone_of.fetch_from()
             }
+            WhatWeTellAProgramToDo::ListTheFilingsAlreadyOnFile {
+                of_which_repository,
+            } => {
+                format!("{}/{}", of_which_repository.owner, of_which_repository.name)
+            }
             WhatWeTellAProgramToDo::AskAModelHowItRules { the_body, .. }
             | WhatWeTellAProgramToDo::AskAModelWhatItWouldFile { the_body, .. } => the_body.clone(),
             WhatWeTellAProgramToDo::ReadTheFiling { which_filing } => {
@@ -107,7 +119,25 @@ impl WhatWeTellAProgramToDo {
         }
     }
 
-    /// Read one filing, as a person named it.
+    /// Ask GitHub for every filing already open on one repository.
+    ///
+    /// **A listing and not a page number**, because a run that reads the first thirty and asks a
+    /// model to weigh them **is a run that never saw filing thirty-one** — and the tracker this is
+    /// for already holds more than thirty.
+    ///
+    /// **By reference**, because the run reads the repository and never writes to it.
+    ///
+    /// **Named after the filings and not after the repository**, because the vocabulary gate refuses
+    /// a name ending on `Repository` — **it is the word for a persistence abstraction wearing a
+    /// domain word**, and this is not that. The repository is where the filings live; **it is not
+    /// what the run is asking for.**
+    pub fn list_the_filings_already_on_file(whose_filings: &Repository) -> Self {
+        WhatWeTellAProgramToDo::ListTheFilingsAlreadyOnFile {
+            of_which_repository: whose_filings.clone(),
+        }
+    }
+
+    /// Read one filing by the number and repository a person named.
     pub fn read_the_filing(which_filing: crate::an_issue_to_read::AnIssueToRead) -> Self {
         WhatWeTellAProgramToDo::ReadTheFiling { which_filing }
     }
@@ -151,10 +181,41 @@ impl WhatWeTellAProgramToDo {
     }
 
     /// The question this request carries, for a request that carries one.
+    ///
+    /// **Both questions and not only the ruling one.** It answered the ruling question only, **so a
+    /// test could read what an agent was told and never what a creative agent was told** — and the
+    /// grounding rule, the file listing and the filings already on file all live in the second
+    /// question. **A door that opens for one of two questions is half a door.**
     pub fn what_it_is_asked_about(&self) -> &str {
         match self {
-            WhatWeTellAProgramToDo::AskAModelHowItRules { the_body, .. } => the_body,
+            WhatWeTellAProgramToDo::AskAModelHowItRules { the_body, .. }
+            | WhatWeTellAProgramToDo::AskAModelWhatItWouldFile { the_body, .. } => the_body,
             _ => "",
+        }
+    }
+
+    /// Whether this request is answered by `gh` and not by `git`.
+    ///
+    /// **A listing is `gh` and a clone is `git`,** and one function that asked both used to carry
+    /// both vocabularies in one match **— so adding a `gh` request meant counting the lines of a
+    /// `git` function, which is the coupling this reports.
+    pub fn is_answered_by_gh(&self) -> bool {
+        matches!(
+            self,
+            WhatWeTellAProgramToDo::ReadTheFiling { .. }
+                | WhatWeTellAProgramToDo::ListTheFilingsAlreadyOnFile { .. }
+                | WhatWeTellAProgramToDo::AskAModelHowItRules { .. }
+                | WhatWeTellAProgramToDo::AskAModelWhatItWouldFile { .. }
+        )
+    }
+
+    /// Which repository a listing is about, for a request that is a listing.
+    pub fn the_repository_it_lists(&self) -> Option<&Repository> {
+        match self {
+            WhatWeTellAProgramToDo::ListTheFilingsAlreadyOnFile {
+                of_which_repository,
+            } => Some(of_which_repository),
+            _ => None,
         }
     }
 
@@ -167,6 +228,7 @@ impl WhatWeTellAProgramToDo {
             | WhatWeTellAProgramToDo::NameWhereTheCodeWasWrittenIn { the_clone_of } => {
                 Some(the_clone_of)
             }
+            WhatWeTellAProgramToDo::ListTheFilingsAlreadyOnFile { .. } => None,
             WhatWeTellAProgramToDo::AskAModelHowItRules { .. }
             | WhatWeTellAProgramToDo::AskAModelWhatItWouldFile { .. }
             | WhatWeTellAProgramToDo::ReadTheFiling { .. } => None,
@@ -215,7 +277,8 @@ impl WhatWeTellAProgramToDo {
             | WhatWeTellAProgramToDo::NameWhereTheCodeWasWrittenIn { .. }
             | WhatWeTellAProgramToDo::AskAModelHowItRules { .. }
             | WhatWeTellAProgramToDo::AskAModelWhatItWouldFile { .. }
-            | WhatWeTellAProgramToDo::ReadTheFiling { .. } => None,
+            | WhatWeTellAProgramToDo::ReadTheFiling { .. }
+            | WhatWeTellAProgramToDo::ListTheFilingsAlreadyOnFile { .. } => None,
         }
     }
 }
