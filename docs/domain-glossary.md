@@ -849,6 +849,28 @@ every call, **so the model cannot stand in for which artifact was refused** — 
 wrong model is worse than no line, **because the question the line exists to answer is which model
 was that.**
 
+**`AFilingAlreadyOnFile`** — a filing already on file, **which is a number and a title and nothing
+else.** No body and no state: **a number and a title are what tells a model that something is already
+being discussed, and a body would put somebody else's words in this system's prompt.**
+
+**`TheFilingsAlreadyOnFile`** holds **all of them and not the closest match**, **because a model asked
+about the closest match would repeat the second-closest without ever hearing of it.** The number is
+compared and never the title, **because two people can title the same thing differently and one issue
+has exactly one number.**
+
+**A run that files what is already filed is the definition of a run nobody asked for twice.** The real
+tier filed one SQLite observation three times across five runs, **because it read the repository and
+never read the issue tracker** — **and the tracker is where a person already said the same thing.**
+
+**`WhatAModelSaidWouldRestate` and `HowTheRunAnswers`** — **the judgement of what counts as a duplicate
+is a model's; the rule about what happens afterwards is not.** A run deciding duplication itself would be
+comparing prose with rules, **and prose is not something rules have ever been able to compare.**
+
+**Both directions are refused.** Restating a filing on file is **not filed**, because it has nothing to
+add. **Naming a filing that is not on file is refused too**, because that is a model reporting a filing
+it never read — **and filing it would put a number nobody can open into a filing, which is the forged
+address `CommissionedIssue` used to compose.**
+
 **`HowItEnded`** — how one call ended, **and the three shapes a reader has to tell apart.**
 `Outstanding` means the model has not answered, `Answered` carries the duration, **and `Refused`
 carries the field that could not be read** — a refusal naming only the model answers none of the
