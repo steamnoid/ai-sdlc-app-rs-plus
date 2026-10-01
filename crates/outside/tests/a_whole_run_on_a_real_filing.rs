@@ -57,14 +57,10 @@ fn where_a_deployment_put_its_model(
 
 /// The work the agent picked up, and is working on.
 fn an_agent_is_working_on_it(
-    picked_up: aisdlc_domain::work_item::WorkItem,
+    picked_up: &aisdlc_domain::work_item::WorkItem,
 ) -> aisdlc_domain::work_item::WorkItem {
-    aisdlc_domain::state_machine::transition(
-        picked_up,
-        Stage::InProgressByAgent,
-        Some(aisdlc_run::a_run_picks_up_the_work::the_agent_that_picks_up_work()),
-    )
-    .expect("the table allows pickup to become work in progress")
+    aisdlc_run::a_run_picks_up_the_work::the_agent_takes_the_work_into_its_own_hands(picked_up)
+        .expect("the table allows pickup to become work in progress")
 }
 
 /// The filing this run is about, as a person named it.
@@ -112,7 +108,7 @@ fn the_work_this_run_built() -> aisdlc_domain::work_item::WorkItem {
     let picked_up = the_work
         .the_run_picks_it_up()
         .expect("the table allows this edge");
-    an_agent_is_working_on_it(picked_up)
+    an_agent_is_working_on_it(&picked_up)
 }
 
 /// The question put to the gate, and the artifact it names.

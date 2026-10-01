@@ -13,7 +13,7 @@ use aisdlc_domain::state_machine::StateMachineError;
 use aisdlc_domain::work_item::WorkItem;
 
 use crate::ApprovalQuestion;
-use crate::a_run_picks_up_the_work::the_agent_that_picks_up_work;
+use crate::a_run_picks_up_the_work::the_agent_answering_for;
 use crate::what_an_agent_has_produced::WhatAnAgentHasProduced;
 
 /// What an agent produced, put in front of the gate, and the question that asks about it.
@@ -27,7 +27,8 @@ pub fn an_agent_presents_what_it_produced_and_the_question_is_put(
 ) -> Result<ApprovalQuestion, StateMachineError> {
     let standing_at_the_gate = crate::the_agent_presents_what_it_produced(
         the_work.clone(),
-        the_agent_that_picks_up_work(),
+        the_agent_answering_for(the_work)
+            .map_err(|no_agent| StateMachineError { why: no_agent.0 })?,
         what_it_produced.which_artifact(),
     )?;
     crate::the_question_put_to_somebody(

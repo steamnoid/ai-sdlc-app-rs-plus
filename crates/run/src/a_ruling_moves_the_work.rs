@@ -26,8 +26,8 @@ pub fn the_ruling_moves_the_work(
         return transition(the_work.clone(), Stage::Done, None);
     }
     let who_was_holding_it = the_work.the_agent_holding_it();
-    let who_gets_it_back = who_was_holding_it
-        .or_else(|| Some(crate::a_run_picks_up_the_work::the_agent_that_picks_up_work()));
+    let who_answers = crate::a_run_picks_up_the_work::the_agent_answering_for(the_work).ok();
+    let who_gets_it_back = who_was_holding_it.or(who_answers);
     transition(
         the_work.clone(),
         Stage::AwaitingAgentPickup,
