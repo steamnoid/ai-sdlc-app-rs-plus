@@ -17,33 +17,35 @@ use aisdlc_domain::work_item::WorkItem;
 use aisdlc_domain::work_item_id::WorkItemId;
 use aisdlc_run::a_ruling_moves_the_work::the_ruling_moves_the_work;
 
-/// The work the agent picked up, worked on, and is presenting.
-fn an_agent_is_working_on_it(picked_up: WorkItem) -> WorkItem {
-    aisdlc_domain::state_machine::transition(
-        picked_up,
-        Stage::InProgressByAgent,
-        Some(aisdlc_run::a_run_picks_up_the_work::the_agent_that_picks_up_work()),
-    )
-    .expect("the table allows pickup to become work in progress")
-}
-
-/// A work item standing at the gate, waiting to be ruled on.
-fn a_work_standing_at_the_gate() -> WorkItem {
-    let the_work = WorkItem::standing_at(
+/// A work item standing at idle, **with one discipline accountable for it.**
+fn a_work_at_idle() -> WorkItem {
+    WorkItem::standing_at(
         WorkItemId::try_from("WELLBEINGT-42").expect("a name"),
         WhoCommissioned::try_from("a person").expect("a name"),
         Repository::try_from("steamnoid/one").expect("two halves"),
         Role::try_from("PO").expect("a discipline"),
         Stage::Idle,
     )
-    .expect("a work item may stand at idle");
+    .expect("a work item may stand at idle")
+}
+
+/// A work item standing at the gate, waiting to be ruled on.
+fn a_work_standing_at_the_gate() -> WorkItem {
+    let the_work = a_work_at_idle();
     let picked_up =
         aisdlc_run::a_run_picks_up_the_work::a_run_picks_up_the_work_it_was_given(&the_work)
             .expect("the table allows this edge");
-    let in_progress = an_agent_is_working_on_it(picked_up);
+    let who_is_presenting =
+        aisdlc_run::a_run_picks_up_the_work::the_agent_answering_for(&picked_up)
+            .expect("a discipline answers for it");
+    let in_progress =
+        aisdlc_run::a_run_picks_up_the_work::the_agent_takes_the_work_into_its_own_hands(
+            &picked_up,
+        )
+        .expect("the table allows pickup to become work in progress");
     aisdlc_run::the_agent_presents_what_it_produced(
         in_progress,
-        aisdlc_run::a_run_picks_up_the_work::the_agent_that_picks_up_work(),
+        who_is_presenting,
         &aisdlc_domain::approval::WhichArtifact::try_from("DiscoveryReport").expect("a name"),
     )
     .expect("an agent working on a work may present it")

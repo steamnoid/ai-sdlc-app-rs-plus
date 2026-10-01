@@ -109,8 +109,10 @@ fn five_disciplines_are_answered_by_five_agents_and_not_fewer() {
 fn the_agent_taking_the_work_on_is_the_one_the_work_names_and_not_one_this_file_carries() {
     let a_proposal_about_a_repository = a_work_the_role_answers("PO");
 
-    let in_progress = the_agent_takes_the_work_into_its_own_hands(&a_proposal_about_a_repository)
+    let picked_up = a_run_picks_up_the_work_it_was_given(&a_proposal_about_a_repository)
         .expect("the table allows this edge");
+    let in_progress = the_agent_takes_the_work_into_its_own_hands(&picked_up)
+        .expect("the table allows pickup to become work in progress");
 
     assert_eq!(
         in_progress

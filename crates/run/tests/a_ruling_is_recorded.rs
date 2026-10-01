@@ -85,12 +85,8 @@ fn a_work_an_agent_is_working_on() -> aisdlc_domain::work_item::WorkItem {
     let picked_up =
         aisdlc_run::a_run_picks_up_the_work::a_run_picks_up_the_work_it_was_given(&the_work)
             .expect("the table allows this edge");
-    aisdlc_domain::state_machine::transition(
-        picked_up,
-        aisdlc_domain::stage::Stage::InProgressByAgent,
-        Some(aisdlc_run::a_run_picks_up_the_work::the_agent_that_picks_up_work()),
-    )
-    .expect("the table allows pickup to become work in progress")
+    aisdlc_run::a_run_picks_up_the_work::the_agent_takes_the_work_into_its_own_hands(&picked_up)
+        .expect("the table allows pickup to become work in progress")
 }
 
 #[test]

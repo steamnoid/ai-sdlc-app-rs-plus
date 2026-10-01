@@ -825,6 +825,24 @@ return value of `Err` is what a program that *was* asked and answered nothing al
 because `gh issue create` and `gh api` are two programs against one GitHub — **and one handle cannot be
 borrowed twice, which the compiler said before I did.**
 
+**`the_agent_that_answers_for`** — which agent answers for a discipline, **transcribed from §10**
+because transcribing a name is not inventing one.
+
+**The agent was a name in a function and not a fact about the work**, so every work item in this system
+was picked up by the repository discovery agent — **including a work about a proposal, which is the
+product analyst's question and not discovery's.** That is the same defect as a work item that named
+`"a person"` whoever asked: **the code filling in a fact it should have been given.** It was in three
+places at once — **the pickup, the presentation, and the edge a refusal hands the work back along** —
+and one literal read three times is three chances to be wrong about the same thing.
+
+**`RoleThatHasNoAgent`** names the discipline that has none, **and `aisdlc-discover` is deliberately not
+in the map**: no role answers for repository discovery, **and naming one of the five would be inventing
+a discipline the specification does not have.**
+
+**`the_agent_answering_for` and `the_agent_takes_the_work_into_its_own_hands` exist because five call
+sites want the same sentence** — and four test files used to compose that transition by hand with a name
+written beside them, **which is how one wrong agent survived in four places.**
+
 **`WhatTheRunWillWorkOn`** — one piece of work a run will take up, and the filing it answers. **One
 filing is one work and not one work with a list in it**, because a work item answers one
 `CommissionedRequest` — **and two issues in one work item would be two requests and one answer, which

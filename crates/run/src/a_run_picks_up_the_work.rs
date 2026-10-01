@@ -20,10 +20,17 @@ use aisdlc_domain::work_item::WorkItem;
 /// The repository discovery agent is deliberately absent: **no role answers for it**, **and naming one
 /// of the five would be inventing a discipline the specification does not have.**
 ///
-/// **Refused for now** — the shape is here and the mapping is not.
 pub fn the_agent_that_answers_for(the_role: &Role) -> Result<AgentIdentifier, RoleThatHasNoAgent> {
-    let _ = the_role;
-    Err(RoleThatHasNoAgent(String::new()))
+    let the_name: &str = match the_role.to_string().as_str() {
+        "PO" => "aisdlc-po-analyze",
+        "QA" => "aisdlc-qa-analyze",
+        "ARCH" => "aisdlc-arch-analyze",
+        "SEC" => "aisdlc-sec-analyze",
+        "DEV" => "aisdlc-dev-impl",
+        _ => return Err(RoleThatHasNoAgent(the_role.to_string())),
+    };
+    AgentIdentifier::try_from(the_name)
+        .map_err(|named_nothing| RoleThatHasNoAgent(named_nothing.to_string()))
 }
 
 /// A discipline no agent answers for, **named so a reader is told which one.**
@@ -72,19 +79,11 @@ pub fn the_agent_takes_the_work_into_its_own_hands(
 pub fn a_run_picks_up_the_work_it_was_given(
     the_work: &WorkItem,
 ) -> Result<WorkItem, StateMachineError> {
+    let who_is_picking_it_up = the_agent_answering_for(the_work)
+        .map_err(|no_agent| StateMachineError { why: no_agent.0 })?;
     transition(
         the_work.clone(),
         Stage::AwaitingAgentPickup,
-        Some(the_agent_that_picks_up_work()),
+        Some(who_is_picking_it_up),
     )
-}
-
-/// The agent that picks up work, **and the name is the specification's and not this file's.**
-///
-/// §10 lists the first agent as the Repository Discovery agent, and the mother project writes that
-/// name as `aisdlc-discover`. **Transcribing it is not inventing it**, which is the whole reason
-/// this could be written at all: a name a system chose for itself would be a name nothing could be
-/// held to.
-pub fn the_agent_that_picks_up_work() -> AgentIdentifier {
-    AgentIdentifier::try_from("aisdlc-discover").expect("the specification names it")
 }
