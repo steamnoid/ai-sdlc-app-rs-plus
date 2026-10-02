@@ -2136,6 +2136,34 @@ setting nobody wrote must not decide the gate.** **`APolicyNobodyCanQuote`** has
 refused rather than defaulted, **because a truncated value is the shape this takes** and `autopilot:`
 with nothing behind it is a claim carrying no claim.
 
+**`APolicyThatAnswersTheGate`** — the first production `APersonToDecide`. **It holds its endpoint
+as `&dyn AProgramWeRun`, which is why `the_model_is_asked_how_it_rules_on` takes `&(impl
+AProgramWeRun + ?Sized)`** — **`&impl` implies `Sized`, so a trait object could not pass through the
+one door a model's ruling comes by.**
+
+**The artifact is a closure and not an argument to `how_they_rule_on`**, because the file a person
+would open is a fact about this policy's deployment rather than about the question — **and a reader
+looking at the trait should not have to know it.** The question names the artifact **and its
+version** beside the artifact's own words, **because a model ruling on version one while the record
+says version two is a decision about the wrong thing, and the only place that can be caught is where
+the question is built.**
+
+**`what_it_was_handed` is a field and not a test convenience: "what did the machine actually see" is
+what a person needs when a policy approved something, and a record holding only the verdict could
+not answer it.**
+
+**There is no special path.** A policy puts the same `ApprovalQuestion` a person is asked and asks
+for its ruling **through the same door**, so it gets **no shortcut past the version check and none
+past the agent check** — because the gate cannot tell which side of `APersonToDecide` answered.
+
+**`the_ruling_out_of` makes both failure directions fall toward a refusal**, because a reader that
+failed the other way **would put a model at a human's gate on the strength of a bug** — and this
+repository has had a model answer a request body that was never valid JSON, three times running.
+
+**A policy that can only approve is a stamp**, because `approved` is a boolean and a refusal leaves
+no record at all, **so refusing is the half that stops work and approving is the half that hands it
+on.**
+
 **`TheModelRefused`** — one refusal naming the artifact and the field. A run asks eight
 agents for eight different artifacts, so *"the shape was wrong"* without saying which is a
 question rather than a diagnosis.

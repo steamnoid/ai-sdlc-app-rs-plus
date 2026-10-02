@@ -183,7 +183,7 @@ pub fn the_body_a_model_is_given(the_question: &str, where_the_model_is: &WhereA
 
 /// The model is asked how it rules, and its answer becomes a decision naming the model.
 pub fn the_model_is_asked_how_it_rules_on(
-    the_model: &impl AProgramWeRun,
+    the_model: &(impl AProgramWeRun + ?Sized),
     a_question: &ApprovalQuestion,
     who_ruled: &WhoDecided,
     where_the_model_is: &WhereAModelIs,
