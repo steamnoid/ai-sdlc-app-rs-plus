@@ -1994,6 +1994,39 @@ comparison the reader cannot see would send them looking for a difference that i
   before and after a change that was a byte-identical rewrite of a file, with both sides on the same
   repository**, so this is refused by name rather than reported as two green suites.
 
+**`AConflict`** — **three situations and not one**: `APullRequestConflicts`,
+`AProposalIsAlreadyFiled`, `TwoRunsTouchOneFile`. **Merging them would make each worse** — an option
+set spanning all three **would offer "leave it and say why" for a code conflict, where the only
+honest answer is to fix it or not merge.**
+
+**The three answer sets are `WhatToDoWhenAPullRequestConflicts`,
+`WhatToDoWhenAProposalIsAlreadyFiled` and `WhatToDoWhenTwoRunsTouchOneFile`,** each holding exactly
+two, **and the second is not a failure or a workaround in any of the three.** *"Rebase and try again" against a conflict a rebase cannot fix would loop for ever*; *"file
+it anyway" is legitimate because **this run may have read something the other did not**, and refusing
+would be deciding on a model's judgement of what counts as the same work; *"push over the other
+run"* destroys a delivery somebody approved and *"do not push"* leaves a branch that is not on the
+remote, **so neither is a default.**
+
+**`WhatToDoAroundAConflict`** — one variant per situation, **and the three are told apart by the
+type rather than by a tag a caller has to match on.** `does_it_reach_the_world` — **three of the six
+reach somebody and three do not**, and a caller that could not ask would have to enumerate all six
+at every call site.
+
+**Free text is not a decision.** A model **chooses a name and this module holds the set of names**,
+and an answer outside it is refused rather than guessed — **because guessing would go on to a
+rebase, a push or a filing on somebody's board that nobody asked for.** `what_to_do_around_a_conflict`
+is **the one door and there is no other**, **because a caller that could reach a decision some other
+way could put a run into a state its own rules never described.**
+
+**`AConflictNobodyCouldRuleOn` carries the answers as well as the fault.** A model told *"that is not
+one of the options"* and not told what the options are **will send the same sentence again** — which
+is what happened here with an invalid JSON body, three times running.
+
+**`the_question_about` names every answer in full and warns against another situation's.** A model
+shown a fixed set of strings in a tool's shape answers with something outside it, **and a prompt
+that does not repeat the answers does not help: the answer is refused, the correction is sent, and
+the same sentence comes back.**
+
 **`TheModelRefused`** — one refusal naming the artifact and the field. A run asks eight
 agents for eight different artifacts, so *"the shape was wrong"* without saying which is a
 question rather than a diagnosis.

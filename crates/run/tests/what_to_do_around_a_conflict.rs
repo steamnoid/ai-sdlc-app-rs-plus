@@ -12,8 +12,8 @@
 //! filing on somebody's board that nobody asked for.**
 
 use aisdlc_run::what_to_do_around_a_conflict::{
-    AConflict, AConflictNobodyCouldRuleOn, WhatToDoAroundAConflict, the_options_for,
-    the_question_about, what_to_do_around_a_conflict,
+    AConflict, AConflictNobodyCouldRuleOn, the_options_for, the_question_about,
+    what_to_do_around_a_conflict,
 };
 
 /// The three situations, **and they are three and not one.**
@@ -90,7 +90,7 @@ fn an_answer_named_for_another_situation_is_refused() {
     let the_refusal = the_refusal_for(AConflict::AProposalIsAlreadyFiled, "push_the_change");
 
     assert!(
-        matches!(the_refusal, Err(_)),
+        the_refusal.about == AConflict::AProposalIsAlreadyFiled,
         "**because every option name is a sentence about a different thing** — `push_the_change` is \
          a true answer to whether two runs touch one file and no answer at all to whether a \
          proposal restates a filing, **and accepting it would carry an answer into a decision it \
@@ -148,9 +148,8 @@ fn half_the_decisions_reach_the_world_and_half_do_not() {
         every_writes_as_it_should,
         "**because filing an issue, pushing a branch and retrying a merge all reach somebody else, \
          and leaving a pull request, not filing and not pushing do not** — a caller that could not \
-         ask would have to enumerate all six at every call site. Which write: {:?} and which do \
-         not: {:?}",
-        the_ones_that_do, the_ones_that_do_not
+         ask would have to enumerate all six at every call site. Which write: {the_ones_that_do:?} \
+         and which do not: {the_ones_that_do_not:?}"
     );
 }
 
@@ -192,7 +191,7 @@ fn the_refusal_for(about: AConflict, what_the_model_wrote: &str) -> AConflictNob
     match what_to_do_around_a_conflict(about, what_the_model_wrote) {
         Err(the_refusal) => the_refusal,
         Ok(a_decision) => {
-            panic!("{what_the_model_wrote} is not one of the options and it gave {a_decision:?}")
+            panic!("{what_the_model_wrote} was accepted and it gave {a_decision:?}")
         }
     }
 }
@@ -204,9 +203,8 @@ fn the_refusal_for(about: AConflict, what_the_model_wrote: &str) -> AConflictNob
 /// one of the three and a helper that looked in one place would call two thirds of them `false` for
 /// the wrong reason — **which is a test that would have passed against a broken system.**
 fn one_writes_to_the_world(what_the_model_wrote: &str) -> Option<bool> {
-    let mut every_situation = every_situation().into_iter();
     let mut what_it_said = None;
-    while let Some(about) = every_situation.next() {
+    for about in every_situation() {
         if let Ok(the_decision) = what_to_do_around_a_conflict(about, what_the_model_wrote) {
             what_it_said = Some(the_decision.does_it_reach_the_world());
         }
