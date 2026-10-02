@@ -2164,6 +2164,32 @@ repository has had a model answer a request body that was never valid JSON, thre
 no record at all, **so refusing is the half that stops work and approving is the half that hands it
 on.**
 
+**`APersonAtTheTerminal`** — the ordinary answerer, and the one every gate was built for. **A
+system with only a policy is a system where nobody ever reads anything.**
+
+**A blank line is a refusal and not an approval, and anything that is not *yes* is a refusal.** A
+terminal that treated Enter as yes **would approve every artifact in a run nobody watched**, and an
+unattended run would then deliver work to a remote for which no person ever read a word. **That is
+the direction of failure this design protects against and it is also the easy one to get wrong by
+accident.** **The word is compared and nothing else is parsed**, because a person typing *no, because
+it is worse* and a person typing *no* have both answered, **and a reader that needed the second
+form would have refused an honest answer and asked again.**
+
+**`the_person_at` refuses a machine's name and returns a `Result` — and that is the domain's own
+rule arriving at the edge.** `ApprovalDecision::the_ruling_about` refuses a decider named `aisdlc-`
+outright, **so a terminal named after an agent could not produce a ruling even to refuse with.**
+Refusing at construction puts the failure **before the artifact is read**, **so nobody's attention is
+spent on a document a machine was named after.** Both namespaces are refused, **because a person
+answering at a terminal and a policy answering are two facts and a record that cannot tell them
+apart is the forgery this record exists to prevent.**
+
+**The artifact is shown as it stands, with its name and its version, and not as a summary** — a
+person shown a summary is not looking at the thing they are approving, **and the summary is a lossy
+thing produced by the run being judged.**
+
+**`WhatWasShownToThem`** is `TheArtifact` or `Nothing`, and it is asked for by name **rather than by
+reading the string back** — a caller matching on prose would be matching on a document.
+
 **`TheModelRefused`** — one refusal naming the artifact and the field. A run asks eight
 agents for eight different artifacts, so *"the shape was wrong"* without saying which is a
 question rather than a diagnosis.
