@@ -90,10 +90,24 @@ fn make_the_work_tree(
     let the_bare_place = the_bare_remote.to_str().expect("a path is a path");
     git(&["init", "-q", "."], the_work_tree)?;
     git(&["remote", "add", "origin", the_bare_place], the_work_tree)?;
+    name_the_one_who_may_commit_in(the_work_tree)?;
     git(
         &["commit", "-q", "--allow-empty", "-m", "what this run made"],
         the_work_tree,
     )
+}
+
+/// Who may commit in this repository, **and in this repository only.
+///
+/// **A local `git config` and never a global one, and this is a repair rather than a fixture
+/// choice.** The commit above refuses with *"Author identity unknown"* on a machine that has no
+/// `user.name` configured — which is every CI runner, and this developer, and nothing else. **The
+/// first run of this file was green here and red on the runner, which is a test that proved the
+/// machine and not the code.** Configuring the identity inside the repository the test made
+/// touches nothing on the host and reads the same on every machine.
+fn name_the_one_who_may_commit_in(the_work_tree: &std::path::Path) -> Result<(), String> {
+    git(&["config", "user.name", "aisdlc"], the_work_tree)?;
+    git(&["config", "user.email", "aisdlc@localhost"], the_work_tree)
 }
 
 /// `git` with the arguments it was given, **and the words it wrote if it would not run.**
