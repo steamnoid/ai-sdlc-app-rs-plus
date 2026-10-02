@@ -10,7 +10,7 @@
 
 use aisdlc_domain::stage::Stage;
 use aisdlc_run::a_run_is_walked_forward::{
-    AWalkThatWouldNotEnd, a_run_is_walked_forward, every_stage_somebody_ruled_on,
+    AWalkThatWouldNotEnd, WhatAWalkReached, a_run_is_walked_forward, every_stage_somebody_ruled_on,
 };
 use aisdlc_run::where_a_run_stands::WhereARunStands;
 use aisdlc_run::where_an_approved_artifact_leads::WhereARunGoesNext;
@@ -41,10 +41,9 @@ fn the_four_facts() -> (
     let the_id = aisdlc_domain::work_item_id::WorkItemId::try_from("WELLBEINGT-5").expect("a name");
     let who_asked =
         aisdlc_domain::who_commissioned::WhoCommissioned::try_from("a person").expect("a name");
-    let the_repository = aisdlc_domain::repository::Repository::try_from(
-        "steamnoid/ai-sdlc-app-rs-plus",
-    )
-    .expect("two halves");
+    let the_repository =
+        aisdlc_domain::repository::Repository::try_from("steamnoid/ai-sdlc-app-rs-plus")
+            .expect("two halves");
     let the_discipline = aisdlc_domain::role::Role::try_from("PO").expect("a discipline");
     (the_id, who_asked, the_repository, the_discipline)
 }
@@ -54,11 +53,11 @@ fn a_run_that_somebody_refused_is_not_walked_again() {
     let the_walk = a_run_is_walked_forward(&a_run_at_its_first_stage(), &[false]);
 
     assert_eq!(
-        the_walk.as_ref().map(|walk| walk.how_far_it_got()),
+        the_walk.as_ref().map(WhatAWalkReached::how_far_it_got),
         Ok(0),
         "**because refusing is a decision and the walk stops on the first one** — and a walk that \
          asked again after a refusal is a run treating a decision as a delay. It walked {:?}",
-        the_walk.as_ref().map(|walk| walk.how_far_it_got())
+        the_walk.as_ref().map(WhatAWalkReached::how_far_it_got)
     );
 }
 
@@ -66,7 +65,9 @@ fn a_run_that_somebody_refused_is_not_walked_again() {
 fn a_run_is_walked_once_per_ruling_and_no_further() {
     let the_walk = a_run_is_walked_forward(&a_run_at_its_first_stage(), &[true]);
 
-    let where_it_stopped = the_walk.as_ref().map(|walk| walk.every_place_it_stopped_at());
+    let where_it_stopped = the_walk
+        .as_ref()
+        .map(WhatAWalkReached::every_place_it_stopped_at);
     assert_eq!(
         where_it_stopped,
         Ok(vec![WhereARunGoesNext::TheProductAnalysis]),
@@ -80,7 +81,7 @@ fn a_run_is_walked_once_per_ruling_and_no_further() {
 fn a_walked_run_is_handed_to_the_agent_at_each_stage_in_turn() {
     let the_walk = a_run_is_walked_forward(&a_run_at_its_first_stage(), &[true, true]);
 
-    let how_far_it_got = the_walk.as_ref().map(|walk| walk.how_far_it_got());
+    let how_far_it_got = the_walk.as_ref().map(WhatAWalkReached::how_far_it_got);
     assert_eq!(
         how_far_it_got,
         Ok(2),
@@ -88,9 +89,11 @@ fn a_walked_run_is_handed_to_the_agent_at_each_stage_in_turn() {
          paper** — and this is the test that says a walk walks. It reached {how_far_it_got:?} stages"
     );
 
-    let where_the_work_ended_up = the_walk.as_ref().map(|walk| walk.where_the_work_ended_up());
+    let where_the_work_ended_up = the_walk
+        .as_ref()
+        .map(WhatAWalkReached::where_the_work_ended_up);
     assert_eq!(
-        where_the_work_ended_up.map(|run| run.the_stage_it_stands_at()),
+        where_the_work_ended_up.map(WhereARunStands::the_stage_it_stands_at),
         Ok(Stage::InProgressByAgent),
         "**because the second stage's agent is holding the work and not merely named** — a run that \
          reported a route and left the work at the first stage has moved nothing. It stands at \
@@ -102,15 +105,17 @@ fn a_walked_run_is_handed_to_the_agent_at_each_stage_in_turn() {
 fn the_artifact_a_walked_run_is_on_advances_with_the_stage_that_produced_it() {
     let the_walk = a_run_is_walked_forward(&a_run_at_its_first_stage(), &[true, true]);
 
-    let which_artifact = the_walk
-        .as_ref()
-        .map(|walk| walk.where_the_work_ended_up().which_artifact_it_is_on().cloned());
+    let which_artifact = the_walk.as_ref().map(|walk| {
+        walk.where_the_work_ended_up()
+            .which_artifact_it_is_on()
+            .cloned()
+    });
     assert_eq!(
         which_artifact,
-        Ok(Some(aisdlc_domain::approval::WhichArtifact::try_from(
-            "QaPlan"
-        )
-        .expect("a name is not blank"))),
+        Ok(Some(
+            aisdlc_domain::approval::WhichArtifact::try_from("QaPlan")
+                .expect("a name is not blank")
+        )),
         "**because a run still standing on `DiscoveryReport` after two stages would route back to \
          the product analysis on the third** — and a walk that loops on one artifact is the router \
          defect that cost the sibling a run. It stands on {which_artifact:?}"
@@ -124,7 +129,10 @@ fn more_rulings_than_there_are_stages_is_a_loop_and_is_refused() {
     let the_refusal = a_run_is_walked_forward(&a_run_at_its_first_stage(), &too_many);
 
     assert!(
-        matches!(the_refusal, Err(AWalkThatWouldNotEnd::MoreRulingsThanStages { .. })),
+        matches!(
+            the_refusal,
+            Err(AWalkThatWouldNotEnd::MoreRulingsThanStages { .. })
+        ),
         "**because the router has seven destinations and nothing has an eighth** — so a ninth \
          ruling is not a run, it is a loop, **and a refusal that named it as one would send whoever \
          reads it after the repeat budget instead of after the router.** It refused: {the_refusal:?}"

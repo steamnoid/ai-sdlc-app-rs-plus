@@ -2250,6 +2250,45 @@ and the next run fails with `could not lock config file` — **a failure that na
 nor the thing that caused it.** Removing the whole place is what clears a lock, **and the removal
 needed a name so it read as deliberate rather than as a stray `let _ =`.**
 
+**`AWalkThatWouldNotEnd`** — six refusals, and **the two the walk did not invent keep the type
+that refused them.** `NoDestinationForThisArtifact` holds `AnArtifactThisRouterHoldsNoDestinationFor`
+and `TheDomainRefusedTheMove` holds `StateMachineError`, **because a `why: String` reads the same
+whether the table, the biconditional or the invariant had refused — and those three send a reader to
+three different files.** Their `Display` writes them out unchanged, **so prefixing them with the
+walk's own sentence would make two faults read as one.**
+
+**A pickup nobody holds is `NowhereToStartFrom`, and that is deliberate.** The invariant refuses to
+build such a work item, **so a run that arrives at one arrived from outside the domain** — and a
+second refusal naming a second cause would be a reader being sent to a file with no answer in it.
+
+**A walk moves the work and a step only describes a move.** `what_a_step_leads` answers where a run
+goes; `a_run_is_walked_forward` **actually moves it**, and the two are separate because a step is
+one fact and a walk is a sequence of them. `WhatAWalkReached` therefore carries **both the places and
+the run**, **because a reader asking *what happened* wants the places and a reader asking *where is
+the work* wants the run** — a walk holding only the first has printed a route without moving
+anything.
+
+**The stage and the artifact move together, and that is the load-bearing rule of the walk.** A run
+handed to the product analyst while still standing on `DiscoveryReport` routes back to the product
+analysis on the next step — **which is the router defect that cost the sibling a run while its suite
+stayed green.** `the_work_is_handed_to_the_next_agent` takes the artifact as an argument and
+`moved_onto` is the only place an artifact is written.
+
+**`which_a_stage_produces` is the router's table read from the other side, and it lives beside it.**
+A walk needs to know what the stage it has just entered will produce, **and a second table
+somewhere else would be the second ordering `where_an_approved_artifact_leads` exists to prevent.**
+`TheDelivery` answers `None` — a delivery produces a pull request and not an artifact, **so a walk
+ends there rather than inventing an artifact for the last stage.**
+
+**`every_stage_somebody_ruled_on` is a ceiling and not an order.** The walk is driven by the router
+and needs no sequence of its own; **it needs to know when to stop**, so it reads its length from
+`every_agent_the_pipeline_hands_work_to` — **one table, and a walk that held a copy would drift from
+it silently.**
+
+**A refusal ends the run at `DONE`, and it is not a stage.** `how_far_it_got` is zero after one, **and
+that is why a refused artifact walks nowhere rather than walking to a destination called
+`TheRunIsOver`.**
+
 **`TheModelRefused`** — one refusal naming the artifact and the field. A run asks eight
 agents for eight different artifacts, so *"the shape was wrong"* without saying which is a
 question rather than a diagnosis.

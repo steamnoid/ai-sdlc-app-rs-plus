@@ -81,6 +81,27 @@ impl WhereARunStands {
             which_artifact_it_is_on: self.which_artifact_it_is_on,
         })
     }
+
+    /// This run at another stage **and on another artifact**, **and it is the only place an
+    /// artifact is written.**
+    ///
+    /// **The stage and the artifact move together because they are one fact about the work.** A run
+    /// handed to the product analyst while still standing on `DiscoveryReport` would route back to
+    /// the product analysis on the next step, **which is the router defect that cost the sibling a
+    /// run while its suite stayed green** — so the two cannot be set apart here even though a
+    /// reader might expect them to be.
+    fn moved_onto(
+        self,
+        to: Stage,
+        the_agent: Option<AgentIdentifier>,
+        which_artifact_it_is_on: WhichArtifact,
+    ) -> Result<Self, StateMachineError> {
+        let moved = transition(self.the_work_item, to, the_agent)?;
+        Ok(Self {
+            the_work_item: moved,
+            which_artifact_it_is_on: Some(which_artifact_it_is_on),
+        })
+    }
 }
 
 /// The work is handed to an agent, **and the move and the handover are one fact.**
@@ -105,4 +126,32 @@ pub fn the_work_is_presented_for_a_ruling(
     the_run: &WhereARunStands,
 ) -> Result<WhereARunStands, StateMachineError> {
     the_run.clone().moved_to(Stage::AwaitingHumanApproval, None)
+}
+
+/// The work is handed to the next agent, **and the run moves onto whatever that agent produces.**
+///
+/// **The artifact is an argument and is not derived from the stage**, because the router's table is
+/// where the pipeline's order lives, **and a function that worked the second artifact out from the
+/// stage would be a second ordering nobody chose.**
+pub fn the_work_is_handed_to_the_next_agent(
+    the_run: &WhereARunStands,
+    to_which_agent: AgentIdentifier,
+    which_artifact_it_produces: WhichArtifact,
+) -> Result<WhereARunStands, StateMachineError> {
+    the_run.clone().moved_onto(
+        Stage::AwaitingAgentPickup,
+        Some(to_which_agent),
+        which_artifact_it_produces,
+    )
+}
+
+/// The run is over, **and a refusal is the only thing that reaches it.**
+///
+/// **A refused delivery does not reach it either**, which is a decision about the delivery and not
+/// about this function — **so nothing here says which refusal it was**, and the caller that knows
+/// is the one that decides.
+pub fn the_run_ends_on_a_refusal(
+    the_run: &WhereARunStands,
+) -> Result<WhereARunStands, StateMachineError> {
+    the_run.clone().moved_to(Stage::Done, None)
 }
