@@ -12,10 +12,9 @@
 //! have it. The two steps already differ in one flag for exactly this reason; now they differ in
 //! two.
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use aisdlc_outside::the_program_as_it_runs::TheProgramAsItRuns;
-use aisdlc_run::a_program_we_run::AProgramWeRun;
 use aisdlc_run::the_tests_are_run_in_a_container::TheSuiteARepositoryDeclares;
 use aisdlc_run::what_we_tell_a_program_to_do::WhatWeTellAProgramToDo;
 
@@ -80,10 +79,8 @@ fn a_suite_runs_against_a_clone_it_may_not_change() {
 }
 
 /// Whether this mount lets the container write, **and `:ro` is the only word that says no.**
-fn may_be_written_to(the_mount: &Option<String>) -> bool {
-    the_mount
-        .as_deref()
-        .is_some_and(|one| !one.ends_with(":ro"))
+fn may_be_written_to(the_mount: Option<&str>) -> bool {
+    the_mount.is_some_and(|one| !one.ends_with(":ro"))
 }
 
 #[test]
@@ -91,8 +88,8 @@ fn installing_an_editable_package_is_the_one_step_that_may_write() {
     let the_install_mount = the_one_mount(&the_arguments_installing_the_dependencies());
     let the_run_mount = the_one_mount(&the_arguments_running_the_suite());
 
-    let may_the_install_write = may_be_written_to(&the_install_mount);
-    let may_the_run_write = may_be_written_to(&the_run_mount);
+    let may_the_install_write = may_be_written_to(the_install_mount.as_deref());
+    let may_the_run_write = may_be_written_to(the_run_mount.as_deref());
 
     assert_eq!(
         (may_the_install_write, may_the_run_write),
@@ -145,4 +142,83 @@ fn a_suite_that_cannot_write_is_still_given_the_place_to_put_its_own_files() {
          broken repository rather than a sandbox that was too tight.** `HOME=/tmp` is the cheapest \
          way to give it somewhere. It was given: {the_run:?}"
     );
+}
+
+#[test]
+#[ignore = "needs a real container: read-only is proved by an attempt and an attempt needs one"]
+fn a_real_container_refuses_to_write_the_clone_and_honours_no_new_privileges() {
+    let the_clone = a_real_checkout_holding_one_file();
+    let what_the_container_said = what_it_said_when_it_tried_to_write(&the_clone);
+
+    assert!(
+        what_the_container_said.contains("Read-only"),
+        "**because `:ro` is a claim until a real container refuses a real write, and a `docker` \
+         refusing an argument it does not know says `unknown flag` — which is the failure this \
+         repository has already been burned by, on a different flag.** Every word in this file \
+         has to be a word the running `docker` accepts. It said: {what_the_container_said}"
+    );
+}
+
+/// A directory holding one real file, **because refusing a write into a directory that was never
+/// created would prove nothing at all.**
+fn a_real_checkout_holding_one_file() -> PathBuf {
+    let the_clone = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../target/a-clone-that-may-not-be-written");
+    let _ = std::fs::remove_dir_all(&the_clone);
+    std::fs::create_dir_all(&the_clone).expect("a directory this machine will hold");
+    let the_file = "fn nothing() {}\n";
+    std::fs::write(the_clone.join("a_file.rs"), the_file).expect("a file to hold");
+    the_clone
+}
+
+/// What the container said when it tried to write one byte into the clone.
+fn what_it_said_when_it_tried_to_write(the_clone: &Path) -> String {
+    let suite = a_python_suite_that_installs_editable();
+    let mut the_arguments = what_would_be_run_against(&suite, the_clone);
+    let up_to_the_image = up_to_the_image_name(&the_arguments, &suite);
+    the_arguments.truncate(up_to_the_image);
+    the_arguments.extend([
+        suite.the_toolchain_image.clone(),
+        String::from("sh"),
+        String::from("-c"),
+        String::from("echo one > /the-clone/a_canary_file"),
+    ]);
+    let the_output = std::process::Command::new("docker")
+        .args(&the_arguments)
+        .output();
+    docker_wrote(&the_output)
+}
+
+/// The `docker run` this system builds, **and a separate function so the two tests in this file
+/// that swap the command share one translation rather than copying it.**
+fn what_would_be_run_against(
+    the_suite: &TheSuiteARepositoryDeclares,
+    the_clone: &Path,
+) -> Vec<String> {
+    let request = WhatWeTellAProgramToDo::the_suite_is_run(the_suite, the_clone);
+    TheProgramAsItRuns::as_it_is_on_this_host(None).the_arguments_of(&request)
+}
+
+/// Where the image name is, **and everything before it is what this system built and did not
+/// change.**
+fn up_to_the_image_name(
+    every_argument: &[String],
+    the_suite: &TheSuiteARepositoryDeclares,
+) -> usize {
+    every_argument
+        .iter()
+        .position(|one| *one == the_suite.the_toolchain_image)
+        .unwrap_or(every_argument.len())
+}
+
+/// What `docker` wrote, **or why it never started at all.**
+fn docker_wrote(the_output: &std::io::Result<std::process::Output>) -> String {
+    match the_output {
+        Ok(it) => format!(
+            "{}{}",
+            String::from_utf8_lossy(&it.stdout),
+            String::from_utf8_lossy(&it.stderr)
+        ),
+        Err(why) => why.to_string(),
+    }
 }

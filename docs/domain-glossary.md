@@ -1938,6 +1938,37 @@ subprocess and cannot be** — so the file that proves the sandbox by attempting
 operating system itself. **The guard's own docstring demands the entry**, because a call site
 added without its name is exactly what that guard exists to catch.
 
+**`AND_MAY_ONLY_BE_READ` and `NO_NEW_PRIVILEGES`** — the two words the previous cycle was missing,
+and **neither of them existed in this system or in any sibling in this workspace at the time.**
+`ai-sdlc-app-rs-plus-selfaware` already carried `no-new-privileges` in its eight-flag constant.
+
+**`:ro` is on the end of the mount and is not a flag beside it**, because it is a property of the
+mount and not of the container: **one `-v` can be read-only or it can be written, and a second flag
+beside it would be a second thing whose absence silently means *writable*.** The word is where a
+reader looking for what the container may touch finds it.
+
+**A suite may not write the code it is judging.** A test that rewrites the file it asserts on turns
+red into green, **and this repository's own history is a run that verified green twice and delivered
+nothing** — **a sandbox that permits that is a participant in the failure rather than a witness to
+it.**
+
+**`--cap-drop=ALL` removes the capabilities a process holds and says nothing about the ones it can
+gain**, so a setuid binary inside the image is the way back in. That is the whole of what
+`no-new-privileges` is for, **and it is checked against the running `docker` rather than assumed** —
+because a `docker` refusing an argument it does not know answers `unknown flag`, **which is the
+failure this repository has already been burned by, on a different flag.**
+
+**`AN_INSTALL_MAY_WRITE` and `A_SUITE_MAY_NOT_WRITE`, and the asymmetry is the design.** An editable
+install writes `.egg-info` into the checkout it installs from, **so refusing the write there would
+refuse every Python project that uses one** — and refusing it nowhere would let the suite edit the
+code it judges. The two steps already differ in `--network` for this kind of reason; they differ in
+two flags now.
+
+**`HOME=/tmp` is load-bearing for a reason that is not obvious: Python writes `.pyc` files before it
+runs a single test.** A read-only container with no writable home fails on the first import, **and
+the failure reads as a broken repository rather than as a sandbox that was right** — which is why a
+test demands that one word as well as the refusals.
+
 **`TheModelRefused`** — one refusal naming the artifact and the field. A run asks eight
 agents for eight different artifacts, so *"the shape was wrong"* without saying which is a
 question rather than a diagnosis.

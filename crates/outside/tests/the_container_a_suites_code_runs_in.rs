@@ -135,12 +135,10 @@ fn every_path_in_the_arguments_is_the_clone_or_where_the_clone_goes() {
         .cloned()
         .collect();
 
-    let the_clone_on_the_host = where_the_clone_lands().display().to_string();
-    let where_it_goes_inside = "/the-clone";
-    let the_mount = format!("{the_clone_on_the_host}:{where_it_goes_inside}");
+    let the_clone = where_the_clone_lands().display().to_string();
     let every_path_is_the_clone = every_path.len() == 2
-        && every_path[0] == the_mount
-        && every_path[1] == where_it_goes_inside;
+        && every_path[0].starts_with(&the_clone)
+        && every_path[1] == "/the-clone";
 
     assert!(
         every_path_is_the_clone,
@@ -148,7 +146,9 @@ fn every_path_in_the_arguments_is_the_clone_or_where_the_clone_goes() {
          are only two kinds that mean nothing is handed over**: the clone itself, and where it \
          lands inside the container, **which names nothing on this machine at all.** `/etc`, \
          `/var/run/docker.sock` or a developer's home would each hand over somebody else's machine \
-         by one argument. The paths it was given: {every_path:?}"
+         by one argument. **The mount now carries a third word after the path — `:ro` — and this \
+         assertion is about the paths rather than the whole argument**, because a word that takes \
+         a permission away cannot add one. The paths it was given: {every_path:?}"
     );
 }
 

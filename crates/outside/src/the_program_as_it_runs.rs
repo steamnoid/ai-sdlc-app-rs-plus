@@ -194,6 +194,30 @@ fn what_a_container_is_asked_for(request: &WhatWeTellAProgramToDo) -> Vec<String
 /// path the container is ever told about.**
 const WHERE_THE_CLONE_IS_INSIDE_THE_CONTAINER: &str = "/the-clone";
 
+/// The one word that turns a mount into a thing the container may only read.
+///
+/// **`:ro` and not a separate flag**, because it is a property of the mount and not a property of
+/// the container: **one `-v` can be read-only or it can be written, and a second flag beside it
+/// would be a second thing whose absence silently means "writable".** The word is on the end of the
+/// mount itself, where a reader looking for what the container may touch finds it.
+const AND_MAY_ONLY_BE_READ: &str = ":ro";
+
+/// A process may not gain a privilege it does not already hold.
+///
+/// **`--cap-drop=ALL` removes the capabilities a process holds and says nothing about the ones it
+/// can gain**, so a setuid binary inside the image is the way back in. This is the one flag that
+/// closes it, **and a sibling implementation in this workspace already carries it** — the constant
+/// is written as a list here for the same reason it is there.
+const NO_NEW_PRIVILEGES: [&str; 2] = ["--security-opt", "no-new-privileges"];
+
+/// An editable install writes `.egg-info` into the checkout it installs from, **so this is the one
+/// step that may write and the reason is a fact about Python and not about this system.**
+const AN_INSTALL_MAY_WRITE: bool = true;
+
+/// A suite may not write the code it is judging, **and the constant is here so a reader of the
+/// call site sees the choice rather than a `true` or a `false`.**
+const A_SUITE_MAY_NOT_WRITE: bool = false;
+
 /// What `docker` is asked when this system needs to know whether it can run anything at all.
 fn to_ask_whether_a_container_is_there() -> Vec<String> {
     vec![String::from("info")]
@@ -214,21 +238,33 @@ fn to_ask_whether_a_container_is_there() -> Vec<String> {
 fn the_arguments_every_container_is_given(
     the_suite: &TheSuiteARepositoryDeclares,
     where_it_lands: &Path,
+    may_the_suite_write: bool,
 ) -> Vec<String> {
-    vec![
+    let mut the_arguments = vec![
         String::from("run"),
         String::from("--rm"),
         String::from("--cap-drop=ALL"),
-        String::from("--user"),
-        the_suite.who_runs_it.clone(),
-        String::from("-v"),
-        format!(
-            "{}:{WHERE_THE_CLONE_IS_INSIDE_THE_CONTAINER}",
-            where_it_lands.display()
-        ),
-        String::from("-w"),
-        String::from(WHERE_THE_CLONE_IS_INSIDE_THE_CONTAINER),
-    ]
+    ];
+    the_arguments.extend(NO_NEW_PRIVILEGES.iter().map(|one| (*one).to_string()));
+    the_arguments.push(String::from("--user"));
+    the_arguments.push(the_suite.who_runs_it.clone());
+    the_arguments.push(String::from("-v"));
+    the_arguments.push(the_one_mount_of(where_it_lands, may_the_suite_write));
+    the_arguments.push(String::from("-w"));
+    the_arguments.push(String::from(WHERE_THE_CLONE_IS_INSIDE_THE_CONTAINER));
+    the_arguments
+}
+
+/// The one mount, **and the write is a word on the mount and not a flag beside it.**
+fn the_one_mount_of(where_it_lands: &Path, may_the_suite_write: bool) -> String {
+    let the_clone = format!(
+        "{}:{WHERE_THE_CLONE_IS_INSIDE_THE_CONTAINER}",
+        where_it_lands.display()
+    );
+    if may_the_suite_write {
+        return the_clone;
+    }
+    format!("{the_clone}{AND_MAY_ONLY_BE_READ}")
 }
 
 /// Install what the suite needs, **and this is the one step given a network.**
@@ -240,7 +276,8 @@ fn to_install_what_the_suite_needs(
     the_suite: &TheSuiteARepositoryDeclares,
     where_it_lands: &Path,
 ) -> Vec<String> {
-    let mut the_arguments = the_arguments_every_container_is_given(the_suite, where_it_lands);
+    let mut the_arguments =
+        the_arguments_every_container_is_given(the_suite, where_it_lands, AN_INSTALL_MAY_WRITE);
     the_arguments.push(String::from("-e"));
     the_arguments.push(String::from("HOME=/tmp"));
     the_arguments.push(the_suite.the_toolchain_image.clone());
@@ -257,7 +294,8 @@ fn to_install_what_the_suite_needs(
 /// gets no mount of the home directory in the first place** — so closing the network is what makes
 /// the missing mount mean something.
 fn to_run_the_suite(the_suite: &TheSuiteARepositoryDeclares, where_it_lands: &Path) -> Vec<String> {
-    let mut the_arguments = the_arguments_every_container_is_given(the_suite, where_it_lands);
+    let mut the_arguments =
+        the_arguments_every_container_is_given(the_suite, where_it_lands, A_SUITE_MAY_NOT_WRITE);
     the_arguments.push(String::from("--network"));
     the_arguments.push(String::from("none"));
     the_arguments.push(String::from("-e"));
