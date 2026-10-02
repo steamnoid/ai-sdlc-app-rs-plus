@@ -384,6 +384,24 @@ mod the_glossary_blesses_every_type_the_domain_defines {
     }
 
     #[test]
+    fn a_generic_type_is_read_as_its_name_and_not_with_its_parameter() {
+        let the_code = "pub struct TheModelAsItIsAsked<TheProgram> {\n    the_program: TheProgram,\n}\n";
+
+        let the_refusals = what_is_wrong_with("a_file.rs", the_code);
+
+        assert_eq!(
+            the_refusals,
+            Vec::<String>::new(),
+            "**because 'the name ends at the first bracket' has to mean the angle bracket too** — the \
+             gate cuts at `(` for a tuple struct, and this repository *requires* generic parameters \
+             (`aisdlc-domain` has no dependencies, ports are generic, and the composition root \
+             monomorphises), **so a gate that cannot read a parameter refuses every generic type \
+             this system will ever write.** Found on the first one this repository has ever had, in \
+             a gate that was written for a codebase with none: {the_refusals:?}"
+        );
+    }
+
+    #[test]
     fn a_type_the_glossary_never_heard_of_is_refused_and_named() {
         let the_code = "pub struct AThingNobodyWroteDown {\n    one: u8,\n}\n";
 
