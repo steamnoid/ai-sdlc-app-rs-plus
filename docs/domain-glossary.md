@@ -383,6 +383,40 @@ with.
 words a failure would — because the caller has to tell *git is not installed* from *there is no
 such repository*, and that telling is not this system's to make up.
 
+**`APullRequestToOpen`** — the repository the change is offered to, the fork the head is on, the
+branch, the base, the title and the body. **The head is the fork and the base is the original
+repository, and the two are different fields because getting either wrong is a different mistake**:
+a head naming the wrong repository is somebody else's branch, and a base naming the run's own fork
+asks GitHub to merge a fork into itself.
+
+**The title and the body are built here and not by a model, and the reason is the page.** They are
+the plan a person approved and the report a person approved, **so a title composed by a model is
+prose nobody checked, on the one page every reviewer of a change will read first.**
+
+**`ARequestThatIsNotAPullRequest`** — a request that is not one, **carrying the reason in the words
+a person can act on.** **A blank title and a blank body are two different faults** — a title nobody
+can read in a list and a change nobody can check — **and one refusal naming which is what a reader
+needs in order to fix it.**
+
+**`AnOpenedPullRequest`** — the number and the address, **both read out of what GitHub wrote.** A
+delivery that recorded a number it composed would record a link to a page that does not exist,
+**which is the exact defect the filing address had before it became the only door an address comes
+through.**
+
+**`APullRequestWasNotOpened`** — four refusals in one type, **because one request can be refused for
+four different facts and a caller needs to tell them apart to answer.** `ThereWasNoCredential`
+before anything is asked, `GitHubRefusedIt` with GitHub's own words quoted whole, `ThereWasNoNumberInIt`
+for a `2xx` carrying none, and the empty credential being a request that claims to be somebody it is
+not.
+
+**`message` and `errors` both, and not `message` alone.** GitHub's failure answer carries the
+complaint in one and the detail in the other, **and a reader told only "Validation Failed" cannot
+tell a branch somebody else is using from a base that does not exist.**
+
+**Only a `2xx` carrying a number is a pull request** — which is the rule "a status this system cannot
+interpret is a refusal" read the other way round, **and a run that read a number out of an error page
+would be reporting a delivery at a link to nothing.**
+
 **`AProgramWeRun`** — a program we run ourselves, on the host, with our own arguments and
 our own inputs. Its `working_directory` is a convenience, not a promise that anything may
 be run there.

@@ -21,11 +21,11 @@
 
 use aisdlc_domain::repository::Repository;
 use aisdlc_run::a_credential::ACredential;
+use aisdlc_run::a_program_we_run::{AProgramWeRun, WhatTheProgramSaid};
 use aisdlc_run::a_pull_request_is_opened::{
-    APullRequestToOpen, AnOpenedPullRequest, APullRequestWasNotOpened, a_pull_request_is_opened,
+    APullRequestToOpen, APullRequestWasNotOpened, AnOpenedPullRequest, a_pull_request_is_opened,
     the_request_a_run_makes_of_its_own_change,
 };
-use aisdlc_run::a_program_we_run::{AProgramWeRun, WhatTheProgramSaid};
 use aisdlc_run::what_we_tell_a_program_to_do::WhatWeTellAProgramToDo;
 
 /// A credential a deployment supplied, **and a real one is never written down in a test.**
@@ -95,7 +95,11 @@ impl AProgramWeRun for AProgramGitHubAnswering {
 fn a_pull_request_comes_back_with_the_number_and_the_address_github_composed() {
     let the_program = AProgramGitHubAnswering::a_pull_request_was_opened();
 
-    let what_was_opened = a_pull_request_is_opened(&the_program, &the_request_this_run_makes(), Some(&a_credential()));
+    let what_was_opened = a_pull_request_is_opened(
+        &the_program,
+        &the_request_this_run_makes(),
+        Some(&a_credential()),
+    );
 
     assert_eq!(
         what_was_opened,
@@ -115,8 +119,7 @@ fn a_pull_request_comes_back_with_the_number_and_the_address_github_composed() {
 fn a_credential_is_refused_before_anything_is_asked_of_github() {
     let the_program = AProgramGitHubAnswering::a_pull_request_was_opened();
 
-    let the_refusal =
-        a_pull_request_is_opened(&the_program, &the_request_this_run_makes(), None);
+    let the_refusal = a_pull_request_is_opened(&the_program, &the_request_this_run_makes(), None);
 
     assert_eq!(
         the_refusal,
@@ -130,12 +133,14 @@ fn a_credential_is_refused_before_anything_is_asked_of_github() {
 
 #[test]
 fn a_pull_request_github_refused_is_refused_with_what_github_said() {
-    let what_github_said =
-        r#"{"message":"Validation Failed","errors":[{"message":"A pull request already exists for steamnoid:aisdlc/WELLBEINGT-42."}]}"#;
+    let what_github_said = r#"{"message":"Validation Failed","errors":[{"message":"A pull request already exists for steamnoid:aisdlc/WELLBEINGT-42."}]}"#;
     let the_program = AProgramGitHubAnswering::answering(false, what_github_said);
 
-    let the_refusal =
-        a_pull_request_is_opened(&the_program, &the_request_this_run_makes(), Some(&a_credential()));
+    let the_refusal = a_pull_request_is_opened(
+        &the_program,
+        &the_request_this_run_makes(),
+        Some(&a_credential()),
+    );
 
     assert_eq!(
         the_refusal,
@@ -155,11 +160,17 @@ fn an_answer_carrying_no_number_is_not_a_pull_request() {
         r#"{"message":"A pull request already exists","documentation_url":"https://docs.github.com"}"#,
     );
 
-    let the_refusal =
-        a_pull_request_is_opened(&the_program, &the_request_this_run_makes(), Some(&a_credential()));
+    let the_refusal = a_pull_request_is_opened(
+        &the_program,
+        &the_request_this_run_makes(),
+        Some(&a_credential()),
+    );
 
     assert!(
-        matches!(the_refusal, Err(APullRequestWasNotOpened::ThereWasNoNumberInIt { .. })),
+        matches!(
+            the_refusal,
+            Err(APullRequestWasNotOpened::ThereWasNoNumberInIt { .. })
+        ),
         "**because only a `2xx` is a pull request** — and a `2xx` that carries no number is not one \
          either. A run that read a number out of an error page and recorded it as a delivery would \
          be reporting a link to nothing: {the_refusal:?}"
@@ -170,7 +181,11 @@ fn an_answer_carrying_no_number_is_not_a_pull_request() {
 fn the_head_is_the_fork_and_the_base_is_where_the_code_was_written() {
     let the_program = AProgramGitHubAnswering::a_pull_request_was_opened();
 
-    let _ = a_pull_request_is_opened(&the_program, &the_request_this_run_makes());
+    let _ = a_pull_request_is_opened(
+        &the_program,
+        &the_request_this_run_makes(),
+        Some(&a_credential()),
+    );
 
     let what_was_asked = the_program.what_it_was_asked.borrow()[0].clone();
     let the_body = what_was_asked.what_it_is_asked_about().to_string();
