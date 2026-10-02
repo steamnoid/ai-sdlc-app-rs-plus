@@ -36,7 +36,10 @@ fn every_verdict() -> Vec<TheVerdict> {
 }
 
 /// A whole answer, **and the ordinary case.**
-fn what_to_repeat() -> WhatToRepeat {
+///
+/// **Named `a_whole_answer` and not `what_to_repeat`, because a fixture named after the function it
+/// builds shadows it** — and a shadowed function is a reader's question with no answer.
+fn a_whole_answer() -> WhatToRepeat {
     what_to_repeat(
         every_verdict(),
         "the change is written again",
@@ -47,7 +50,7 @@ fn what_to_repeat() -> WhatToRepeat {
 
 #[test]
 fn a_repeat_naming_one_place_and_saying_what_has_not_changed_is_accepted() {
-    let the_answer = what_to_repeat();
+    let the_answer = a_whole_answer();
 
     assert_eq!(
         (every_verdict().len(), the_answer.where_the_run_starts_again),
@@ -71,7 +74,7 @@ fn a_verdict_the_model_left_out_is_refused_by_name() {
     assert!(
         matches!(
             &the_refusal,
-            Err(AStageNobodyMayRestartFrom::AVerdictForNobody { .. })
+            Err(AStageNobodyMayRestartFrom::AVerdictForNobody)
         ),
         "**because an agent the model left out is a missing verdict rather than a stage that \
          quietly does not run** — and a stage that quietly does not run is the failure this whole \
@@ -105,9 +108,10 @@ fn a_place_outside_the_closed_set_is_refused_and_the_set_is_named() {
         "the product analyst was wrong",
     );
 
-    let it_names_what_was_offered = the_refusal
-        .as_ref()
-        .is_ok_and(|one| matches!(one, AStageNobodyMayRestartFrom::NoSuchPlaceToStartAgain { .. }));
+    let it_names_what_was_offered = matches!(
+        &the_refusal,
+        Err(AStageNobodyMayRestartFrom::NoSuchPlaceToStartAgain { .. })
+    );
 
     assert!(
         it_names_what_was_offered,
@@ -134,11 +138,13 @@ fn what_has_not_changed_may_not_be_left_blank() {
 
 #[test]
 fn the_place_is_the_models_and_the_agent_beside_it_is_the_code_s() {
-    let the_place = the_agent_asked_to_do_it_again(WhereTheRunShouldStartAgain::TheChangeIsWrittenAgain);
-    let the_plan = the_agent_asked_to_do_it_again(WhereTheRunShouldStartAgain::TheChangeIsPlannedAgain);
+    let the_place =
+        the_agent_asked_to_do_it_again(WhereTheRunShouldStartAgain::TheChangeIsWrittenAgain);
+    let the_plan =
+        the_agent_asked_to_do_it_again(WhereTheRunShouldStartAgain::TheChangeIsPlannedAgain);
 
     assert_eq!(
-        (the_place.as_str(), the_plan.as_str()),
+        (the_place.0.as_str(), the_plan.0.as_str()),
         ("aisdlc-dev-impl", "aisdlc-dev-plan"),
         "**because the model decides and the code routes** — the answer names one of two places and \
          **this literal is what sends the work back**, because a value read out of the model would \
