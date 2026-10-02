@@ -1179,6 +1179,33 @@ not composed here, for the same reason the agent's name was. `DiscoveryReport`, 
 test refuses every one of the seven being refused**, because a run naming one and being turned away
 would mean this repository is narrower than the pipeline it is supposed to run.
 
+**`WhereARunGoesNext`** — the eight places a run can be after a gate: the product analysis, the
+quality analysis, the architecture analysis, the security analysis, the planning, the
+implementation, the delivery, and the run being over. **A stage and not a node name, because this
+repository has no graph** — `Stage` is a `match` and the sibling's own rules here are not a
+translation of the rules there, **so a destination is a stage of the pipeline and the artifact a
+stage produces is written in the same row of the same table.** Two answers that are one list, rather
+than two a reader has to keep in step.
+
+**`where_an_approved_artifact_leads`** — the whole of what happens next, **and it is a table rather
+than a chain of `if`s because the chain is the defect that cost the sibling a run.** Its router fell
+through: anything that was not a discovery report went to the implementation, so approving the
+verification sent the run back into the implementation, which made the change and asked about the
+verification again, and nothing in the state changed to stop it — **two container suite runs per pass
+until the framework's recursion limit, and a green suite that said nothing because the router was
+covered by nothing.**
+
+**A refusal is not a row, and that is the asymmetry the table cannot express.** Seven artifacts are
+approved and each leads somewhere; a refusal at any of the seven ends the run. **A work whose ruling
+was a refusal is not delivered**, and a run that carried on past one would be working on something a
+person has already said no to.
+
+**`AnArtifactThisRouterHoldsNoDestinationFor`** — an artifact with no row, **quoted by name and
+nothing else.** It is not `AnArtifactThisSystemDoesNotKnow`, which is a different fact: that one
+refuses a name the *pipeline* does not hold, and this one refuses a name the pipeline holds and the
+*router* has no destination for. **The second is a gap in the table and the first is a gap in the
+names**, and a reader told only that "it is not known" would go looking in the wrong file.
+
 **`AnArtifactThisSystemDoesNotKnow`** — that refusal, and **it says the name is a gap in this
 pipeline and not a fault of the run**, because an artifact with no rule written for it is a gap in
 the pipeline — **and blaming a run for a name this repository has not declared sends somebody to fix
