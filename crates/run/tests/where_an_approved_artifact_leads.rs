@@ -19,7 +19,7 @@
 
 use aisdlc_domain::approval::WhichArtifact;
 use aisdlc_run::where_an_approved_artifact_leads::{
-    AnArtifactThisRouterHoldsNoDestinationFor, WhereARunGoesNext,
+    AnArtifactThisRouterHoldsNoDestinationFor, WhereARunGoesNext, where_a_gate_outcome_leads,
     where_an_approved_artifact_leads,
 };
 
@@ -93,13 +93,17 @@ fn a_refusal_at_any_gate_ends_the_run() {
     let where_each_led: Vec<WhereARunGoesNext> = the_gate_outcomes
         .iter()
         .map(|was_it_approved| {
-            where_a_gate_outcome_leads(an_artifact("ImplementationPlan"), *was_it_approved)
+            where_a_gate_outcome_leads(&an_artifact("ImplementationPlan"), *was_it_approved)
+                .expect("the pipeline holds the plan")
         })
         .collect();
 
     assert_eq!(
         where_each_led,
-        vec![WhereARunGoesNext::TheImplementation, WhereARunGoesNext::TheRunIsOver],
+        vec![
+            WhereARunGoesNext::TheImplementation,
+            WhereARunGoesNext::TheRunIsOver
+        ],
         "**because a refusal is a decision and not a gap** — a run that carried on past one would \
          be implementing a plan a person has already said no to, **and the run would deliver \
          something nobody approved.** The same rule at every gate, which is what one function for \
@@ -115,21 +119,10 @@ fn there_is_no_fall_through_because_the_whole_table_is_listed_twice() {
         .collect();
 
     assert!(
-        where_each_led.iter().all(|one| one.is_some()),
+        where_each_led.iter().all(Option::is_some),
         "**because a reader who wants to see the table should not have to infer it from a `match` \
          that might fall through** — and this is the rule that catches a fall-through: every \
          artifact the pipeline holds has to resolve, so a new artifact with no row is refused by \
          name instead of quietly going wherever the last arm went"
     );
-}
-
-/// Where one gate's outcome leads, **which is the only decision a run makes after a gate.**
-fn where_a_gate_outcome_leads(
-    which_artifact: WhichArtifact,
-    was_it_approved: bool,
-) -> WhereARunGoesNext {
-    if !was_it_approved {
-        return WhereARunGoesNext::TheRunIsOver;
-    }
-    where_an_approved_artifact_leads(&which_artifact).expect("the pipeline holds that artifact")
 }
