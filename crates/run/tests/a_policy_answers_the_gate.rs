@@ -9,7 +9,8 @@
 //! ruling on a summary written for it **is not ruling on the artifact**, it is ruling on somebody's
 //! description of it.
 
-use aisdlc_domain::approval::{AnArtifactVersion, ApprovalDecision, WhichArtifact, WhoDecided};
+use aisdlc_domain::approval::{AnArtifactVersion, WhichArtifact};
+use aisdlc_run::a_model_is_asked_how_it_rules::WhereAModelIs;
 use aisdlc_run::a_policy_answers_the_gate::APolicyThatAnswersTheGate;
 use aisdlc_run::a_program_we_run::{AProgramWeRun, WhatTheProgramSaid};
 use aisdlc_run::who_answers_the_gate::WhoAnswersTheGate;
@@ -24,9 +25,18 @@ struct AnEndpointAnswering {
 
 impl AnEndpointAnswering {
     /// A model that rules, **and gives a reason because the field requires one.**
+    ///
+    /// **The answer is inside the envelope an endpoint sends, and the newline is real** — a double
+    /// that answered with bare words was refused by the envelope reader, **which is the reader
+    /// working: no endpoint returns a bare word.** `serde_json` escapes the newline for us.
     fn a_model_that_says(verdict: &str, reason: &str) -> Self {
+        let the_answer = format!("{verdict}\n{reason}");
         Self {
-            the_words: format!("{verdict}\\n{reason}"),
+            the_words: serde_json::json!({
+                "id": "chatcmpl-a-test",
+                "choices": [{"message": {"role": "assistant", "content": the_answer}}],
+            })
+            .to_string(),
             did_the_call_succeed: true,
             what_it_was_handed: std::cell::RefCell::new(Vec::new()),
         }
@@ -34,8 +44,13 @@ impl AnEndpointAnswering {
 }
 
 impl AProgramWeRun for AnEndpointAnswering {
-    fn run(&self, what_it_is_asked_to_do: &aisdlc_run::what_we_tell_a_program_to_do::WhatWeTellAProgramToDo) -> WhatTheProgramSaid {
-        self.what_it_was_handed.borrow_mut().push(format!("{what_it_is_asked_to_do:?}"));
+    fn run(
+        &self,
+        what_it_is_asked_to_do: &aisdlc_run::what_we_tell_a_program_to_do::WhatWeTellAProgramToDo,
+    ) -> WhatTheProgramSaid {
+        self.what_it_was_handed
+            .borrow_mut()
+            .push(format!("{what_it_is_asked_to_do:?}"));
         WhatTheProgramSaid::of(self.did_the_call_succeed, &self.the_words)
     }
 }
@@ -49,7 +64,8 @@ fn a_question() -> ApprovalQuestion {
     let the_work_item = aisdlc_domain::work_item::WorkItem::standing_at(
         aisdlc_domain::work_item_id::WorkItemId::try_from("WELLBEINGT-5").expect("a name"),
         aisdlc_domain::who_commissioned::WhoCommissioned::try_from("a person").expect("a name"),
-        aisdlc_domain::repository::Repository::try_from("steamnoid/ai-sdlc-app-rs-plus").expect("two halves"),
+        aisdlc_domain::repository::Repository::try_from("steamnoid/ai-sdlc-app-rs-plus")
+            .expect("two halves"),
         aisdlc_domain::role::Role::try_from("PO").expect("a discipline"),
         aisdlc_domain::stage::Stage::AwaitingHumanApproval,
     )
@@ -64,11 +80,14 @@ fn a_question() -> ApprovalQuestion {
 }
 
 /// A policy answering under one name, **with a model that says what this test needs it to say.**
-fn a_policy_answering(the_model: &AnEndpointAnswering) -> APolicyThatAnswersTheGate {
+fn a_policy_answering(the_model: &AnEndpointAnswering) -> APolicyThatAnswersTheGate<'_> {
     APolicyThatAnswersTheGate::the_policy(
-        "review-what-the-run-found",
-        &the_model,
-        || the_artifact_on_disk(),
+        the_model as &dyn AProgramWeRun,
+        WhereAModelIs {
+            the_endpoint: String::from("http://localhost:1/v1"),
+            which_model: String::from("a-model"),
+        },
+        the_artifact_on_disk,
         WhoAnswersTheGate::ThisPolicyAnswering {
             which_policy: String::from("review-what-the-run-found"),
         },
@@ -87,18 +106,20 @@ fn a_policy_that_approved_is_recorded_under_its_own_namespace() {
 
     assert_eq!(
         (the_ruling.approved, the_ruling.decided_by.to_string()),
-        (true, "autopilot:review-what-the-run-found"),
+        (true, String::from("autopilot:review-what-the-run-found")),
         "**because a policy that could be recorded as a person would forge the one thing this \
          record exists to be** — and the name in the record is the evidence, not the verdict. It \
-         recorded: {:?} for {:?}",
-        the_ruling.decided_by, the_ruling.about_which_artifact
+         recorded: {:?}",
+        the_ruling.decided_by
     );
 }
 
 #[test]
 fn a_policy_may_refuse_and_a_refusal_is_a_decision() {
-    let the_model =
-        AnEndpointAnswering::a_model_that_says("REFUSED", "the report cites a file that is not there");
+    let the_model = AnEndpointAnswering::a_model_that_says(
+        "REFUSED",
+        "the report cites a file that is not there",
+    );
     let mut the_policy = a_policy_answering(&the_model);
 
     let the_ruling = the_policy.how_they_rule_on(&a_question());
@@ -114,7 +135,8 @@ fn a_policy_may_refuse_and_a_refusal_is_a_decision() {
 
 #[test]
 fn a_policy_is_handed_the_artifact_and_not_a_description_of_it() {
-    let the_model = AnEndpointAnswering::a_model_that_says("APPROVED", "the report names its build system");
+    let the_model =
+        AnEndpointAnswering::a_model_that_says("APPROVED", "the report names its build system");
     let mut the_policy = a_policy_answering(&the_model);
 
     let _ = the_policy.how_they_rule_on(&a_question());
