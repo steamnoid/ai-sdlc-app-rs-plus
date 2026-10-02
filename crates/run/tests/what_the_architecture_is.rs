@@ -28,6 +28,7 @@ fn what_the_architecture_is() -> WhatTheArchitectureIs {
         how_the_whole_is_put_together: String::from(
             "every agent reads the clone through the same two ports",
         ),
+        what_a_manifest_declares: vec![String::from("serde")],
     }
 }
 
@@ -40,7 +41,7 @@ fn an_architecture_naming_a_dependency_no_manifest_declares_is_refused() {
         ..what_the_architecture_is()
     };
 
-    let the_refusal = the_architecture.the_dependencies_the_manifests_declare(&["serde"]);
+    let the_refusal = the_architecture.the_dependencies_the_manifests_declare();
 
     assert!(
         matches!(
@@ -60,10 +61,13 @@ fn an_architecture_naming_no_module_is_refused() {
         modules: vec![],
         ..what_the_architecture_is()
     }
-    .what_the_dependencies_the_manifests_declare(&["serde"]);
+    .the_dependencies_the_manifests_declare();
 
     assert!(
-        matches!(&the_refusal, Err(NoArchitectureWasDescribed::NoModuleWasNamed)),
+        matches!(
+            &the_refusal,
+            Err(NoArchitectureWasDescribed::NoModuleWasNamed)
+        ),
         "**because a sentence about how the whole is put together is not a list anybody can plan \
          against** — and it reads as an architecture, because it is a paragraph about one. What \
          was refused: {the_refusal:?}"
@@ -80,10 +84,13 @@ fn a_module_named_without_saying_what_it_is_for_is_refused() {
         }],
         ..what_the_architecture_is()
     }
-    .the_dependencies_the_manifests_declare(&["serde"]);
+    .the_dependencies_the_manifests_declare();
 
     assert!(
-        matches!(&the_refusal, Err(NoArchitectureWasDescribed::AModuleNamedOnly)),
+        matches!(
+            &the_refusal,
+            Err(NoArchitectureWasDescribed::AModuleNamedOnly { .. })
+        ),
         "**because a module named without a purpose is a filename** — and this system's naming \
          rule says the same thing about code: a name that does not say what the thing is is a \
          name nobody can hold to. What was refused: {the_refusal:?}"
@@ -97,11 +104,15 @@ fn a_whole_described_only_in_prose_is_refused_when_no_module_is_named() {
         how_the_whole_is_put_together: String::from(
             "the agents and the ports and the outside, in that order",
         ),
+        what_a_manifest_declares: vec![String::from("serde")],
     }
-    .the_dependencies_the_manifests_declare(&["serde"]);
+    .the_dependencies_the_manifests_declare();
 
     assert!(
-        matches!(&the_refusal, Err(NoArchitectureWasDescribed::NoModuleWasNamed)),
+        matches!(
+            &the_refusal,
+            Err(NoArchitectureWasDescribed::NoModuleWasNamed)
+        ),
         "**because prose about an architecture is the shape a model answers in when nothing holds \
          it to a list** — and the fix for that is the refusal, not a longer prompt. What was \
          refused: {the_refusal:?}"
@@ -110,7 +121,7 @@ fn a_whole_described_only_in_prose_is_refused_when_no_module_is_named() {
 
 #[test]
 fn an_architecture_whose_dependencies_the_manifests_all_declare_is_accepted() {
-    let the_refusal = what_the_architecture_is().the_dependencies_the_manifests_declare(&["serde"]);
+    let the_refusal = what_the_architecture_is().the_dependencies_the_manifests_declare();
 
     assert!(
         the_refusal.is_ok(),
