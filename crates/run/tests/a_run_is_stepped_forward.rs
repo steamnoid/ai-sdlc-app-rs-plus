@@ -10,7 +10,7 @@
 
 use aisdlc_domain::stage::Stage;
 use aisdlc_run::a_run_is_stepped_forward::{
-    TheRunWasNotStepped, what_a_step_leads, where_a_run_goes_from_here,
+    TheRunWasNotStepped, WhatOneStepLeadsTo, what_a_step_leads, where_a_run_goes_from_here,
 };
 use aisdlc_run::where_a_run_stands::WhereARunStands;
 use aisdlc_run::where_an_approved_artifact_leads::WhereARunGoesNext;
@@ -50,10 +50,9 @@ fn the_four_facts() -> (
     let the_id = aisdlc_domain::work_item_id::WorkItemId::try_from("WELLBEINGT-5").expect("a name");
     let who_asked =
         aisdlc_domain::who_commissioned::WhoCommissioned::try_from("a person").expect("a name");
-    let the_repository = aisdlc_domain::repository::Repository::try_from(
-        "steamnoid/ai-sdlc-app-rs-plus",
-    )
-    .expect("two halves");
+    let the_repository =
+        aisdlc_domain::repository::Repository::try_from("steamnoid/ai-sdlc-app-rs-plus")
+            .expect("two halves");
     let the_discipline = aisdlc_domain::role::Role::try_from("PO").expect("a discipline");
     (the_id, who_asked, the_repository, the_discipline)
 }
@@ -93,8 +92,11 @@ fn a_step_hands_the_work_to_the_agent_that_answers_at_the_next_stage() {
 
     let the_next_step = what_a_step_leads(&the_run, true);
 
+    let who_was_named = the_next_step
+        .as_ref()
+        .map(WhatOneStepLeadsTo::who_answers_the_next_stage);
     assert_eq!(
-        the_next_step.map(|one| one.who_answers_the_next_stage()),
+        who_was_named,
         Ok(String::from("aisdlc-po-analyze")),
         "**because the agent and the stage move together** — a run that named the stage and left \
          the caller to guess the agent is a run with two orderings. It said: {the_next_step:?}"
@@ -108,7 +110,10 @@ fn a_run_that_has_reached_the_end_has_nowhere_to_go_and_says_so() {
     let where_it_goes = where_a_run_goes_from_here(&the_run, true);
 
     assert!(
-        matches!(where_it_goes, Err(TheRunWasNotStepped::TheRunHasReachedTheEnd)),
+        matches!(
+            where_it_goes,
+            Err(TheRunWasNotStepped::TheRunHasReachedTheEnd)
+        ),
         "**because a finished work item has nothing left to approve** — and asking where it goes next \
          is a question about a run that is over. It said: {where_it_goes:?}"
     );

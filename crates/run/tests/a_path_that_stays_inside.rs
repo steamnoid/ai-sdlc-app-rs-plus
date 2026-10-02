@@ -119,11 +119,21 @@ fn a_path_that_goes_out_through_a_symlink_is_refused_and_says_it_escaped() {
     );
 }
 
+/// Clear one place of whatever is there, **and a directory as well as a file — because a fixture
+/// left as a directory by a run that was killed mid-suite makes every later run of this test fail
+/// on `AlreadyExists`, and the failure says nothing about the symlink.**
+fn the_place_is_clear_of_whatever_was_there(the_place: &std::path::Path) {
+    let _ = std::fs::remove_file(the_place);
+    let _ = std::fs::remove_dir_all(the_place);
+    if let Some(the_parent) = the_place.parent() {
+        std::fs::create_dir_all(the_parent).expect("a directory this machine will hold");
+    }
+}
+
 #[test]
 fn a_path_through_a_symlink_that_stays_inside_is_not_refused_for_the_symlink() {
     let the_link = the_root().join("target/a-symlink-staying-in");
-    let _ = std::fs::remove_file(&the_link);
-    let _ = std::fs::create_dir_all(the_root().join("target"));
+    the_place_is_clear_of_whatever_was_there(&the_link);
     std::os::unix::fs::symlink(the_root(), &the_link).expect("a symlink can point back inside");
 
     let a_path = a_path_in_the_project("target/a-symlink-staying-in/Cargo.toml")

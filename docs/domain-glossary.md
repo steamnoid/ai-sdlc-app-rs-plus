@@ -2219,6 +2219,37 @@ invariant forbids, and the refusal would come from a check reading a field nobod
 before a fixture is written: a work item cannot be *put* at that stage without an agent, **so the
 pickup node assigns one and the handover moves it to `IN_PROGRESS_BY_AGENT`.**
 
+**`THE_AGENT_AT_EACH_DESTINATION`** — seven destinations and the agent at each, **and it is a table
+and not a second ordering.** The stage and the agent move together and are written beside each other
+on purpose: **a run that named the stage and left the caller to guess the agent is a run with two
+orderings, and the second one would be the one the caller got right by accident.** `TheRunIsOver`
+names no agent, **because a run that is over is not held by anybody.**
+
+**`WhatOneStepLeadsTo`** is a value so a caller can read a step before obeying it, **and the field
+is asked by name because it is a closed set and a caller matching on the shape would be matching on
+a shape.**
+
+**`where_a_run_goes_from_here` asks the router and is not the router**, so there is one ordering
+rather than two — **and a refusal reaches `TheRunIsOver` inside the router, which is the one place
+that decision is made.**
+
+**A run standing at a gate is refused before the router is asked, and that is a finding.** The first
+version asked the router first, **and it handed a work item standing at `AWAITING_HUMAN_APPROVAL` to
+the quality analyst** — **a step that moves gate work into an agent's hands is the forgery the whole
+approval boundary exists to prevent, and the router was right while the caller was the thing that was
+wrong.** The check is `Stage::an_agent_must_be_holding_it` **and not a second list of stages**,
+because that list is the domain's and not this module's.
+
+**`TheRunWasNotStepped`** — three refusals and three different things: a finished run has nothing
+left to approve; a stage no agent may hold belongs to a person; and the router holds no destination,
+**quoted whole because a name is what a reader needs.**
+
+**A fixture in `target/` must clear its place of whatever is there, and that includes a directory
+where the test expected a file.** A gate killed mid-suite leaves `git` locks in the branch fixtures
+and the next run fails with `could not lock config file` — **a failure that names neither the test
+nor the thing that caused it.** Removing the whole place is what clears a lock, **and the removal
+needed a name so it read as deliberate rather than as a stray `let _ =`.**
+
 **`TheModelRefused`** — one refusal naming the artifact and the field. A run asks eight
 agents for eight different artifacts, so *"the shape was wrong"* without saying which is a
 question rather than a diagnosis.
