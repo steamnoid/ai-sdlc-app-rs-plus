@@ -161,7 +161,7 @@ pub fn the_model_is_asked_how_it_rules_on(
         &the_question_a_model_is_asked(a_question, &the_work_item),
         where_the_model_is,
     );
-    let what_it_said = the_model.run(&WhatWeTellAProgramToDo::ask_a_model_how_it_rules(
+    let what_it_said = the_model.run(&WhatWeTellAProgramToDo::ask_a_model(
         &where_the_model_is.the_endpoint,
         &where_the_model_is.which_model,
         &the_body,

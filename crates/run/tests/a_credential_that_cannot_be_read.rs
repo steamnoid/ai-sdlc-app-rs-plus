@@ -41,7 +41,7 @@ fn a_key_that_is_nothing_is_refused() {
 
 #[test]
 fn a_request_carries_no_credential_and_a_reader_could_print_one_safely() {
-    let a_question = WhatWeTellAProgramToDo::ask_a_model_how_it_rules(
+    let a_question = WhatWeTellAProgramToDo::ask_a_model(
         "http://localhost:11434/v1",
         "a-model",
         "a question about an artifact",

@@ -103,7 +103,7 @@ fn the_one_request_the_adapter_built(
 /// The address the request names and the body it carries, read out of the request itself.
 fn the_endpoint_and_the_body_out_of(one_request: &WhatWeTellAProgramToDo) -> (String, String) {
     match one_request {
-        WhatWeTellAProgramToDo::AskAModelHowItRules {
+        WhatWeTellAProgramToDo::AskAModel {
             the_endpoint,
             the_body,
             ..

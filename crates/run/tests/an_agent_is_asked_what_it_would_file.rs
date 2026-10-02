@@ -9,9 +9,7 @@
 
 use aisdlc_domain::repository::Repository;
 use aisdlc_run::an_agent_is_asked_what_it_would_file::an_agent_is_asked_what_it_would_file;
-use aisdlc_run::an_agent_is_asked_what_it_would_file::{
-    the_body_a_creative_agent_is_given, the_three_judgements_a_model_gave,
-};
+use aisdlc_run::an_agent_is_asked_what_it_would_file::the_three_judgements_a_model_gave;
 use aisdlc_run::what_we_tell_a_program_to_do::WhatWeTellAProgramToDo;
 
 /// Where a deployment said its model is.
@@ -33,20 +31,12 @@ fn what_the_run_actually_saw() -> Vec<String> {
     vec!["crates/run/src/what_an_agent_offered.rs".to_string()]
 }
 
-/// What an endpoint said, wrapping content the way this gateway does.
-fn what_the_endpoint_said(its_content: &str) -> String {
-    format!(
-        "{{\"choices\":[{{\"message\":{{\"content\":{}}}}}]}}",
-        serde_json::to_string(its_content).expect("a string is JSON")
-    )
-}
-
 #[test]
 fn what_the_agent_said_about_its_own_work_is_read_and_kept() {
     let its_content = r#"{"offers":[],"what_it_found":"an offer path is never checked against the listing","what_it_could_not_settle":"whether the listing is truncated","what_it_expects_next":"file what the listing names"}"#;
 
-    let what_it_said = the_three_judgements_a_model_gave(&what_the_endpoint_said(its_content))
-        .expect("three judgements said");
+    let what_it_said =
+        the_three_judgements_a_model_gave(its_content).expect("three judgements said");
 
     assert_eq!(
         what_it_said.what_it_could_not_settle.as_str(),
@@ -60,7 +50,7 @@ fn what_the_agent_said_about_its_own_work_is_read_and_kept() {
 fn an_answer_whose_three_judgements_are_blank_is_refused() {
     let its_content = r#"{"offers":[],"what_it_found":"","what_it_could_not_settle":"","what_it_expects_next":""}"#;
 
-    let what_it_said = the_three_judgements_a_model_gave(&what_the_endpoint_said(its_content));
+    let what_it_said = the_three_judgements_a_model_gave(its_content);
 
     assert!(
         what_it_said.is_err(),
@@ -71,45 +61,15 @@ fn an_answer_whose_three_judgements_are_blank_is_refused() {
 }
 
 #[test]
-fn the_body_is_valid_json_however_the_question_reads() {
-    let a_question_reading_awkwardly =
-        "a \"quoted\" word, a \\ backslash and a newline\nsecond line";
-
-    let the_body =
-        the_body_a_creative_agent_is_given(a_question_reading_awkwardly, &where_the_model_is());
-
-    let what_it_came_back_as = serde_json::from_str::<serde_json::Value>(&the_body);
-    assert!(
-        what_it_came_back_as.is_ok(),
-        "**because a hand-rolled escape is a lossy channel in both directions** — and every request \
-         this system ever sent a model was invalid JSON until the library built the body, the far end \
-         answered 400 with zero bytes, and the refusal reached us as an empty string. The body this \
-         run would send is: {the_body}"
-    );
-    let what_it_came_back_as = what_it_came_back_as.expect("checked one line above");
-    assert_eq!(
-        what_it_came_back_as
-            .get("messages")
-            .and_then(|messages| messages.get(0))
-            .and_then(|one| one.get("content"))
-            .and_then(|it| it.as_str()),
-        Some(a_question_reading_awkwardly),
-        "**because a hand-rolled escape is a lossy channel in both directions** — and every request \
-         this system ever sent a model was invalid JSON until the library built the body, the far \
-         end answered 400 with zero bytes, and the refusal reached us as an empty string"
-    );
-}
-
-#[test]
-fn the_request_is_a_question_about_what_the_agent_would_file() {
-    let what_the_run_asks_for = WhatWeTellAProgramToDo::ask_a_model_what_it_would_file(
+fn the_request_is_a_question_about_a_model() {
+    let what_the_run_asks_for = WhatWeTellAProgramToDo::ask_a_model(
         &where_the_model_is().the_endpoint,
         &where_the_model_is().which_model,
         "a body",
     );
 
     assert!(
-        what_the_run_asks_for.is_a_question_about_what_it_would_file(),
+        what_the_run_asks_for.is_a_question_about_a_model(),
         "**because a run that cannot tell what kind of question it is asking cannot refuse to ask \
          one** — and the refusal is the whole of the flag's meaning: {what_the_run_asks_for:?}"
     );
@@ -118,14 +78,13 @@ fn the_request_is_a_question_about_what_the_agent_would_file() {
 #[test]
 fn the_whole_path_from_a_listing_to_grounded_offers() {
     let its_content = r#"{"offers":[{"title":"an offer path is never checked","what_it_asks_for":"compare each cited path with the listing","paths":["crates/run/src/what_an_agent_offered.rs"]}],"what_it_found":"nothing compares the paths","what_it_could_not_settle":"nothing","what_it_expects_next":"add the comparison"}"#;
-    let the_program = AProgramThatAnswers(what_the_endpoint_said(its_content));
+    let mut the_model = AModelThatSays::saying(its_content);
 
     let what_was_offered = an_agent_is_asked_what_it_would_file(
-        &the_program,
+        &mut the_model,
         &aisdlc_run::the_filings_already_on_file::TheFilingsAlreadyOnFile::none_yet(),
         &the_repository_it_read(),
         &what_the_run_actually_saw(),
-        &where_the_model_is(),
     )
     .expect("an answer in the shape it was asked for, grounded in the listing");
 
@@ -137,14 +96,64 @@ fn the_whole_path_from_a_listing_to_grounded_offers() {
     );
 }
 
-/// A program that answers with a fixed answer, and remembers nothing.
-struct AProgramThatAnswers(String);
+/// A model that answers with fixed words, and is not a program at all.
+///
+/// **It hands over the content and not an envelope, and that is the assertion inside the
+/// double.** A path that unwrapped an envelope itself would be handed something that is
+/// not one and would refuse — so this double cannot be used by code that reads the far
+/// end's own wrapping, which is the half this cycle removes.
+struct AModelThatSays {
+    what_it_would_say: String,
+    how_many_times_it_was_asked: std::cell::RefCell<usize>,
+}
 
-impl aisdlc_run::a_program_we_run::AProgramWeRun for AProgramThatAnswers {
-    fn run(
-        &self,
-        _what_it_is_asked: &WhatWeTellAProgramToDo,
-    ) -> aisdlc_run::a_program_we_run::WhatTheProgramSaid {
-        aisdlc_run::a_program_we_run::WhatTheProgramSaid::of(true, &self.0)
+impl AModelThatSays {
+    /// A model that will say this, whenever it is asked.
+    fn saying(what_it_would_say: &str) -> Self {
+        Self {
+            what_it_would_say: what_it_would_say.to_string(),
+            how_many_times_it_was_asked: std::cell::RefCell::new(0),
+        }
     }
+}
+
+impl aisdlc_run::AReasoningModel for AModelThatSays {
+    fn what_it_says_when_asked_for(
+        &mut self,
+        _which_artifact: &aisdlc_domain::approval::WhichArtifact,
+        _which_organisation: aisdlc_domain::which_organisation_reasons::WhichOrganisationReasons,
+        _the_question: &str,
+    ) -> Result<String, aisdlc_run::the_words_inside_the_endpoints_envelope::AnAnswerNobodyCanRead>
+    {
+        *self.how_many_times_it_was_asked.borrow_mut() += 1;
+        Ok(self.what_it_would_say.clone())
+    }
+}
+
+#[test]
+fn a_model_that_is_not_a_program_is_asked_what_it_would_file() {
+    let its_content = r#"{"offers":[{"title":"an offer path is never checked","what_it_asks_for":"compare each cited path with the listing","paths":["crates/run/src/what_an_agent_offered.rs"]}],"what_it_found":"nothing compares the paths","what_it_could_not_settle":"nothing","what_it_expects_next":"add the comparison"}"#;
+    let mut the_model = AModelThatSays::saying(its_content);
+
+    let what_was_offered = an_agent_is_asked_what_it_would_file(
+        &mut the_model,
+        &aisdlc_run::the_filings_already_on_file::TheFilingsAlreadyOnFile::none_yet(),
+        &the_repository_it_read(),
+        &what_the_run_actually_saw(),
+    )
+    .expect("an answer in the shape it was asked for, grounded in the listing");
+
+    assert_eq!(
+        (
+            what_was_offered.offers.len(),
+            *the_model.how_many_times_it_was_asked.borrow()
+        ),
+        (1, 1),
+        "**because a model asked through a program is a model asked through the wrong door** — the \
+         port exists, `TheModelAsItIsAsked` answers it, and this use case still takes a program and \
+         a `WhereAModelIs` and unwraps the envelope itself **twice**: once for the offers and once \
+         for the three judgements. A double that hands over content and not an envelope cannot be \
+         used by a path that reads the far end's own wrapping, **and the offers and the judgements \
+         are one answer read once**: {what_was_offered:?}"
+    );
 }

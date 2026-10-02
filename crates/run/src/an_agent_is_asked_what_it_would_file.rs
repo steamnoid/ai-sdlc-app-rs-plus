@@ -3,14 +3,13 @@
 //! **The shell for now.** Every function here has the shape it will keep and none of the behaviour —
 //! **the tests are what demand any of it**, because a shell that accepts the absence cannot prove it.
 
+use aisdlc_domain::approval::WhichArtifact;
 use aisdlc_domain::repository::Repository;
+use aisdlc_domain::which_organisation_reasons::WhichOrganisationReasons;
 
-use crate::a_model_is_asked_how_it_rules::WhereAModelIs;
-use crate::a_program_we_run::AProgramWeRun;
-use crate::the_words_inside_the_endpoints_envelope::the_words_inside_the_endpoints_envelope;
+use crate::AReasoningModel;
 use crate::what_an_agent_judged::WhatAnAgentJudged;
 use crate::what_an_agent_offered::{WhatAModelSaidItWouldFile, WhatAnAgentOffered};
-use crate::what_we_tell_a_program_to_do::WhatWeTellAProgramToDo;
 
 /// An answer that was not offers, quoting what came back.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -83,34 +82,16 @@ file is refused, so name a number you were shown or null.\n\
     )
 }
 
-/// The body a creative agent is given, **built by the JSON library and not by a hand.**
-///
-/// **The library and not a format string**, because a body that leaves this system is a wire format
-/// and a wire format typed by hand is one broken by anything the hand did not think of — **and the
-/// far end answering `400` with zero bytes is a refusal that reaches us as an empty string.**
-pub fn the_body_a_creative_agent_is_given(
-    the_question: &str,
-    where_the_model_is: &WhereAModelIs,
-) -> String {
-    let the_asked = serde_json::json!({
-        "model": where_the_model_is.which_model,
-        "temperature": 0,
-        "messages": [{"role": "user", "content": the_question}],
-    });
-    the_asked.to_string()
-}
-
-/// What a model said it would file, **read out of the envelope and held to the shape it was given.**
+/// What a model said it would file, **held to the shape it was asked for.**
 ///
 /// **Every way of failing here is a refusal and never an offer**, because that is the direction the
 /// failure has to point: a broken answer read as an offer files an issue nobody read.
 pub fn what_a_model_offered(
-    what_the_endpoint_said: &str,
+    what_the_model_said: &str,
 ) -> Result<Vec<WhatAModelSaidItWouldFile>, AnAnswerThatIsNotAnOffer> {
-    let the_content = the_words_a_model_said(what_the_endpoint_said)?;
-    let what_it_came_back_as: serde_json::Value = serde_json::from_str(&the_content)
-        .map_err(|_| AnAnswerThatIsNotAnOffer::because(&the_content))?;
-    the_offers_in(&what_it_came_back_as, &the_content)
+    let what_it_came_back_as: serde_json::Value = serde_json::from_str(what_the_model_said)
+        .map_err(|_| AnAnswerThatIsNotAnOffer::because(what_the_model_said))?;
+    the_offers_in(&what_it_came_back_as, what_the_model_said)
 }
 
 /// The three judgements a model gave about its own reading, **refused when one is blank.**
@@ -119,30 +100,31 @@ pub fn what_a_model_offered(
 /// anywhere, **so a caller holding a `WhatAnAgentJudged` has to be able to ask what the constructor
 /// asks.**
 pub fn the_three_judgements_a_model_gave(
-    what_the_endpoint_said: &str,
+    what_the_model_said: &str,
 ) -> Result<WhatAnAgentJudged, AnAnswerThatIsNotAnOffer> {
-    let the_content = the_words_a_model_said(what_the_endpoint_said)?;
-    let what_it_came_back_as: serde_json::Value = serde_json::from_str(&the_content)
-        .map_err(|_| AnAnswerThatIsNotAnOffer::because(&the_content))?;
-    the_three_in(&what_it_came_back_as, &the_content)
+    let what_it_came_back_as: serde_json::Value = serde_json::from_str(what_the_model_said)
+        .map_err(|_| AnAnswerThatIsNotAnOffer::because(what_the_model_said))?;
+    the_three_in(&what_it_came_back_as, what_the_model_said)
 }
 
 /// A creative agent asked what work is worth filing, **offering nothing for now.**
+///
+/// **A model and not a program, and no `WhereAModelIs` beside it.** A model asked through a
+/// program is a model asked through the wrong door: the endpoint and the body are the adapter's
+/// business, and a use case carrying them is a use case that has to be changed every time the
+/// far end changes how it is addressed.
 pub fn an_agent_is_asked_what_it_would_file(
-    the_model: &impl AProgramWeRun,
+    the_model: &mut impl AReasoningModel,
     what_is_already_on_file: &crate::the_filings_already_on_file::TheFilingsAlreadyOnFile,
     of_which_repository: &Repository,
     what_the_run_saw: &[String],
-    where_the_model_is: &WhereAModelIs,
 ) -> Result<WhatAnAgentOffered, ACreativeAgentThatCouldNotOffer> {
     let the_question = the_question_an_agent_is_asked(
         of_which_repository,
         what_the_run_saw,
         what_is_already_on_file,
     );
-    let the_body = the_body_a_creative_agent_is_given(&the_question, where_the_model_is);
-    let what_the_model_said =
-        what_the_model_answered_about_what_it_would_file(the_model, &the_body, where_the_model_is);
+    let what_the_model_said = what_a_model_was_asked_for_offering(the_model, &the_question);
     let offered = what_a_model_offered(&what_the_model_said)
         .map_err(|a_fault| ACreativeAgentThatCouldNotOffer(a_fault.what_it_said().to_string()))?;
     let judged = the_three_judgements_a_model_gave(&what_the_model_said)
@@ -156,27 +138,33 @@ pub fn an_agent_is_asked_what_it_would_file(
     .map_err(|not_offered| ACreativeAgentThatCouldNotOffer(not_offered.0))
 }
 
-/// What the model said when asked what it would file, **and the question is not repeated here.**
-fn what_the_model_answered_about_what_it_would_file(
-    the_model: &impl AProgramWeRun,
-    the_body: &str,
-    where_the_model_is: &WhereAModelIs,
+/// What the model said when asked what it would file, **asked once and read once.**
+///
+/// **The artifact is the offer and not a pipeline name, because the port asks for an artifact
+/// and a use case that passed a sentence would be a second vocabulary.** The refusals below
+/// carry the words the model said, and a model that could not be reached arrives here as
+/// content it never wrote — which is quoted rather than summarised, because it is the only
+/// clue a caller has for deciding whether to retry.
+fn what_a_model_was_asked_for_offering(
+    the_model: &mut impl AReasoningModel,
+    the_question: &str,
 ) -> String {
-    let what_it_said = the_model.run(&WhatWeTellAProgramToDo::ask_a_model_what_it_would_file(
-        &where_the_model_is.the_endpoint,
-        &where_the_model_is.which_model,
-        the_body,
-    ));
-    what_it_said.the_words().to_string()
+    let which_artifact = WhichArtifact::try_from("WhatAnAgentOffered")
+        .expect("the offering artifact is declared here");
+    match the_model.what_it_says_when_asked_for(
+        &which_artifact,
+        which_organisation_reasons(),
+        the_question,
+    ) {
+        Ok(what_it_said) => what_it_said,
+        Err(nobody_can_read) => nobody_can_read.what_it_said().to_string(),
+    }
 }
 
-/// The words inside the endpoint's envelope, **read through the one door #102 and #109 were burned at.**
-pub fn the_words_a_model_said(
-    what_the_endpoint_said: &str,
-) -> Result<String, AnAnswerThatIsNotAnOffer> {
-    the_words_inside_the_endpoints_envelope(what_the_endpoint_said).map_err(|nobody_can_read| {
-        AnAnswerThatIsNotAnOffer::because(nobody_can_read.what_it_said())
-    })
+/// The organisation whose model is asked, **and it is a deployment fact this crate does not read.**
+fn which_organisation_reasons() -> WhichOrganisationReasons {
+    WhichOrganisationReasons::try_from("openai_compatible")
+        .expect("the organisation a model answers for is not this run's to guess")
 }
 
 /// The offers inside what a model said, **or the refusal quoting what came back.**

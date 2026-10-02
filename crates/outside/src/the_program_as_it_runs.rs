@@ -78,8 +78,7 @@ impl TheProgramAsItRuns {
         what_it_is_asked_to_do: &WhatWeTellAProgramToDo,
     ) -> WhichProgramWeRun {
         match what_it_is_asked_to_do {
-            WhatWeTellAProgramToDo::AskAModelHowItRules { .. }
-            | WhatWeTellAProgramToDo::AskAModelWhatItWouldFile { .. } => WhichProgramWeRun::Curl,
+            WhatWeTellAProgramToDo::AskAModel { .. } => WhichProgramWeRun::Curl,
             _ => self.which_program,
         }
     }
@@ -95,12 +94,7 @@ impl TheProgramAsItRuns {
     /// merged.
     pub fn the_arguments_of(&self, what_it_is_asked_to_do: &WhatWeTellAProgramToDo) -> Vec<String> {
         match what_it_is_asked_to_do {
-            WhatWeTellAProgramToDo::AskAModelHowItRules {
-                the_endpoint,
-                the_body,
-                ..
-            }
-            | WhatWeTellAProgramToDo::AskAModelWhatItWouldFile {
+            WhatWeTellAProgramToDo::AskAModel {
                 the_endpoint,
                 the_body,
                 ..

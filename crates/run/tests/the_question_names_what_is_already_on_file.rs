@@ -14,17 +14,14 @@ use aisdlc_run::a_filing_is_read::AFilingIsReadFrom;
 use aisdlc_run::a_git_hub_we_write_to::{
     AGitHubWeWriteTo, WhatGitHubWasAskedFor, WhereGitHubAnswered,
 };
-use aisdlc_run::a_model_is_asked_how_it_rules::WhereAModelIs;
-use aisdlc_run::a_program_we_run::{AProgramWeRun, WhatTheProgramSaid};
 use aisdlc_run::an_agent_is_asked_what_it_would_file::the_question_an_agent_is_asked;
 use aisdlc_run::an_issue_read::AnIssueRead;
 use aisdlc_run::the_filings_already_on_file::{AFilingAlreadyOnFile, TheFilingsAlreadyOnFile};
-use aisdlc_run::what_we_tell_a_program_to_do::WhatWeTellAProgramToDo;
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 
 /// What a model answers when it concludes nothing is worth filing, **and that is a valid answer.**
-const A_MODEL_CONCLUDING_NOTHING_IS_WORTH_FILING: &str = "{\"choices\":[{\"message\":{\"content\":\"{\\\"offers\\\":[],\\\"what_it_found\\\":\\\"a\\\",\\\"what_it_could_not_settle\\\":\\\"b\\\",\\\"what_it_expects_next\\\":\\\"c\\\"}\"}}]}";
+const A_MODEL_CONCLUDING_NOTHING_IS_WORTH_FILING: &str = r#"{"offers":[],"what_it_found":"a","what_it_could_not_settle":"b","what_it_expects_next":"c"}"#;
 
 fn the_repository_the_run_reads() -> Repository {
     Repository {
@@ -49,13 +46,6 @@ fn the_filings() -> TheFilingsAlreadyOnFile {
 
 fn the_listing() -> Vec<String> {
     vec![String::from("crates/run/src/lib.rs")]
-}
-
-fn where_the_model_is() -> WhereAModelIs {
-    WhereAModelIs {
-        the_endpoint: String::from("http://localhost:1/v1/chat/completions"),
-        which_model: String::from("a-model"),
-    }
 }
 
 /// A tracker that remembers whether it was asked, **and holds two filings when it is.**
@@ -88,11 +78,16 @@ struct AModelRememberingItsQuestion {
     what_it_was_asked: Rc<RefCell<String>>,
 }
 
-impl AProgramWeRun for AModelRememberingItsQuestion {
-    fn run(&self, what_it_was_told_to_do: &WhatWeTellAProgramToDo) -> WhatTheProgramSaid {
-        self.what_it_was_asked
-            .replace(what_it_was_told_to_do.what_it_is_asked_about().to_string());
-        WhatTheProgramSaid::of(true, A_MODEL_CONCLUDING_NOTHING_IS_WORTH_FILING)
+impl aisdlc_run::AReasoningModel for AModelRememberingItsQuestion {
+    fn what_it_says_when_asked_for(
+        &mut self,
+        _which_artifact: &aisdlc_domain::approval::WhichArtifact,
+        _which_organisation: aisdlc_domain::which_organisation_reasons::WhichOrganisationReasons,
+        the_question: &str,
+    ) -> Result<String, aisdlc_run::the_words_inside_the_endpoints_envelope::AnAnswerNobodyCanRead>
+    {
+        self.what_it_was_asked.replace(the_question.to_string());
+        Ok(String::from(A_MODEL_CONCLUDING_NOTHING_IS_WORTH_FILING))
     }
 }
 
@@ -161,16 +156,15 @@ struct WhatTheWholeRunDid {
 fn what_the_whole_run_did() -> WhatTheWholeRunDid {
     let what_the_model_was_asked = Rc::new(RefCell::new(String::new()));
     let was_the_tracker_read = Rc::new(Cell::new(false));
-    let the_model = the_model_remembering(what_the_model_was_asked.clone());
+    let mut the_model = the_model_remembering(what_the_model_was_asked.clone());
     let mut a_tracker = a_tracker_remembering(was_the_tracker_read.clone());
     let mut github = AGitHubThatFilesNothing;
     let filed = a_creative_agent_files_what_it_concluded(
-        &the_model,
+        &mut the_model,
         &mut github,
         &mut a_tracker,
         &the_repository_the_run_reads(),
         &the_listing(),
-        &where_the_model_is(),
     );
     WhatTheWholeRunDid {
         was_the_tracker_read: was_the_tracker_read.get(),

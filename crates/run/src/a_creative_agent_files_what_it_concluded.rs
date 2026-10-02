@@ -10,9 +10,8 @@
 use aisdlc_domain::commissioned_request::AWhereItWasFiled;
 use aisdlc_domain::repository::Repository;
 
+use crate::AReasoningModel;
 use crate::a_git_hub_we_write_to::AGitHubWeWriteTo;
-use crate::a_model_is_asked_how_it_rules::WhereAModelIs;
-use crate::a_program_we_run::AProgramWeRun;
 use crate::an_agent_is_asked_what_it_would_file;
 use crate::what_a_model_said_would_restate::{HowTheRunAnswers, WhatAModelSaidWouldRestate};
 
@@ -27,12 +26,11 @@ pub struct ACreativeAgentCouldNotFile(pub String);
 /// out of the port that asked GitHub.** A path split across five seams is five places for two of them
 /// to disagree about what it takes.
 pub fn a_creative_agent_files_what_it_concluded(
-    the_model: &impl AProgramWeRun,
+    the_model: &mut impl AReasoningModel,
     somewhere: &mut impl AGitHubWeWriteTo,
     somewhere_else: &mut impl crate::a_filing_is_read::AFilingIsReadFrom,
     of_which_repository: &Repository,
     what_the_run_saw: &[String],
-    where_the_model_is: &WhereAModelIs,
 ) -> Result<Vec<AWhereItWasFiled>, ACreativeAgentCouldNotFile> {
     let what_is_already_on_file = somewhere_else
         .the_filings_already_on_file_of(of_which_repository)
@@ -43,7 +41,6 @@ pub fn a_creative_agent_files_what_it_concluded(
             &what_is_already_on_file,
             of_which_repository,
             what_the_run_saw,
-            where_the_model_is,
         )
         .map_err(|could_not_offer| ACreativeAgentCouldNotFile(could_not_offer.0))?;
     one_filing_per_offer(

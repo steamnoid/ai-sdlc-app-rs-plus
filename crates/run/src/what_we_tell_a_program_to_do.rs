@@ -37,17 +37,13 @@ pub enum WhatWeTellAProgramToDo {
         /// Which clone, and where it landed.
         the_clone_of: ARepositoryToClone,
     },
-    /// Ask a model how it rules on an exact artifact at an exact version.
-    AskAModelHowItRules {
-        /// Where the model is, which is a deployment fact and not a secret.
-        the_endpoint: String,
-        /// Which model, which is a deployment fact and not a secret.
-        the_model: String,
-        /// The question and the shape of the answer, built here and not by the model.
-        the_body: String,
-    },
-    /// Ask a model what work is worth filing, from the listing the run showed it.
-    AskAModelWhatItWouldFile {
+    /// Ask a model, at an address a deployment named, one question.
+    ///
+    /// **One variant and not one per kind of question, because the two that were here carried the
+    /// same three fields and were told apart by nothing a caller could act on.** Two variants that
+    /// mean one thing are two places for the translation to be wrong, and the wrongness looks like
+    /// a model that was asked the wrong thing — which is not a thing a reader can see.
+    AskAModel {
         /// Where the model is, which is a deployment fact and not a secret.
         the_endpoint: String,
         /// Which model, which is a deployment fact and not a secret.
@@ -111,8 +107,7 @@ impl WhatWeTellAProgramToDo {
             } => {
                 format!("{}/{}", of_which_repository.owner, of_which_repository.name)
             }
-            WhatWeTellAProgramToDo::AskAModelHowItRules { the_body, .. }
-            | WhatWeTellAProgramToDo::AskAModelWhatItWouldFile { the_body, .. } => the_body.clone(),
+            WhatWeTellAProgramToDo::AskAModel { the_body, .. } => the_body.clone(),
             WhatWeTellAProgramToDo::ReadTheFiling { which_filing } => {
                 which_filing.which_issue().to_string()
             }
@@ -142,54 +137,43 @@ impl WhatWeTellAProgramToDo {
         WhatWeTellAProgramToDo::ReadTheFiling { which_filing }
     }
 
-    /// Ask a model how it rules on an exact artifact.
-    pub fn ask_a_model_how_it_rules(the_endpoint: &str, the_model: &str, the_body: &str) -> Self {
-        WhatWeTellAProgramToDo::AskAModelHowItRules {
+    /// Ask a model one question, at the address a deployment named.
+    pub fn ask_a_model(the_endpoint: &str, the_model: &str, the_body: &str) -> Self {
+        WhatWeTellAProgramToDo::AskAModel {
             the_endpoint: the_endpoint.to_string(),
             the_model: the_model.to_string(),
             the_body: the_body.to_string(),
         }
     }
 
-    /// Ask a model what work is worth filing.
-    pub fn ask_a_model_what_it_would_file(
-        the_endpoint: &str,
-        the_model: &str,
-        the_body: &str,
-    ) -> Self {
-        WhatWeTellAProgramToDo::AskAModelWhatItWouldFile {
-            the_endpoint: the_endpoint.to_string(),
-            the_model: the_model.to_string(),
-            the_body: the_body.to_string(),
-        }
-    }
-
-    /// This request, read as a question about what a model would file.
+    /// Whether this request is a question about a model.
     ///
     /// **A question a run cannot classify is a question no flag can hold back**, and refusing to ask
     /// one is the whole of what `AISDLC_AN_AGENT_OFFERS` means.
-    pub fn is_a_question_about_what_it_would_file(&self) -> bool {
-        matches!(
-            self,
-            WhatWeTellAProgramToDo::AskAModelWhatItWouldFile { .. }
-        )
+    pub fn is_a_question_about_a_model(&self) -> bool {
+        matches!(self, WhatWeTellAProgramToDo::AskAModel { .. })
     }
 
     /// This request, read as a question about a ruling.
+    ///
+    /// **Every question a model is asked is also a question about a ruling, and that is the
+    /// asymmetry this rename settles.** There was one variant for each kind of question and no
+    /// way to ask "is this a question for a model" — so a gate that has to hold one question
+    /// back has to know the kind, and the kind is a second list to keep in step with the first.
     pub fn is_a_question_about_a_ruling(&self) -> bool {
-        matches!(self, WhatWeTellAProgramToDo::AskAModelHowItRules { .. })
+        self.is_a_question_about_a_model()
     }
 
     /// The question this request carries, for a request that carries one.
     ///
-    /// **Both questions and not only the ruling one.** It answered the ruling question only, **so a
-    /// test could read what an agent was told and never what a creative agent was told** — and the
-    /// grounding rule, the file listing and the filings already on file all live in the second
-    /// question. **A door that opens for one of two questions is half a door.**
+    /// **One question and not one per kind**, and this accessor existed because there were two
+    /// kinds: it answered the ruling question only, **so a test could read what an agent was told
+    /// and never what a creative agent was told** — and the grounding rule, the file listing and the
+    /// filings already on file all lived in the second question. **A door that opens for one of two
+    /// questions is half a door.**
     pub fn what_it_is_asked_about(&self) -> &str {
         match self {
-            WhatWeTellAProgramToDo::AskAModelHowItRules { the_body, .. }
-            | WhatWeTellAProgramToDo::AskAModelWhatItWouldFile { the_body, .. } => the_body,
+            WhatWeTellAProgramToDo::AskAModel { the_body, .. } => the_body,
             _ => "",
         }
     }
@@ -204,8 +188,7 @@ impl WhatWeTellAProgramToDo {
             self,
             WhatWeTellAProgramToDo::ReadTheFiling { .. }
                 | WhatWeTellAProgramToDo::ListTheFilingsAlreadyOnFile { .. }
-                | WhatWeTellAProgramToDo::AskAModelHowItRules { .. }
-                | WhatWeTellAProgramToDo::AskAModelWhatItWouldFile { .. }
+                | WhatWeTellAProgramToDo::AskAModel { .. }
         )
     }
 
@@ -229,8 +212,7 @@ impl WhatWeTellAProgramToDo {
                 Some(the_clone_of)
             }
             WhatWeTellAProgramToDo::ListTheFilingsAlreadyOnFile { .. } => None,
-            WhatWeTellAProgramToDo::AskAModelHowItRules { .. }
-            | WhatWeTellAProgramToDo::AskAModelWhatItWouldFile { .. }
+            WhatWeTellAProgramToDo::AskAModel { .. }
             | WhatWeTellAProgramToDo::ReadTheFiling { .. } => None,
         }
     }
@@ -275,8 +257,7 @@ impl WhatWeTellAProgramToDo {
             WhatWeTellAProgramToDo::TheCommitItStandsOn { .. }
             | WhatWeTellAProgramToDo::TheRefItStandsOn { .. }
             | WhatWeTellAProgramToDo::NameWhereTheCodeWasWrittenIn { .. }
-            | WhatWeTellAProgramToDo::AskAModelHowItRules { .. }
-            | WhatWeTellAProgramToDo::AskAModelWhatItWouldFile { .. }
+            | WhatWeTellAProgramToDo::AskAModel { .. }
             | WhatWeTellAProgramToDo::ReadTheFiling { .. }
             | WhatWeTellAProgramToDo::ListTheFilingsAlreadyOnFile { .. } => None,
         }

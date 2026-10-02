@@ -13,10 +13,7 @@ use aisdlc_run::a_creative_agent_files_what_it_concluded::a_creative_agent_files
 use aisdlc_run::a_git_hub_we_write_to::{
     AGitHubWeWriteTo, WhatGitHubWasAskedFor, WhereGitHubAnswered,
 };
-use aisdlc_run::a_model_is_asked_how_it_rules::WhereAModelIs;
-use aisdlc_run::a_program_we_run::{AProgramWeRun, WhatTheProgramSaid};
 use aisdlc_run::the_filings_already_on_file::{AFilingAlreadyOnFile, TheFilingsAlreadyOnFile};
-use aisdlc_run::what_we_tell_a_program_to_do::WhatWeTellAProgramToDo;
 
 fn the_repository_it_files_into() -> Repository {
     Repository {
@@ -29,23 +26,13 @@ fn the_listing() -> Vec<String> {
     vec![String::from("crates/run/src/lib.rs")]
 }
 
-fn where_the_model_is() -> WhereAModelIs {
-    WhereAModelIs {
-        the_endpoint: String::from("http://localhost:1/v1/chat/completions"),
-        which_model: String::from("a-model"),
-    }
-}
-
 /// What a model said, **with one offer that restates filing 12 and one that does not.**
 fn a_model_offering_a_restatement_and_something_new() -> String {
     let its_content = r#"{"offers":[
         {"title":"the E2E database leaves artifacts behind","what_it_asks_for":"clean it up","paths":["crates/run/src/lib.rs"],"it_restates":12},
         {"title":"the router has no test for a refused artifact","what_it_asks_for":"write one","paths":["crates/run/src/lib.rs"],"it_restates":null}
     ],"what_it_found":"two things","what_it_could_not_settle":"one","what_it_expects_next":"a third"}"#;
-    format!(
-        "{{\"choices\":[{{\"message\":{{\"content\":{}}}}}]}}",
-        serde_json::to_string(its_content).expect("a string is JSON")
-    )
+    its_content.to_string()
 }
 
 /// What a model said when every offer restates something, **and there is nothing left to file.**
@@ -53,18 +40,21 @@ fn a_model_offering_only_restatements() -> String {
     let its_content = r#"{"offers":[
         {"title":"the E2E database leaves artifacts behind","what_it_asks_for":"clean it up","paths":["crates/run/src/lib.rs"],"it_restates":12}
     ],"what_it_found":"one thing","what_it_could_not_settle":"one","what_it_expects_next":"nothing"}"#;
-    format!(
-        "{{\"choices\":[{{\"message\":{{\"content\":{}}}}}]}}",
-        serde_json::to_string(its_content).expect("a string is JSON")
-    )
+    its_content.to_string()
 }
 
-/// A program that answers with whatever it was built holding.
-struct AProgramThatAnswers(String);
+/// A model that says whatever it was built holding, and is not a program at all.
+struct AModelThatAnswers(String);
 
-impl AProgramWeRun for AProgramThatAnswers {
-    fn run(&self, _what_it_was_told_to_do: &WhatWeTellAProgramToDo) -> WhatTheProgramSaid {
-        WhatTheProgramSaid::of(true, &self.0)
+impl aisdlc_run::AReasoningModel for AModelThatAnswers {
+    fn what_it_says_when_asked_for(
+        &mut self,
+        _which_artifact: &aisdlc_domain::approval::WhichArtifact,
+        _which_organisation: aisdlc_domain::which_organisation_reasons::WhichOrganisationReasons,
+        _the_question: &str,
+    ) -> Result<String, aisdlc_run::the_words_inside_the_endpoints_envelope::AnAnswerNobodyCanRead>
+    {
+        Ok(self.0.clone())
     }
 }
 
@@ -120,12 +110,11 @@ fn an_offer_restating_a_filing_is_not_filed_and_the_new_one_beside_it_is() {
     let mut tracker = ATrackerHoldingTwoFilings;
 
     let what_the_run_filed = a_creative_agent_files_what_it_concluded(
-        &AProgramThatAnswers(a_model_offering_a_restatement_and_something_new()),
+        &mut AModelThatAnswers(a_model_offering_a_restatement_and_something_new()),
         &mut github,
         &mut tracker,
         &the_repository_it_files_into(),
         &the_listing(),
-        &where_the_model_is(),
     );
 
     assert_eq!(
@@ -142,12 +131,11 @@ fn a_model_restating_everything_files_nothing_and_says_so_rather_than_failing() 
     let mut tracker = ATrackerHoldingTwoFilings;
 
     let what_the_run_filed = a_creative_agent_files_what_it_concluded(
-        &AProgramThatAnswers(a_model_offering_only_restatements()),
+        &mut AModelThatAnswers(a_model_offering_only_restatements()),
         &mut github,
         &mut tracker,
         &the_repository_it_files_into(),
         &the_listing(),
-        &where_the_model_is(),
     );
 
     let was_there_nothing_to_file = what_the_run_filed.as_ref().is_ok_and(Vec::is_empty);
@@ -161,10 +149,10 @@ fn a_model_restating_everything_files_nothing_and_says_so_rather_than_failing() 
 }
 
 /// A model claiming a restatement of filing 4242, **which nobody has ever filed here.**
-fn a_model_claiming_a_filing_nobody_has() -> AProgramThatAnswers {
-    AProgramThatAnswers(
+fn a_model_claiming_a_filing_nobody_has() -> AModelThatAnswers {
+    AModelThatAnswers(
         a_model_offering_a_restatement_and_something_new()
-            .replace("\\\"it_restates\\\":12", "\\\"it_restates\\\":4242"),
+            .replace("\"it_restates\":12", "\"it_restates\":4242"),
     )
 }
 
@@ -174,12 +162,11 @@ fn an_offer_naming_a_filing_that_is_not_on_file_is_refused_rather_than_filed() {
     let mut tracker = ATrackerHoldingTwoFilings;
 
     let what_the_run_filed = a_creative_agent_files_what_it_concluded(
-        &a_model_claiming_a_filing_nobody_has(),
+        &mut a_model_claiming_a_filing_nobody_has(),
         &mut github,
         &mut tracker,
         &the_repository_it_files_into(),
         &the_listing(),
-        &where_the_model_is(),
     );
 
     assert!(

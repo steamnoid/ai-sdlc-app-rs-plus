@@ -11,11 +11,10 @@
 use aisdlc_domain::commissioned_request::AWhereItWasFiled;
 use aisdlc_domain::repository::Repository;
 
+use crate::AReasoningModel;
 use crate::a_creative_agent_files_what_it_concluded::a_creative_agent_files_what_it_concluded;
 use crate::a_filing_is_read::{AFilingIsReadFrom, the_filing_a_filing_was_read_back};
 use crate::a_git_hub_we_write_to::AGitHubWeWriteTo;
-use crate::a_model_is_asked_how_it_rules::WhereAModelIs;
-use crate::a_program_we_run::AProgramWeRun;
 use crate::the_work_each_filing_becomes::{WhatTheRunWillWorkOn, the_work_each_filing_becomes};
 use crate::whether_an_agent_offers::WhetherAnAgentOffers;
 
@@ -29,12 +28,11 @@ pub struct AFlagThatIsOff(pub String);
 /// off has already paid for an answer nobody wanted **and may already have made a filing in somebody's
 /// repository**, and neither can be taken back by reading the flag afterwards.
 pub fn a_creative_run_files_what_it_would_file(
-    the_model: &impl AProgramWeRun,
+    the_model: &mut impl AReasoningModel,
     somewhere: &mut impl AGitHubWeWriteTo,
     somewhere_else: &mut impl AFilingIsReadFrom,
     of_which_repository: &Repository,
     what_the_run_saw: &[String],
-    where_the_model_is: &WhereAModelIs,
     may_an_agent_offer: WhetherAnAgentOffers,
 ) -> Result<Vec<WhatTheRunWillWorkOn>, AFlagThatIsOff> {
     if may_an_agent_offer != WhetherAnAgentOffers::Yes {
@@ -49,7 +47,6 @@ pub fn a_creative_run_files_what_it_would_file(
         somewhere_else,
         of_which_repository,
         what_the_run_saw,
-        where_the_model_is,
     )
     .map_err(|could_not_file| AFlagThatIsOff(could_not_file.0))?;
     the_work_the_run_will_work_on(somewhere_else, of_which_repository, &where_each_filing_went)

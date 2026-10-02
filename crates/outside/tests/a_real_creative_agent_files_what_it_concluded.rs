@@ -14,6 +14,7 @@ use aisdlc_outside::a_filing_is_read::AFilingIsRead;
 use aisdlc_outside::a_filing_reaching_github::AFilingReachingGitHub;
 use aisdlc_outside::how_this_deployment_is_set_up::how_this_deployment_is_set_up;
 use aisdlc_outside::the_environment::TheEnvironment;
+use aisdlc_outside::the_model_as_it_is_asked::TheModelAsItIsAsked;
 use aisdlc_outside::the_program_as_it_runs::TheProgramAsItRuns;
 use aisdlc_outside::the_project_on_disk::TheProjectAsItIsOnDisk;
 use aisdlc_outside::whether_anything_stands_there::WhetherAnythingStandsOnDisk;
@@ -113,19 +114,26 @@ fn a_deployment_that_may_file(
 }
 
 /// The whole chain, once, on a real repository and a real model.
+///
+/// **The model is composed here and nowhere else**, because this is the one place in the
+/// repository that names both the program and where a deployment put its model — and the
+/// use case below it is handed a model and has no idea a program is involved.
 fn the_whole_creative_run(
-    the_program: &TheProgramAsItRuns,
+    the_program: TheProgramAsItRuns,
     the_listing: &[String],
     where_the_model_is: &WhereAModelIs,
     may_an_agent_offer: WhetherAnAgentOffers,
 ) -> Result<Vec<WhatTheRunWillWorkOn>, String> {
-    aisdlc_run::a_creative_run_files_what_it_would_file::a_creative_run_files_what_it_would_file(
+    let mut the_model = TheModelAsItIsAsked::the_model_where_a_deployment_put_its_model(
+        where_the_model_is.clone(),
         the_program,
+    );
+    aisdlc_run::a_creative_run_files_what_it_would_file::a_creative_run_files_what_it_would_file(
+        &mut the_model,
         &mut AFilingReachingGitHub,
         &mut AFilingIsRead,
         &the_repository_it_files_into(),
         the_listing,
-        where_the_model_is,
         may_an_agent_offer,
     )
     .map_err(|the_flag| the_flag.0)
@@ -150,14 +158,14 @@ fn a_real_creative_run_files_what_it_concluded_and_works_on_it() {
     let the_listing = the_listing_a_run_shows(&mut the_program);
 
     let what_the_run_will_work_on =
-        what_the_run_files_and_works_on(&the_program, &the_listing, &where_the_model_is);
+        what_the_run_files_and_works_on(the_program, &the_listing, &where_the_model_is);
 
     every_filing_went_somewhere_this_deployment_controls(&what_the_run_will_work_on);
 }
 
 /// The chain from the listing to the works, **and the run's own words when it refuses.**
 fn what_the_run_files_and_works_on(
-    the_program: &TheProgramAsItRuns,
+    the_program: TheProgramAsItRuns,
     the_listing: &[String],
     where_the_model_is: &WhereAModelIs,
 ) -> Vec<WhatTheRunWillWorkOn> {

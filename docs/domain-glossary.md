@@ -1018,15 +1018,19 @@ for two of them to disagree about what it takes.**
 **`ACreativeAgentThatCouldNotOffer`** carries the sentence and nothing else — **because a refusal that
 names a field instead of quoting the answer throws away the only clue there was.**
 
-**`the_body_a_creative_agent_is_given`** builds the body with the JSON library and **the test asserts
-it parses for a question containing a quoted word, a backslash and a newline** — because a hand-rolled
-escape is a lossy channel in both directions, **and every request this system ever sent a model was
-invalid JSON until the library built it.**
+**`the_body_a_creative_agent_is_given` is gone, and it was byte-for-byte `the_body_a_model_is_given`
+beside it.** A diff of the two showed no difference worth mentioning, **and that is why a reader
+holding both would have to be the one to notice there were two** — the duplication was invisible
+precisely because it was correct. The body is built once, by `TheModelAsItIsAsked`, and
+`the_body_is_valid_json.rs` still asserts it parses for a question containing a quoted word, a
+backslash and a newline — because a hand-rolled escape is a lossy channel in both directions, **and
+every request this system ever sent a model was invalid JSON until the library built it.**
 
-**`is_a_question_about_what_it_would_file`** exists because **a question a run cannot classify is a
-question no flag can hold back**, and refusing to ask one is the whole of what `AISDLC_AN_AGENT_OFFERS`
-means. **The flag that stops an agent filing is enforced by a run being able to recognise what it is
-about to ask.**
+**`is_a_question_about_a_model`** exists because **a question a run cannot classify is a question no
+flag can hold back**, and refusing to ask one is the whole of what `AISDLC_AN_AGENT_OFFERS` means.
+**It answers for every kind of question a model is asked and not for one of two kinds**, which is what
+it is for: a gate holding a question back has to know whether it is talking to a model, and a method
+named for the *kind* of question makes that a second list to keep in step with the enum.
 
 **The three judgements come from the model and are checked here**, reached through the same
 `WhatAnAgentJudged` refusal the constructor gives — **and a field is readable from anywhere, so a
@@ -1385,11 +1389,16 @@ port returning `String` has nowhere to put a failure, so every unreachable model
 refusal and each caller read it separately — **and "the model did not answer" is a fact about the
 world, so it belongs to the adapter that knows the world and not to the use case that does not.**
 
-**`AskAModelHowItRules`** — a request carrying the endpoint, the model and the body, and **no
-credential at all.** `curl` builds no arguments for it without one, and the program run says so in
-words rather than fetching the question as an address. **A translation guessed at is a translation
-that looks right until somebody runs it**, and the fact this one was missing is the fact a reader
-could not see.
+**`AskAModel`** — a request carrying the endpoint, the model and the body, and **no credential at
+all.** `curl` builds no arguments for it without one, and the program run says so in words rather than
+fetching the question as an address. **A translation guessed at is a translation that looks right
+until somebody runs it**, and the fact this one was missing is the fact a reader could not see.
+
+**`AskAModel` and not one request per kind of question.** There were two — `AskAModelHowItRules` and
+`AskAModelWhatItWouldFile` — carrying the same three fields and told apart by nothing a caller could
+act on. **Two variants that mean one thing are two places for the translation to be wrong, and the
+wrongness looks like a model that was asked the wrong thing**, which is not a thing a reader can see
+from either side. The duplicate body builder beside them is the same mistake one layer down.
 
 **Where the secret lives is decided and is recorded here, because the entry above said it had not
 been.** The credential reaches the program as one argument, `Authorization: Bearer <key>`, and no
