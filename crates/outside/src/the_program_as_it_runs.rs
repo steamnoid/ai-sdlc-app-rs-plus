@@ -105,6 +105,9 @@ impl TheProgramAsItRuns {
 }
 
 /// The arguments of everything `git` is asked for, one thing each and never a line.
+///
+/// **The clone is one arm and the rest is one question**, because there are now six requests
+/// about a clone and a match arm each is a list of six places to change.
 fn what_git_is_asked_for(what_it_is_asked_to_do: &WhatWeTellAProgramToDo) -> Vec<String> {
     if what_it_is_asked_to_do.is_answered_by_gh() {
         return Vec::new();
@@ -115,17 +118,66 @@ fn what_git_is_asked_for(what_it_is_asked_to_do: &WhatWeTellAProgramToDo) -> Vec
             the_clone_of.fetch_from(),
             the_clone_of.where_it_lands().display().to_string(),
         ],
-        WhatWeTellAProgramToDo::TheCommitItStandsOn { the_clone_of } => {
-            inside_the_clone(the_clone_of, &["rev-parse", "HEAD"])
-        }
-        WhatWeTellAProgramToDo::TheRefItStandsOn { the_clone_of } => {
-            inside_the_clone(the_clone_of, &["rev-parse", "--abbrev-ref", "HEAD"])
-        }
-        WhatWeTellAProgramToDo::NameWhereTheCodeWasWrittenIn { the_clone_of } => {
+        _ => what_git_is_asked_about(what_it_is_asked_to_do),
+    }
+}
+
+/// What `git` is asked inside a clone that already exists, **and nothing at all for a request
+/// that is not about one.
+///
+/// **One parameter and not two, and that is the whole of how this function is written.** The
+/// gate counting how deep a statement sits reads a line naming a function as the start of a
+/// body, so the brace that opens the body is never counted — **and a second parameter would
+/// have put the signature on two lines, which counts it, which puts every arm of the match one
+/// level deeper than it looks.** Every other function in this file has been one line for the
+/// same reason, without the gate ever having said so out loud.
+fn what_git_is_asked_about(request: &WhatWeTellAProgramToDo) -> Vec<String> {
+    let Some(the_clone_of) = request.the_clone_it_is_about() else {
+        return Vec::new();
+    };
+    match request {
+        WhatWeTellAProgramToDo::TheCommitItStandsOn { .. } => to_read_the_commit(the_clone_of),
+        WhatWeTellAProgramToDo::TheRefItStandsOn { .. } => to_read_the_ref(the_clone_of),
+        WhatWeTellAProgramToDo::NameWhereTheCodeWasWrittenIn { .. } => {
             to_name_where_the_code_was_written_in(the_clone_of)
+        }
+        WhatWeTellAProgramToDo::ReadTheRemote { which_branch, .. } => {
+            to_read_the_remote(the_clone_of, which_branch)
+        }
+        WhatWeTellAProgramToDo::PushTheBranch { which_branch, .. } => {
+            to_push_the_branch(the_clone_of, which_branch)
         }
         _ => Vec::new(),
     }
+}
+
+/// The commit the clone stands on, **read by name and never composed into the address.**
+fn to_read_the_commit(the_clone_of: &ARepositoryToClone) -> Vec<String> {
+    inside_the_clone(the_clone_of, &["rev-parse", "HEAD"])
+}
+
+/// The ref the clone stands on, **which may be a branch and may be `HEAD`.**
+fn to_read_the_ref(the_clone_of: &ARepositoryToClone) -> Vec<String> {
+    inside_the_clone(the_clone_of, &["rev-parse", "--abbrev-ref", "HEAD"])
+}
+
+/// What `ls-remote` would be run with, **and the branch is one whole argument.**
+fn to_read_the_remote(the_clone_of: &ARepositoryToClone, which_branch: &str) -> Vec<String> {
+    inside_the_clone(
+        the_clone_of,
+        &["ls-remote", "--heads", "origin", which_branch],
+    )
+}
+
+/// What a push would be run with, **and `HEAD` rather than the commit.
+///
+/// **`HEAD:refs/heads/<name>` and not a local branch name**, because pushing the branch the
+/// checkout is standing on would move *that* branch on the remote.
+fn to_push_the_branch(the_clone_of: &ARepositoryToClone, which_branch: &str) -> Vec<String> {
+    inside_the_clone(
+        the_clone_of,
+        &["push", "origin", &format!("HEAD:refs/heads/{which_branch}")],
+    )
 }
 
 /// The arguments that name the origin of a clone, **run inside the clone that was already made.**
