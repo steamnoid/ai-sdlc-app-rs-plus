@@ -15,7 +15,7 @@ use aisdlc_run::a_program_we_run::AProgramWeRun;
 use aisdlc_run::what_we_tell_a_program_to_do::WhatWeTellAProgramToDo;
 
 fn a_question_to_a_model() -> WhatWeTellAProgramToDo {
-    WhatWeTellAProgramToDo::ask_a_model_how_it_rules(
+    WhatWeTellAProgramToDo::ask_a_model(
         "http://localhost:11434/v1/chat/completions",
         "a-model",
         "{\"model\":\"a-model\",\"messages\":[]}",

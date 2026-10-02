@@ -1,4 +1,4 @@
-//! What a model said it would file, read out of the envelope it arrived in.
+//! What a model said it would file, held to the shape it was asked for.
 //!
 //! **The listing goes into the question and the refusal is not the model's to decide.** A creative
 //! agent asked to improve a project will happily invent one that does not exist, **so the run hands
@@ -24,14 +24,6 @@ fn what_the_run_actually_saw() -> Vec<String> {
     ]
 }
 
-/// What an endpoint said, wrapping content the way this gateway does.
-fn what_the_endpoint_said(its_content: &str) -> String {
-    format!(
-        "{{\"choices\":[{{\"message\":{{\"content\":{}}}}}]}}",
-        serde_json::to_string(its_content).expect("a string is JSON")
-    )
-}
-
 #[test]
 fn the_question_hands_the_model_the_listing_it_may_cite() {
     let the_question = the_question_an_agent_is_asked(
@@ -51,11 +43,11 @@ fn the_question_hands_the_model_the_listing_it_may_cite() {
 }
 
 #[test]
-fn the_answer_is_read_out_of_the_envelope_and_becomes_offers() {
+fn what_a_model_said_becomes_offers() {
     let its_content = r#"{"offers":[{"title":"the offers are not read by any test","what_it_asks_for":"name the refusal in a test","paths":["crates/run/src/what_an_agent_offered.rs"]}]}"#;
 
-    let what_it_said = what_a_model_offered(&what_the_endpoint_said(its_content))
-        .expect("an answer in the shape it was asked for");
+    let what_it_said =
+        what_a_model_offered(its_content).expect("an answer in the shape it was asked for");
 
     assert_eq!(
         what_it_said.len(),
@@ -88,7 +80,7 @@ fn an_answer_nobody_can_read_is_refused_and_quoted() {
 
 #[test]
 fn an_answer_with_no_offers_is_no_offers_and_not_a_refusal() {
-    let what_it_said = what_a_model_offered(&what_the_endpoint_said(r#"{"offers":[]}"#))
+    let what_it_said = what_a_model_offered(r#"{"offers":[]}"#)
         .expect("a model that found nothing to file said so");
 
     assert!(

@@ -20,15 +20,6 @@ fn the_repository_offered_in() -> aisdlc_domain::repository::Repository {
         .expect("two halves")
 }
 
-/// Where a deployment put its model.
-fn where_the_model_is() -> aisdlc_run::a_model_is_asked_how_it_rules::WhereAModelIs {
-    aisdlc_run::a_model_is_asked_how_it_rules::WhereAModelIs::where_a_deployment_put_its_model(
-        Some("https://opencode.ai/zen/go/v1/chat/completions"),
-        Some("space-bunny-free"),
-    )
-    .expect("a full address and a model")
-}
-
 /// The files the run really showed the model.
 fn the_listing() -> Vec<String> {
     vec!["crates/run/src/what_an_agent_offered.rs".to_string()]
@@ -36,10 +27,8 @@ fn the_listing() -> Vec<String> {
 
 /// One offer and the three judgements, **which is what the model was asked for.**
 fn one_offer_the_model_would_write() -> String {
-    let its_content = r#"{"offers":[{"title":"the listing: why nothing compares a path","what_it_asks_for":"compare every cited path with the listing","paths":["crates/run/src/what_an_agent_offered.rs"]}],"what_it_found":"nothing compares the paths","what_it_could_not_settle":"whether the listing is truncated","what_it_expects_next":"add the comparison"}"#;
-    format!(
-        "{{\"choices\":[{{\"message\":{{\"content\":{}}}}}]}}",
-        serde_json::to_string(its_content).expect("a string is JSON")
+    String::from(
+        r#"{"offers":[{"title":"the listing: why nothing compares a path","what_it_asks_for":"compare every cited path with the listing","paths":["crates/run/src/what_an_agent_offered.rs"]}],"what_it_found":"nothing compares the paths","what_it_could_not_settle":"whether the listing is truncated","what_it_expects_next":"add the comparison"}"#,
     )
 }
 
@@ -103,26 +92,29 @@ impl AGitHubWeWriteTo for AGitHubThatFiles {
     }
 }
 
-/// A program that answers with one offer **and remembers whether it was asked at all**, because the
-/// claim that a run which was not asked does not ask is only checkable here.
-struct AProgramThatWasMaybeAsked {
+/// A model that says one offer **and remembers whether it was asked at all**, because the claim
+/// that a run which was not asked does not ask is only checkable here.
+struct AModelThatWasMaybeAsked {
     what_it_said: String,
     was_it_asked: std::cell::RefCell<bool>,
 }
 
-impl aisdlc_run::a_program_we_run::AProgramWeRun for AProgramThatWasMaybeAsked {
-    fn run(
-        &self,
-        _what_it_is_asked_to_do: &aisdlc_run::what_we_tell_a_program_to_do::WhatWeTellAProgramToDo,
-    ) -> aisdlc_run::a_program_we_run::WhatTheProgramSaid {
+impl aisdlc_run::AReasoningModel for AModelThatWasMaybeAsked {
+    fn what_it_says_when_asked_for(
+        &mut self,
+        _which_artifact: &aisdlc_domain::approval::WhichArtifact,
+        _which_organisation: aisdlc_domain::which_organisation_reasons::WhichOrganisationReasons,
+        _the_question: &str,
+    ) -> Result<String, aisdlc_run::the_words_inside_the_endpoints_envelope::AnAnswerNobodyCanRead>
+    {
         *self.was_it_asked.borrow_mut() = true;
-        aisdlc_run::a_program_we_run::WhatTheProgramSaid::of(true, &self.what_it_said)
+        Ok(self.what_it_said.clone())
     }
 }
 
 /// A deployment, its model and its two programs against GitHub, **all four of them a test needs.**
 struct ADeploymentAndItsGitHub {
-    the_model: AProgramThatWasMaybeAsked,
+    the_model: AModelThatWasMaybeAsked,
     where_it_files: AGitHubThatFiles,
     where_it_reads_back: AGitHubThatReadsBack,
 }
@@ -133,7 +125,7 @@ impl ADeploymentAndItsGitHub {
     fn one_ready_to_be_asked() -> Self {
         let what_github_holds = WhatGitHubHolds::default();
         ADeploymentAndItsGitHub {
-            the_model: AProgramThatWasMaybeAsked {
+            the_model: AModelThatWasMaybeAsked {
                 what_it_said: one_offer_the_model_would_write(),
                 was_it_asked: std::cell::RefCell::new(false),
             },
@@ -154,12 +146,11 @@ impl ADeploymentAndItsGitHub {
         aisdlc_run::a_creative_run_files_what_it_would_file::AFlagThatIsOff,
     > {
         a_creative_run_files_what_it_would_file(
-            &self.the_model,
+            &mut self.the_model,
             &mut self.where_it_files,
             &mut self.where_it_reads_back,
             &the_repository_offered_in(),
             &the_listing(),
-            &where_the_model_is(),
             flag,
         )
     }

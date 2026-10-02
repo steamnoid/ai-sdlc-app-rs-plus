@@ -80,7 +80,7 @@ fn the_question_to_put(
     where_the_model_is: &WhereAModelIs,
     the_body: &str,
 ) -> WhatWeTellAProgramToDo {
-    WhatWeTellAProgramToDo::ask_a_model_how_it_rules(
+    WhatWeTellAProgramToDo::ask_a_model(
         &where_the_model_is.the_endpoint,
         &where_the_model_is.which_model,
         the_body,

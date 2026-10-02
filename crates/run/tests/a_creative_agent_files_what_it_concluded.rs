@@ -20,15 +20,6 @@ fn the_repository_it_is_filed_in() -> aisdlc_domain::repository::Repository {
         .expect("two halves")
 }
 
-/// Where a deployment put its model.
-fn where_the_model_is() -> aisdlc_run::a_model_is_asked_how_it_rules::WhereAModelIs {
-    aisdlc_run::a_model_is_asked_how_it_rules::WhereAModelIs::where_a_deployment_put_its_model(
-        Some("https://opencode.ai/zen/go/v1/chat/completions"),
-        Some("space-bunny-free"),
-    )
-    .expect("a full address and a model")
-}
-
 /// One offer grounded in one file of the repository.
 fn an_offer_about_one_file() -> AWorkAnAgentOffered {
     AWorkAnAgentOffered {
@@ -55,11 +46,9 @@ fn the_address_github_would_print() -> String {
 }
 
 /// What an endpoint said, wrapping one grounded offer and the three judgements.
-fn a_program_answered_with_one_offer() -> String {
-    let its_content = r#"{"offers":[{"title":"the listing: why nothing compares a path","what_it_asks_for":"compare every cited path with the listing","paths":["crates/run/src/what_an_agent_offered.rs"]}],"what_it_found":"nothing compares the paths","what_it_could_not_settle":"whether the listing is truncated","what_it_expects_next":"add the comparison"}"#;
-    format!(
-        "{{\"choices\":[{{\"message\":{{\"content\":{}}}}}]}}",
-        serde_json::to_string(its_content).expect("a string is JSON")
+fn a_model_answered_with_one_offer() -> String {
+    String::from(
+        r#"{"offers":[{"title":"the listing: why nothing compares a path","what_it_asks_for":"compare every cited path with the listing","paths":["crates/run/src/what_an_agent_offered.rs"]}],"what_it_found":"nothing compares the paths","what_it_could_not_settle":"whether the listing is truncated","what_it_expects_next":"add the comparison"}"#,
     )
 }
 
@@ -92,11 +81,9 @@ impl AGitHubWeWriteTo for ARunRememberingWhatGitHubSaid {
 }
 
 /// What an endpoint said, wrapping no offers at all.
-fn a_program_answered_with_no_offer() -> String {
-    let its_content = r#"{"offers":[],"what_it_found":"nothing worth filing","what_it_could_not_settle":"whether the listing is truncated","what_it_expects_next":"tell a human there was nothing"}"#;
-    format!(
-        "{{\"choices\":[{{\"message\":{{\"content\":{}}}}}]}}",
-        serde_json::to_string(its_content).expect("a string is JSON")
+fn a_model_answered_with_no_offer() -> String {
+    String::from(
+        r#"{"offers":[],"what_it_found":"nothing worth filing","what_it_could_not_settle":"whether the listing is truncated","what_it_expects_next":"tell a human there was nothing"}"#,
     )
 }
 
@@ -121,15 +108,18 @@ impl aisdlc_run::a_filing_is_read::AFilingIsReadFrom for ATrackerWithNothingOnFi
     }
 }
 
-/// A program that answers with a fixed answer.
-struct AProgramThatAnswers(String);
+/// A model that answers with fixed words, and is not a program at all.
+struct AModelThatAnswers(String);
 
-impl aisdlc_run::a_program_we_run::AProgramWeRun for AProgramThatAnswers {
-    fn run(
-        &self,
-        _what_it_is_asked_to_do: &aisdlc_run::what_we_tell_a_program_to_do::WhatWeTellAProgramToDo,
-    ) -> aisdlc_run::a_program_we_run::WhatTheProgramSaid {
-        aisdlc_run::a_program_we_run::WhatTheProgramSaid::of(true, &self.0)
+impl aisdlc_run::AReasoningModel for AModelThatAnswers {
+    fn what_it_says_when_asked_for(
+        &mut self,
+        _which_artifact: &aisdlc_domain::approval::WhichArtifact,
+        _which_organisation: aisdlc_domain::which_organisation_reasons::WhichOrganisationReasons,
+        _the_question: &str,
+    ) -> Result<String, aisdlc_run::the_words_inside_the_endpoints_envelope::AnAnswerNobodyCanRead>
+    {
+        Ok(self.0.clone())
     }
 }
 
@@ -158,16 +148,15 @@ fn the_port_hands_back_the_address_github_answered() {
 #[test]
 fn the_whole_creative_run_files_one_filing_and_returns_its_address() {
     let mut somewhere = ARunRememberingWhatGitHubSaid::one_that_answers();
-    let the_model = AProgramThatAnswers(a_program_answered_with_one_offer());
+    let mut the_model = AModelThatAnswers(a_model_answered_with_one_offer());
 
     let mut a_tracker = ATrackerWithNothingOnFile;
     let what_it_filed = a_creative_agent_files_what_it_concluded(
-        &the_model,
+        &mut the_model,
         &mut somewhere,
         &mut a_tracker,
         &the_repository_it_is_filed_in(),
         &the_listing(),
-        &where_the_model_is(),
     )
     .expect("the run filed what the model concluded and knows where");
 
@@ -188,16 +177,15 @@ fn the_whole_creative_run_files_one_filing_and_returns_its_address() {
 #[test]
 fn a_run_that_is_asked_to_file_nothing_files_nothing() {
     let mut somewhere = ARunRememberingWhatGitHubSaid::one_that_answers();
-    let the_model = AProgramThatAnswers(a_program_answered_with_no_offer());
+    let mut the_model = AModelThatAnswers(a_model_answered_with_no_offer());
 
     let mut a_tracker = ATrackerWithNothingOnFile;
     let what_it_filed = a_creative_agent_files_what_it_concluded(
-        &the_model,
+        &mut the_model,
         &mut somewhere,
         &mut a_tracker,
         &the_repository_it_is_filed_in(),
         &the_listing(),
-        &where_the_model_is(),
     )
     .expect("a model that found nothing has told the truth");
 
