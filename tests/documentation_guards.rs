@@ -384,6 +384,26 @@ mod the_glossary_blesses_every_type_the_domain_defines {
     }
 
     #[test]
+    fn a_generic_type_is_read_as_its_name_and_not_with_its_parameter() {
+        let the_code =
+            "pub struct WhatDiscoveryConcluded<TheProgram> {\n    the_program: TheProgram,\n}\n";
+
+        let the_refusals = what_is_wrong_with("a_file.rs", the_code);
+
+        assert_eq!(
+            the_refusals,
+            Vec::<String>::new(),
+            "**because 'the name ends at the first bracket' has to mean the angle bracket too** — the \
+             gate cuts at `(` for a tuple struct, and this repository *requires* generic parameters \
+             (`aisdlc-domain` has no dependencies, ports are generic, and the composition root \
+             monomorphises), **so a gate that cannot read a parameter refuses every generic type \
+             this system will ever write.** Found on the first one this repository has ever had, in \
+             a gate that was written for a codebase with none. The name is one the glossary already \
+             blesses, **because the property under test is the bracket and not the name**: {the_refusals:?}"
+        );
+    }
+
+    #[test]
     fn a_type_the_glossary_never_heard_of_is_refused_and_named() {
         let the_code = "pub struct AThingNobodyWroteDown {\n    one: u8,\n}\n";
 
@@ -487,10 +507,22 @@ mod the_glossary_blesses_every_type_the_domain_defines {
         found
     }
 
-    /// The type's name, without the fields a tuple struct writes beside it.
+    /// The type's name, without the fields a tuple struct writes beside it and without the
+    /// parameter a generic type declares.
+    ///
+    /// **Two brackets and not one, because a generic declaration is a name followed by its
+    /// parameter.** `pub struct WhichArtifact(pub String)` and
+    /// `pub struct TheModelAsItIsAsked<TheProgram>` are the two ways a type writes things
+    /// beside its name, and a reader that cut at the first of them and not the second reported
+    /// `WhichArtifact(pub` for the first — seventeen of the domain's twenty-six types, on a day
+    /// when none of them was wrong.
     fn the_name_out_of(a_word: &str) -> String {
         let without_the_fields = a_word.split('(').next().unwrap_or(a_word);
-        without_the_fields
+        let without_the_parameter = without_the_fields
+            .split('<')
+            .next()
+            .unwrap_or(without_the_fields);
+        without_the_parameter
             .trim_matches(|c: char| !c.is_alphanumeric())
             .to_string()
     }
