@@ -2342,6 +2342,18 @@ somewhere else would be the second ordering `where_an_approved_artifact_leads` e
 `TheDelivery` answers `None` — a delivery produces a pull request and not an artifact, **so a walk
 ends there rather than inventing an artifact for the last stage.**
 
+**A walk reaches the delivery, and the refusal at the end of the pipeline is about the run and not
+about the table running out.** `TheDelivery` names an agent and `TheRunIsOver` does not, **and the
+first version read both as "the last row"** — so it read `which_a_stage_produces` answering `None`
+for the delivery as the end of the road, **and a run could not be walked to its own last stage.** It
+verified something and could not deliver it, **and the refusal it raised named a gap in the table
+when the truth was a gap in the walk.** The one refusal left is `AWalkThatWouldNotEnd::TheRunIsOver`.
+
+**`what_the_run_is_on_after` keeps the artifact a stage does not replace.** The delivery presents what
+was verified and produces nothing of its own, **so `None` from `which_a_stage_produces` is a fact
+about the delivery and not a fact about where the run goes** — **and a run standing on a name the
+delivery invented would be a pull request about a document nobody wrote.**
+
 **`every_stage_somebody_ruled_on` is a ceiling and not an order.** The walk is driven by the router
 and needs no sequence of its own; **it needs to know when to stop**, so it reads its length from
 `every_agent_the_pipeline_hands_work_to` — **one table, and a walk that held a copy would drift from

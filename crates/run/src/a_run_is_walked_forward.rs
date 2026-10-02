@@ -15,6 +15,7 @@
 use std::fmt;
 
 use aisdlc_domain::agent_identifier::AgentIdentifier;
+use aisdlc_domain::approval::WhichArtifact;
 use aisdlc_domain::stage::Stage;
 use aisdlc_domain::state_machine::StateMachineError;
 
@@ -90,12 +91,11 @@ pub enum AWalkThatWouldNotEnd {
         /// What the router said.
         why: AnArtifactThisRouterHoldsNoDestinationFor,
     },
-    /// A stage named no agent to hand the work to, **and a stage that produces no artifact goes with
-    /// it** — both are the walk reaching the end of the table rather than a fault in the run.
-    AStageAtTheEndOfTheTable {
-        /// Which stage it was.
-        which_stage: WhereARunGoesNext,
-    },
+    /// The run is over, **and a run that is over is not held by anybody.**
+    ///
+    /// **The only refusal about the end of the pipeline, and it is not about the table running
+    /// out** — the delivery *is* reached, and this is about the one destination with no agent on it.
+    TheRunIsOver,
     /// The walk's own move was refused by the domain, **and the domain's own type is kept.**
     TheDomainRefusedTheMove {
         /// What the domain said.
@@ -123,8 +123,8 @@ impl AWalkThatWouldNotEnd {
             AWalkThatWouldNotEnd::TheRunIsOnNoArtifact => {
                 String::from("on no artifact, so no gate")
             }
-            AWalkThatWouldNotEnd::AStageAtTheEndOfTheTable { which_stage } => {
-                format!("{which_stage:?} names no agent or no artifact")
+            AWalkThatWouldNotEnd::TheRunIsOver => {
+                String::from("the run is over, and a run that is over is not held by anybody")
             }
             AWalkThatWouldNotEnd::NoDestinationForThisArtifact { why } => why.to_string(),
             AWalkThatWouldNotEnd::TheDomainRefusedTheMove { why } => why.to_string(),
@@ -253,19 +253,26 @@ impl WalkingTheRun {
         Ok(())
     }
 
-    /// Hand the work to the agent at that stage, **and stop if that stage is at the end of the
-    /// table.**
+    /// Hand the work to the agent at that stage.
     ///
-    /// **The delivery produces a pull request and not an artifact, so the walk ends there.** A walk
-    /// that invented an artifact for the last stage would route the run onwards into nothing, **and
-    /// the run would be finished with nowhere to go and no reason.**
+    /// **The delivery is reached and is not refused, and that is a finding.** The first version read
+    /// `which_a_stage_produces` answering `None` as the end of the road, **so a run could not be
+    /// walked to its own last stage** — it verified something and could not deliver it, and the
+    /// refusal named a gap in the table when the truth was a gap in the walk.
+    ///
+    /// **A stage that produces no artifact keeps the one the run already has**, because the delivery
+    /// presents what was verified rather than producing anything of its own. **Only
+    /// `TheRunIsOver` is refused**, and it is refused because a run that is over is not held by
+    /// anybody — **which is the one thing about the end of the pipeline that is true.**
     fn hand_the_work_to_the_stage_there(
         &mut self,
         where_the_run_goes: WhereARunGoesNext,
     ) -> Result<(), AWalkThatWouldNotEnd> {
         let the_agent = the_agent_at(where_the_run_goes)?;
-        let which_artifact = which_a_stage_produces(where_the_run_goes)
-            .ok_or(a_stage_at_the_end(where_the_run_goes))?;
+        let which_artifact = what_the_run_is_on_after(
+            where_the_run_goes,
+            self.where_it_is_now.which_artifact_it_is_on(),
+        );
         let at_a_pickup = the_work_is_handed_to_the_next_agent(
             &self.where_it_is_now,
             the_agent.clone(),
@@ -275,6 +282,26 @@ impl WalkingTheRun {
         let in_progress = the_work_is_handed_to_an_agent(&at_a_pickup, the_agent);
         self.where_it_is_now = in_progress.map_err(the_domain_refused_the_move)?;
         Ok(())
+    }
+}
+
+/// The artifact the run is on once that stage has been entered, **and a stage that produces no
+/// artifact keeps the one the run already has.**
+///
+/// **The delivery presents what was verified and does not produce an artifact of its own**, so
+/// `which_a_stage_produces` answering `None` for it is a fact about the delivery and **not a fact
+/// about where the run goes.** Reading the two as one thing is what stopped the walk a stage short
+/// of its own end — **and a run standing on a name the delivery invented would be a pull request
+/// about a document nobody wrote.**
+fn what_the_run_is_on_after(
+    where_the_run_goes: WhereARunGoesNext,
+    what_it_is_on_now: Option<&WhichArtifact>,
+) -> WhichArtifact {
+    let produced = which_a_stage_produces(where_the_run_goes);
+    match (produced, what_it_is_on_now) {
+        (Some(produced), _now) => produced,
+        (None, Some(what_it_is_on_now)) => what_it_is_on_now.clone(),
+        (None, None) => WhichArtifact::try_from("VerificationReport").expect("a name is not blank"),
     }
 }
 
@@ -294,10 +321,14 @@ fn where_the_presented_artifact_leads(
 fn the_agent_at(
     where_the_run_goes: WhereARunGoesNext,
 ) -> Result<AgentIdentifier, AWalkThatWouldNotEnd> {
-    let the_name = the_agent_asked_to_do_it(where_the_run_goes)
-        .ok_or(a_stage_at_the_end(where_the_run_goes))?;
-    AgentIdentifier::try_from(the_name)
-        .map_err(|_not_a_name| a_stage_at_the_end(where_the_run_goes))
+    let the_name = the_agent_asked_to_do_it(where_the_run_goes).ok_or(a_run_that_is_over())?;
+    AgentIdentifier::try_from(the_name).map_err(|_not_a_name| a_run_that_is_over())
+}
+
+/// A run that is over is not held by anybody, **and this is the one destination with no agent — so
+/// this refusal is about the run and not about the table running out.**
+fn a_run_that_is_over() -> AWalkThatWouldNotEnd {
+    AWalkThatWouldNotEnd::TheRunIsOver
 }
 
 /// More rulings than stages, **and the refusal is built here rather than written inside the `if`
@@ -315,10 +346,6 @@ fn a_loop_rather_than_a_run(
 
 /// A stage the walk reached and there was nothing beyond, **and both no agent and no artifact are
 /// that stage** — the delivery is the one that produces a pull request rather than an artifact.
-fn a_stage_at_the_end(which_stage: WhereARunGoesNext) -> AWalkThatWouldNotEnd {
-    AWalkThatWouldNotEnd::AStageAtTheEndOfTheTable { which_stage }
-}
-
 /// The router's refusal, **kept as the router wrote it.**
 fn the_router_holds_no_destination(
     why: AnArtifactThisRouterHoldsNoDestinationFor,
