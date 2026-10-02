@@ -13,6 +13,8 @@
 //! use case that says `reqwest` instead of `AGitHubWeReadFrom` has moved a decision out of
 //! the type and into a line of code.
 
+use std::fmt;
+
 pub mod a_branch_goes_to_a_remote;
 pub mod a_change_is_made_in_the_clone;
 pub mod a_comment_is_left;
@@ -48,6 +50,7 @@ pub mod the_filings_already_on_file;
 pub mod the_path_inside_the_project;
 pub mod the_project_on_disk;
 pub mod the_repository_to_clone_into;
+pub mod the_run_is_delivered;
 pub mod the_run_makes_a_checkout;
 pub mod the_tests_are_run_in_a_container;
 pub mod the_whole_of_a_run;
@@ -215,6 +218,16 @@ impl NotStandingAtTheGate {
         )
     }
 
+    /// The refusal in a sentence, **and it is here because every caller that keeps this refusal has
+    /// had to flatten it to a string to write it down.**
+    ///
+    /// **A refusal a reader cannot read is a refusal a reader has to look up**, and looking one up
+    /// means opening the file that raised it — **which is a place to send somebody rather than a
+    /// thing to tell them.**
+    fn as_a_sentence(&self) -> String {
+        self.why_it_could_not_be_asked()
+    }
+
     /// This refusal, for a work item standing somewhere else.
     pub fn because(the_stage_it_stands_at: Stage) -> Self {
         Self {
@@ -222,6 +235,14 @@ impl NotStandingAtTheGate {
         }
     }
 }
+
+impl fmt::Display for NotStandingAtTheGate {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter.write_str(&self.as_a_sentence())
+    }
+}
+
+impl std::error::Error for NotStandingAtTheGate {}
 
 /// The question put to somebody standing at the gate.
 pub fn the_question_put_to_somebody(

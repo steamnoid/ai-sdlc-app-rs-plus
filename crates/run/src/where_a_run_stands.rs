@@ -164,3 +164,15 @@ pub fn the_run_ends_on_a_refusal(
 ) -> Result<WhereARunStands, StateMachineError> {
     the_run.clone().moved_to(Stage::Done, None)
 }
+
+/// The work item is delivered, and the run is over.
+///
+/// **`AWAITING_HUMAN_APPROVAL -> DONE` is the only edge into `DONE` and it comes from a gate**, so a
+/// delivery cannot finish a run by announcing itself — **it puts what it delivered to a person, and
+/// the table's own edge is what carries the work home.** The delivery node is where that edge is
+/// taken; this function is only where it is legal.
+pub fn the_work_is_delivered_so_it_is_done(
+    the_run: &WhereARunStands,
+) -> Result<WhereARunStands, StateMachineError> {
+    the_run.clone().moved_to(Stage::Done, None)
+}
