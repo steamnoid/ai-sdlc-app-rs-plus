@@ -44,14 +44,6 @@ impl AProgramAnsweringWith {
             the_request_it_was_given: std::rc::Rc::new(std::cell::RefCell::new(None)),
         }
     }
-
-    /// The one request this program was given, and a refusal when it was given none.
-    fn the_request_it_was_given(&self) -> WhatWeTellAProgramToDo {
-        self.the_request_it_was_given
-            .borrow()
-            .clone()
-            .expect("the adapter under test asked the program it was given")
-    }
 }
 
 impl AProgramWeRun for AProgramAnsweringWith {
@@ -81,12 +73,14 @@ fn which_organisation_reasons() -> WhichOrganisationReasons {
 }
 
 /// The question an agent puts, which reaches the model whole.
-fn a_question_about_the_repository() -> &'static str {
+fn a_question_about_the_checkout() -> &'static str {
     "What is this repository, and what would you change about it?"
 }
 
 /// The adapter and the program under it, and what the program was asked.
-fn the_one_request_the_adapter_built(what_the_endpoint_would_answer_with: &str) -> (String, String) {
+fn the_one_request_the_adapter_built(
+    what_the_endpoint_would_answer_with: &str,
+) -> (String, String) {
     let the_program = AProgramAnsweringWith::answering(what_the_endpoint_would_answer_with);
     let the_request = std::rc::Rc::clone(&the_program.the_request_it_was_given);
     let mut the_model = TheModelAsItIsAsked::the_model_where_a_deployment_put_its_model(
@@ -98,7 +92,7 @@ fn the_one_request_the_adapter_built(what_the_endpoint_would_answer_with: &str) 
         .what_it_says_when_asked_for(
             &the_artifact_that_was_asked_for(),
             which_organisation_reasons(),
-            a_question_about_the_repository(),
+            a_question_about_the_checkout(),
         )
         .expect("this endpoint answered something readable");
 
@@ -114,12 +108,14 @@ fn the_endpoint_and_the_body_out_of(one_request: &WhatWeTellAProgramToDo) -> (St
             the_body,
             ..
         } => (the_endpoint.clone(), the_body.clone()),
-        _ => panic!("a model was asked and this request is not a question to a model"),
+        _ => panic!("a model was asked and this request carries no address and no body"),
     }
 }
 
 /// What the adapter makes of what an endpoint wrote, through the port and nothing else.
-fn what_a_caller_is_given(what_the_endpoint_would_answer_with: &str) -> Result<String, AnAnswerNobodyCanRead> {
+fn what_a_caller_is_given(
+    what_the_endpoint_would_answer_with: &str,
+) -> Result<String, AnAnswerNobodyCanRead> {
     let mut the_model = TheModelAsItIsAsked::the_model_where_a_deployment_put_its_model(
         where_a_deployment_put_its_model(),
         AProgramAnsweringWith::answering(what_the_endpoint_would_answer_with),
@@ -127,7 +123,7 @@ fn what_a_caller_is_given(what_the_endpoint_would_answer_with: &str) -> Result<S
     the_model.what_it_says_when_asked_for(
         &the_artifact_that_was_asked_for(),
         which_organisation_reasons(),
-        a_question_about_the_repository(),
+        a_question_about_the_checkout(),
     )
 }
 
@@ -190,7 +186,7 @@ fn the_request_goes_to_the_address_the_deployment_named() {
 #[test]
 fn the_body_carries_the_question_and_the_model_the_deployment_named() {
     let which_model_a_deployment_named = where_a_deployment_put_its_model().which_model;
-    let the_question = a_question_about_the_repository();
+    let the_question = a_question_about_the_checkout();
 
     let (_, the_body) = the_one_request_the_adapter_built(&an_endpoint_answering_with("a report"));
 

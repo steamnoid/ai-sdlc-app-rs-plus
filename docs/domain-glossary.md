@@ -309,7 +309,7 @@ two of the splits are not inventions — they are lines this domain had already 
 
 | Port | Asks | Implemented by |
 |---|---|---|
-| `AReasoningModel` | to answer with a validated artifact | four organisations, one at a time |
+| `AReasoningModel` | to answer with a validated artifact | `TheModelAsItIsAsked` |
 | `AGitHubWeReadFrom` | for a checkout, and for a file at a ref | HTTPS, no credential |
 | `AGitHubWeWriteTo` | for a branch, and for a pull request | `git` over SSH, always a credential |
 | `TheProjectOnDisk` | for a listing, and for a file's text | the local filesystem |
@@ -1366,12 +1366,39 @@ secret**. **And that is the point of the type existing**: the address and the mo
 two facts a deployment configures and can say out loud, **and the credential is deliberately not
 one of them.**
 
+**`TheModelAsItIsAsked`** — a model, at the address a deployment named, **asked over a program and
+not over a socket.** **The one implementation of `AReasoningModel` outside a test file**, and the
+reason the port was open rather than declared: while its only implementor was a double, the port a
+real answer would arrive through had never been open at all, **and the two paths that do ask a
+model went around it through `AProgramWeRun` with a `WhereAModelIs` beside them.** That is the
+second time this repository has been caught by it — `README.md` records `AGitHubWeWriteTo` having
+one implementor and it being a test double, so seven cycles of the creative path were proved
+against a place that accepts anything.
+
+**Generic over the program and not concrete, because the composition root monomorphises.** No `dyn`
+anywhere in the domain or the run, and a struct holding `TheProgramAsItRuns` would have made this
+the one place in the crate that could not be tested without a host — **which is the port a test
+doubles through, and a test that cannot use it has no seam.**
+
+**A `Result` and not a `String`, and that is the whole of what the port's return type changed.** A
+port returning `String` has nowhere to put a failure, so every unreachable model arrived as its own
+refusal and each caller read it separately — **and "the model did not answer" is a fact about the
+world, so it belongs to the adapter that knows the world and not to the use case that does not.**
+
 **`AskAModelHowItRules`** — a request carrying the endpoint, the model and the body, and **no
-credential at all.** `curl` builds no arguments for it today, and the program run says so in words
-rather than fetching the question as an address. **A translation guessed at is a translation that
-looks right until somebody runs it**, and the fact this one is missing is the fact a reader
-cannot see: **where a secret lives in a process is a decision a person has to make, and this
-system has not made it.**
+credential at all.** `curl` builds no arguments for it without one, and the program run says so in
+words rather than fetching the question as an address. **A translation guessed at is a translation
+that looks right until somebody runs it**, and the fact this one was missing is the fact a reader
+could not see.
+
+**Where the secret lives is decided and is recorded here, because the entry above said it had not
+been.** The credential reaches the program as one argument, `Authorization: Bearer <key>`, and no
+request carries one. **That is a decision and not an accident**, and it is the wrong side of the one
+the entry used to leave open: a key in a command line is visible to every process on the host and
+appears in this process's own arguments. **It is recorded rather than fixed here** because changing
+it means not running `curl` — and the translation for a request that is not a command line does not
+exist yet. **A secret on a command line is a known cost, written down, and not a thing a reader
+has to discover.**
 
 **`AnAnswerThatIsNotARuling`** — a model's answer that was not `APPROVED` or `REFUSED` and
 nothing else, quoting what came back. **A contract a model can miss is not a contract**, so an

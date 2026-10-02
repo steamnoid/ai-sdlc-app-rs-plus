@@ -67,6 +67,7 @@ pub fn the_project_this_run_is_in() -> std::path::PathBuf {
 pub use crate::the_project_on_disk::TheProjectOnDisk;
 
 use crate::the_project_on_disk::AFileTheProjectDoesNotHave;
+use crate::the_words_inside_the_endpoints_envelope::AnAnswerNobodyCanRead;
 
 use aisdlc_domain::agent_identifier::AgentIdentifier;
 use aisdlc_domain::approval::{AnArtifactVersion, Approval, ApprovalDecision, WhichArtifact};
@@ -117,14 +118,23 @@ pub fn the_agent_takes_the_work_item_into_its_own_hands(
 }
 
 /// A model that answers with a validated artifact.
+///
+/// **A `Result` and not a `String`, because "the model did not answer" is a fact about the world
+/// and not about the question.** A port returning `String` has nowhere to put a failure, so every
+/// unreachable model arrives as its own refusal and each caller reads it separately — **and the
+/// two callers of this one are exactly the two that would have read it differently.**
 pub trait AReasoningModel {
-    /// What the model says when asked for one artifact.
+    /// What the model says when asked for one artifact, **or the answer that could not be read.**
+    ///
+    /// **The words and not the envelope, and that is the point of the type.** A model asked to
+    /// say one word answers with JSON around that word, and a caller handed the whole answer
+    /// decides no model can ever rule.
     fn what_it_says_when_asked_for(
         &mut self,
         which_artifact: &WhichArtifact,
         which_organisation: WhichOrganisationReasons,
         the_question: &str,
-    ) -> String;
+    ) -> Result<String, AnAnswerNobodyCanRead>;
 }
 
 /// What a model said when it was asked for an artifact, before anything checked it.
@@ -186,6 +196,10 @@ impl AnAnswerIsNotYetAnArtifact {
 /// something with a name that could be mistaken for a plan until something has checked one. A
 /// work item with no request cannot be asked about, so it is refused here rather than sent to a
 /// model with nothing to answer.
+///
+/// **A model that could not be reached is the same refusal as a work item with no request, and
+/// both name the artifact.** The caller asked one question and got no answer either way, and a
+/// caller that had to tell them apart would have to know which half of the world went wrong.
 pub fn the_agent_asks_for_its_artifact(
     the_model: &mut impl AReasoningModel,
     the_work_item: &WorkItem,
@@ -201,12 +215,33 @@ pub fn the_agent_asks_for_its_artifact(
     };
     let what_the_model_said =
         the_model.what_it_says_when_asked_for(which_artifact, who_reasoned, &requested.title);
+    let what_the_model_said = what_the_model_said
+        .map_err(|nobody_can_read| the_model_did_not_answer(which_artifact, &nobody_can_read))?;
     Ok(AnAnswerIsNotYetAnArtifact {
         which_artifact: which_artifact.clone(),
         who_reasoned,
         the_question: requested.title,
         what_the_model_said,
     })
+}
+
+/// A model that could not be read, as the refusal this use case hands its caller.
+///
+/// **Quoted and not summarised, and the artifact is named beside it.** A run asks eight agents
+/// for eight different artifacts, so "the model did not answer" without saying which one is a
+/// question rather than a diagnosis — and the words that came back are the only clue a caller
+/// has for deciding whether to retry.
+fn the_model_did_not_answer(
+    which_artifact: &WhichArtifact,
+    nobody_can_read: &AnAnswerNobodyCanRead,
+) -> AnUnanswerableRequest {
+    AnUnanswerableRequest::because(
+        which_artifact,
+        &format!(
+            "the model did not answer, and what came back was: {}",
+            nobody_can_read.what_it_said()
+        ),
+    )
 }
 
 /// A work item whose request a model cannot be asked about, named with the artifact and why.
