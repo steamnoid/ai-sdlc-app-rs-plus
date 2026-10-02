@@ -17,6 +17,7 @@ pub mod how_this_deployment_is_set_up;
 pub mod the_environment;
 pub mod the_model_as_it_is_asked;
 pub mod the_program_as_it_runs;
+pub mod the_project_as_it_is_changed;
 pub mod the_project_on_disk;
 pub mod whether_a_model_rules_here_is_read;
 pub mod whether_an_agent_offers_is_read;

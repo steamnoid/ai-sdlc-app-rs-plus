@@ -142,6 +142,7 @@ fn what_git_is_asked_about(request: &WhatWeTellAProgramToDo) -> Vec<String> {
     };
     match request {
         WhatWeTellAProgramToDo::TheCommitItStandsOn { .. } => to_read_the_commit(the_clone_of),
+        WhatWeTellAProgramToDo::RecordTheChange { every_path } => to_record_the_change(every_path),
         WhatWeTellAProgramToDo::TheRefItStandsOn { .. } => to_read_the_ref(the_clone_of),
         WhatWeTellAProgramToDo::NameWhereTheCodeWasWrittenIn { .. } => {
             to_name_where_the_code_was_written_in(the_clone_of)
@@ -154,6 +155,18 @@ fn what_git_is_asked_about(request: &WhatWeTellAProgramToDo) -> Vec<String> {
         }
         _ => Vec::new(),
     }
+}
+
+/// What a commit would be run with, **staged and committed in one program and then read back.**
+///
+/// **`--` before the paths, because a path beginning with a dash is an option.** A plan names
+/// files, **and a file named `-something` would be a flag this system passed to `git` on its own
+/// behalf** — so the paths are quoted after `--` and nothing a plan supplies reaches `git` as an
+/// option.
+fn to_record_the_change(every_path: &[String]) -> Vec<String> {
+    let mut the_arguments = vec![String::from("add"), String::from("--")];
+    the_arguments.extend(every_path.iter().cloned());
+    the_arguments
 }
 
 /// The commit the clone stands on, **read by name and never composed into the address.**

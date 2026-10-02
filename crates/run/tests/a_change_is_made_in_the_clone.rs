@@ -21,12 +21,16 @@
 //! nobody can see is not a change, and a commit of nothing is not a record.**
 
 use aisdlc_run::a_change_is_made_in_the_clone::{
-    AChangeCouldNotBeMade, AFileToWrite, WhatWasWritten, a_change_is_made_in_the_clone,
+    AChangeCouldNotBeMade, AFileToWrite, a_change_is_made_in_the_clone,
 };
 use aisdlc_run::a_program_we_run::{AProgramWeRun, WhatTheProgramSaid};
-use aisdlc_run::a_record_of_a_change::AChangeIsRecorded;
+use aisdlc_run::a_record_of_a_change::{AChangeIsRecorded, AFileThatWasNotWritten};
 use aisdlc_run::what_a_planner_planned::WhatAPlannerPlanned;
 use aisdlc_run::what_we_tell_a_program_to_do::WhatWeTellAProgramToDo;
+
+/// The words a person would read if they opened the file, **and the ones the double already
+/// holds where a write has to change something.**
+const THE_WORDS_THAT_CHANGE_A_DOCUMENT: &str = "the gate a document sent the wrong way first";
 
 /// The plan a person approved, **naming one file to change and one test to bring.**
 fn the_plan_a_person_approved() -> WhatAPlannerPlanned {
@@ -42,6 +46,16 @@ fn the_plan_a_person_approved() -> WhatAPlannerPlanned {
 /// One file, **with the words a person would read if they opened it.**
 fn a_file_with(text: &str) -> AFileToWrite {
     AFileToWrite::the_file_at("AGENTS.md", text).expect("a path inside the project")
+}
+
+/// Two files, **one the plan named and one it never will.**
+fn a_file_the_plan_named_besides_one_it_did_not() -> Vec<AFileToWrite> {
+    let one_it_did_not_name = AFileToWrite::the_file_at("src/lib.rs", "a change nobody approved")
+        .expect("a path inside the project");
+    vec![
+        a_file_with(THE_WORDS_THAT_CHANGE_A_DOCUMENT),
+        one_it_did_not_name,
+    ]
 }
 
 /// A project that remembers what it was asked to write, **and what it already held.**
@@ -78,10 +92,15 @@ impl AChangeIsRecorded for AProjectRemembering {
     }
 
     /// Write one file, **and record that it was asked to.**
-    fn one_file_is_written(&mut self, which_file: &str, what_it_says: &str) {
+    fn one_file_is_written(
+        &mut self,
+        which_file: &str,
+        what_it_says: &str,
+    ) -> Result<(), AFileThatWasNotWritten> {
         self.what_it_was_asked_to_write
             .borrow_mut()
             .push(format!("{which_file}: {what_it_says}"));
+        Ok(())
     }
 }
 
@@ -131,13 +150,16 @@ fn every_file_the_plan_named_is_written_and_nothing_else_is() {
         &the_git,
         &mut the_project,
         &the_plan_a_person_approved(),
-        &[a_file_with("the gate a document sent the wrong way first")],
+        &[a_file_with(THE_WORDS_THAT_CHANGE_A_DOCUMENT)],
     )
     .expect("the plan named that file and the write was a change");
 
     let what_the_plan_named_besides = what_was_written.files_written_ref();
     assert_eq!(
-        (what_was_written.the_commit().as_str(), what_the_plan_named_besides.len()),
+        (
+            what_was_written.the_commit(),
+            what_the_plan_named_besides.len()
+        ),
         ("9f1c2a4", 1),
         "**because a change is the files the plan named and the commit that records them** — and \
          both answers come from what `git` wrote, **because a commit this system composed would be \
@@ -151,21 +173,21 @@ fn a_file_the_plan_did_not_name_is_refused_and_nothing_is_written() {
     let mut the_project = AProjectRemembering::holding_nothing();
     let the_git = AProgramGitAnswering::a_git_that_commits();
 
+    let the_files = a_file_the_plan_named_besides_one_it_did_not();
     let the_refusal = a_change_is_made_in_the_clone(
         &the_git,
         &mut the_project,
         &the_plan_a_person_approved(),
-        &[
-            a_file_with("the gate a document sent the wrong way first"),
-            AFileToWrite::the_file_at("src/lib.rs", "a change nobody approved")
-                .expect("a path inside the project"),
-        ],
+        &the_files,
     );
 
     let nothing_was_written = the_project.what_it_was_asked_to_write.borrow().is_empty();
+    let the_plan_named_none_of_them = matches!(
+        the_refusal,
+        Err(AChangeCouldNotBeMade::AFileThePlanDidNotName { .. })
+    );
     assert!(
-        matches!(the_refusal, Err(AChangeCouldNotBeMade::AFileThePlanDidNotName { .. }))
-            && nothing_was_written,
+        the_plan_named_none_of_them && nothing_was_written,
         "**because a plan a person approved is a list of files, and an implementation writing \
          anything else is a change nobody approved** — and a run that wrote the unapproved file and \
          then refused is a run that changed somebody's repository for nothing. What was written: \
@@ -176,21 +198,22 @@ fn a_file_the_plan_did_not_name_is_refused_and_nothing_is_written() {
 
 #[test]
 fn a_write_identical_to_what_is_already_there_is_refused() {
-    let mut the_project = AProjectRemembering::holding_one_file(
-        "AGENTS.md",
-        "the gate a document sent the wrong way first",
-    );
+    let mut the_project =
+        AProjectRemembering::holding_one_file("AGENTS.md", THE_WORDS_THAT_CHANGE_A_DOCUMENT);
     let the_git = AProgramGitAnswering::a_git_that_commits();
 
     let the_refusal = a_change_is_made_in_the_clone(
         &the_git,
         &mut the_project,
         &the_plan_a_person_approved(),
-        &[a_file_with("the gate a document sent the wrong way first")],
+        &[a_file_with(THE_WORDS_THAT_CHANGE_A_DOCUMENT)],
     );
 
     assert!(
-        matches!(the_refusal, Err(AChangeCouldNotBeMade::AWriteThatChangesNothing { .. })),
+        matches!(
+            the_refusal,
+            Err(AChangeCouldNotBeMade::AWriteThatChangesNothing { .. })
+        ),
         "**because a change nobody can see is not a change** — this repository's history records a \
          run that wrote a file byte-identical to the one already there, committed nothing, and was \
          caught only by a `nothing to commit` from GitHub forty-five minutes later. Refused here, \
@@ -207,11 +230,14 @@ fn a_commit_git_would_not_make_is_refused_with_gits_own_words() {
         &the_git,
         &mut the_project,
         &the_plan_a_person_approved(),
-        &[a_file_with("the gate a document sent the wrong way first")],
+        &[a_file_with(THE_WORDS_THAT_CHANGE_A_DOCUMENT)],
     );
 
     assert!(
-        matches!(the_refusal, Err(AChangeCouldNotBeMade::TheChangeWasNotCommitted { .. })),
+        matches!(
+            the_refusal,
+            Err(AChangeCouldNotBeMade::TheChangeWasNotCommitted { .. })
+        ),
         "**because a delivery that pushed a branch with no commit on it is refused by the far end, \
          a hundred steps later, for a cause that is a hundred steps back** — and `nothing to commit, \
          working tree clean` is the only thing that says so. Quoted, and not summarised: \

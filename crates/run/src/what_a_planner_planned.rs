@@ -126,6 +126,26 @@ pub fn the_plan_a_model_proposed(
 }
 
 impl WhatAPlannerPlanned {
+    /// Every path this plan names, **from the three lists that name files and not from the two
+    /// that do not.**
+    ///
+    /// **The one list an implementer may write from, and it is built here rather than asked for**,
+    /// because a plan naming a crate to add is not a file to write — **and a comparison against
+    /// the wrong list is a run writing a file a person never approved.**
+    pub fn the_paths_it_named(&self) -> Vec<String> {
+        let mut every_path = Vec::new();
+        for one_list in [
+            &self.files_to_change,
+            &self.files_to_add,
+            &self.tests_to_add,
+        ] {
+            for one_path in one_list {
+                every_path.push(one_path.clone());
+            }
+        }
+        every_path
+    }
+
     /// Whether this plan names at least one file, **and `dependencies` do not count.**
     fn names_a_file(&self) -> bool {
         !self.files_to_change.is_empty()

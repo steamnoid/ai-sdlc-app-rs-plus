@@ -57,6 +57,16 @@ pub enum WhatWeTellAProgramToDo {
         of_which_repository: Repository,
     },
 
+    /// Record the change, **by staging exactly the paths named and then committing them.**
+    RecordTheChange {
+        /// Every path, one argument each and never a line.
+        every_path: Vec<String>,
+    },
+    /// Read the commit a change is standing on, **and change nothing.**
+    ReadTheCommit {
+        /// Which clone, which is the only place this system takes one from.
+        the_clone_of: ARepositoryToClone,
+    },
     /// Ask GitHub to open a pull request, **and change something in a repository.**
     OpenAPullRequest {
         /// Where the request goes, which is the repository the code was written in.
@@ -150,6 +160,20 @@ impl WhatWeTellAProgramToDo {
         }
     }
 
+    /// Record the change, **staging exactly what the plan named and not one file more.**
+    pub fn record_the_change(every_path: &[&str]) -> Self {
+        WhatWeTellAProgramToDo::RecordTheChange {
+            every_path: every_path.iter().map(|one| (*one).to_string()).collect(),
+        }
+    }
+
+    /// Read the commit a change is standing on, **and nothing else.**
+    pub fn read_the_commit(of_which_clone: ARepositoryToClone) -> Self {
+        WhatWeTellAProgramToDo::ReadTheCommit {
+            the_clone_of: of_which_clone,
+        }
+    }
+
     /// Ask GitHub to open a pull request, **and carry the credential as one argument.**
     pub fn open_a_pull_request(where_it_goes: &str, the_body: &str) -> Self {
         WhatWeTellAProgramToDo::OpenAPullRequest {
@@ -190,6 +214,17 @@ impl WhatWeTellAProgramToDo {
     /// Whether this request is answered over HTTPS, **and a pull request and a filing are.**
     pub fn is_answered_by_github_over_https(&self) -> bool {
         matches!(self, WhatWeTellAProgramToDo::OpenAPullRequest { .. })
+    }
+
+    /// Whether this request changes a repository, **and a commit and a push and a pull request
+    /// all do while a reading does not.**
+    pub fn does_this_change_a_repository(&self) -> bool {
+        matches!(
+            self,
+            WhatWeTellAProgramToDo::RecordTheChange { .. }
+                | WhatWeTellAProgramToDo::PushTheBranch { .. }
+                | WhatWeTellAProgramToDo::OpenAPullRequest { .. }
+        )
     }
 
     /// The branch this request is about, **for a request that is about one branch.**
@@ -300,10 +335,12 @@ impl WhatWeTellAProgramToDo {
                 Some(the_clone_of)
             }
             WhatWeTellAProgramToDo::ReadTheRemote { the_clone_of, .. }
-            | WhatWeTellAProgramToDo::PushTheBranch { the_clone_of, .. } => Some(the_clone_of),
+            | WhatWeTellAProgramToDo::PushTheBranch { the_clone_of, .. }
+            | WhatWeTellAProgramToDo::ReadTheCommit { the_clone_of } => Some(the_clone_of),
             WhatWeTellAProgramToDo::ListTheFilingsAlreadyOnFile { .. } => None,
             WhatWeTellAProgramToDo::AskAModel { .. }
             | WhatWeTellAProgramToDo::OpenAPullRequest { .. }
+            | WhatWeTellAProgramToDo::RecordTheChange { .. }
             | WhatWeTellAProgramToDo::ReadTheFiling { .. } => None,
         }
     }
@@ -352,6 +389,8 @@ impl WhatWeTellAProgramToDo {
             | WhatWeTellAProgramToDo::ReadTheRemote { .. }
             | WhatWeTellAProgramToDo::PushTheBranch { .. }
             | WhatWeTellAProgramToDo::OpenAPullRequest { .. }
+            | WhatWeTellAProgramToDo::RecordTheChange { .. }
+            | WhatWeTellAProgramToDo::ReadTheCommit { .. }
             | WhatWeTellAProgramToDo::ReadTheFiling { .. }
             | WhatWeTellAProgramToDo::ListTheFilingsAlreadyOnFile { .. } => None,
         }
