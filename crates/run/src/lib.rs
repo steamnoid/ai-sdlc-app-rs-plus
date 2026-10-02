@@ -50,6 +50,7 @@ pub mod what_a_planner_planned;
 pub mod what_an_agent_has_produced;
 pub mod what_an_agent_judged;
 pub mod what_an_agent_offered;
+pub mod what_could_go_wrong;
 pub mod what_discovery_concluded;
 pub mod what_the_agent_presents;
 pub mod what_the_architecture_is;
