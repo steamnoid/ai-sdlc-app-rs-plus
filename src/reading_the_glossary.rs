@@ -269,10 +269,75 @@ pub fn the_blessed_names(the_glossary: &str) -> Vec<String> {
 /// The files the rule of three hundred lines of code does not apply to.
 ///
 /// **Read from the glossary and not named in the gate**, because a gate that carries its own
-/// exceptions has exceptions nobody reads, and this repository declares every other exemption
-/// in the one place a reader goes looking for them.
+/// exceptions is a gate whose exceptions nobody reads, and this repository declares every other
+/// exemption in the one place a reader goes looking for them.
 pub fn the_files_the_length_gate_does_not_read(the_glossary: &str) -> Vec<String> {
     the_first_column_of_the_table_under(the_glossary, "AFileTheLengthGateDoesNotRead")
+}
+
+/// The six ways a document says something here is not here.
+///
+/// **The anchor is the paragraph before the block and not a phrase inside it**, for the reason
+/// `the_words_the_vocabulary_gate_refuses` gives: a phrase in the block is found, and the reader
+/// then walks on to the next fence in the document.
+///
+/// **A bar and not a space, because five of the six are several words long.** `the_block_containing`
+/// joins the lines with a space, so a reader splitting on whitespace got nineteen words and the
+/// gate then matched `there` in every ordinary sentence in the repository.
+pub fn the_words_a_denial_is_made_of(the_glossary: &str) -> Vec<String> {
+    the_block_containing(the_glossary, "reads the block and not this paragraph")
+        .split('|')
+        .map(|one| one.trim().to_string())
+        .filter(|one| !one.is_empty())
+        .collect()
+}
+
+/// Every path the checkout holds, relative to its own root and spelled as it spells it.
+///
+/// **`target` and `.git` are left out**, because a build leaves behind a copy of the source and
+/// a document may not be held to a path a build made.
+pub fn the_paths_the_checkout_holds() -> Vec<String> {
+    let mut found = Vec::new();
+    collect_the_paths_under(
+        &reading_the_checkout::the_root_of_the_checkout(),
+        &reading_the_checkout::the_root_of_the_checkout(),
+        &mut found,
+    );
+    found.sort();
+    found
+}
+
+/// Add every path under one directory, and named from the root rather than from where the walk stands.
+fn collect_the_paths_under(the_root: &Path, a_directory: &Path, found: &mut Vec<String>) {
+    let Ok(entries) = std::fs::read_dir(a_directory) else {
+        return;
+    };
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if path
+            .file_name()
+            .is_some_and(|it| it == "target" || it == ".git")
+        {
+            continue;
+        }
+        found.push(the_path_from_the_root(the_root, &path));
+        if path.is_dir() {
+            collect_the_paths_under(the_root, &path, found);
+        }
+    }
+}
+
+/// One path as the checkout spells it, and a directory as the one with the bar on it.
+fn the_path_from_the_root(the_root: &Path, a_path: &Path) -> String {
+    let written = a_path
+        .strip_prefix(the_root)
+        .unwrap_or(a_path)
+        .to_string_lossy()
+        .to_string();
+    if a_path.is_dir() {
+        return format!("{written}/");
+    }
+    written
 }
 
 /// The first column of the table under a heading, without its header and separator rows.

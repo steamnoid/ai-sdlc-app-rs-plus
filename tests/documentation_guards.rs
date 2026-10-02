@@ -1035,3 +1035,265 @@ mod the_gate_workflow_needs_no_secret {
         );
     }
 }
+
+mod a_document_does_not_deny_what_this_checkout_holds {
+    //! No document of this repository says that something this checkout holds is not here.
+    //!
+    //! **Three sentences in `AGENTS.md` said exactly that, and nothing in this repository read
+    //! that file.** "Every rule in this file has a gate, and not one of them exists yet", "What
+    //! this repository is going to be, and none of it exists yet", and "there is no `Cargo.toml`
+    //! in this repository" — **twenty-two gates, four manifests and six directories, and a reader
+    //! told the opposite three times.** The gate table in the glossary is checked by
+    //! `the_documentation_says_what_the_code_does`, and the prose around it was checked by
+    //! nothing, **which is what a second copy of a checked fact is: a place nobody looks.**
+    //!
+    //! **A claim and not a section, and a path rather than a word.** See the glossary's
+    //! `ADenialOfWhatThisRepositoryHolds` for why the rule is drawn at the phrase and at the
+    //! path, and what each of those two decisions costs.
+
+    use aisdlc_gates::reading_the_checkout;
+    use aisdlc_gates::reading_the_glossary::{
+        the_glossary_text, the_paths_the_checkout_holds, the_words_a_denial_is_made_of,
+    };
+
+    /// The documents a reader is sent to before the code, and the one the glossary reads.
+    const THE_DOCUMENTS_A_READER_IS_SENT_TO: [&str; 3] =
+        ["AGENTS.md", "README.md", "docs/domain-glossary.md"];
+
+    /// Every path a claim names, given its text — backticks and a fenced block both.
+    fn the_paths_a_claim_names(a_claim: &str) -> Vec<String> {
+        let mut found: Vec<String> = a_claim
+            .split('`')
+            .skip(1)
+            .step_by(2)
+            .map(str::to_string)
+            .collect();
+        found.extend(the_paths_in_the_fenced_blocks_of(a_claim));
+        found.retain(|one| !one.contains(' ') && !one.is_empty());
+        found
+    }
+
+    /// The path-shaped words inside every fenced block of a claim.
+    fn the_paths_in_the_fenced_blocks_of(a_claim: &str) -> Vec<String> {
+        let mut found = Vec::new();
+        let mut inside = false;
+        for one_line in a_claim.lines() {
+            if one_line.trim_start().starts_with("```") {
+                inside = !inside;
+                continue;
+            }
+            if inside {
+                found.extend(one_line.split_whitespace().map(str::to_string));
+            }
+        }
+        found
+    }
+
+    /// Every claim of a document, and a fenced block belongs to the claim above it.
+    ///
+    /// **A block first and a claim second, because a layout is written as a fenced block under
+    /// the sentence that denies it.** A reader that ended a claim at every blank line asked the
+    /// layout on its own, found no denial in it, and reported nothing — **which is a reader that
+    /// looks and finds nothing, and the two are indistinguishable in the output.**
+    fn the_claims_of(a_document: &str) -> Vec<String> {
+        let mut found: Vec<String> = Vec::new();
+        let mut one_claim = String::new();
+        for one_block in the_blocks_of(a_document) {
+            if !one_claim.is_empty() && one_block_is_prose(&one_block) {
+                found.push(std::mem::take(&mut one_claim));
+            }
+            one_claim.push_str(&one_block);
+            one_claim.push('\n');
+        }
+        found.push(one_claim);
+        found.retain(|one| !one.trim().is_empty());
+        found
+    }
+
+    /// Whether a block is a paragraph, **and a paragraph is what starts a claim.**
+    fn one_block_is_prose(one_block: &str) -> bool {
+        !one_block.trim_start().starts_with("```")
+    }
+
+    /// Every block of a document, a fenced one whole and a paragraph of its own.
+    ///
+    /// **A blank line ends a paragraph and does not end a fence**, because a layout block has
+    /// blank lines in it and a reader that treated every blank line as the end of a block cut
+    /// each layout into its lines and asked each line on its own.
+    fn the_blocks_of(a_document: &str) -> Vec<String> {
+        let mut found: Vec<String> = Vec::new();
+        let mut one_block: Vec<&str> = Vec::new();
+        let mut inside_a_fence = false;
+        for one_line in a_document.lines() {
+            if one_line.trim_start().starts_with("```") {
+                inside_a_fence = !inside_a_fence;
+            }
+            if one_line_ends_a_block(one_line, inside_a_fence) {
+                found.push(one_block.join("\n"));
+                one_block.clear();
+                continue;
+            }
+            one_block.push(one_line);
+        }
+        found.push(one_block.join("\n"));
+        found.retain(|one| !one.trim().is_empty());
+        found
+    }
+
+    /// Whether a line ends the block being read, which a blank line outside a fence does.
+    fn one_line_ends_a_block(one_line: &str, inside_a_fence: bool) -> bool {
+        !inside_a_fence && one_line.trim().is_empty()
+    }
+
+    /// The refusal for one claim, if it denies something the checkout holds.
+    fn what_is_wrong_with(a_claim: &str, the_paths_the_checkout_has: &[String]) -> Option<String> {
+        let denial = the_denial_in(a_claim)?;
+        let every_path_it_names = the_paths_a_claim_names(a_claim);
+        let named_here: Vec<&String> = every_path_it_names
+            .iter()
+            .filter(|one| the_paths_the_checkout_has.contains(one))
+            .collect();
+        if named_here.is_empty() {
+            return None;
+        }
+        Some(format!(
+            "says \"{denial}\" and names {named_here:?}, which this checkout holds"
+        ))
+    }
+
+    /// The first phrase of the list this claim is written with, or nothing when it is written
+    /// with none of them.
+    fn the_denial_in(a_claim: &str) -> Option<String> {
+        the_words_a_denial_is_made_of(&the_glossary_text())
+            .into_iter()
+            .find(|one| a_claim.contains(one.as_str()))
+    }
+
+    #[test]
+    fn no_document_denies_what_this_checkout_holds() {
+        let the_paths = the_paths_the_checkout_holds();
+        let mut found: Vec<String> = Vec::new();
+        for a_document in &THE_DOCUMENTS_A_READER_IS_SENT_TO {
+            found.extend(the_refusals_in(a_document, &the_paths));
+        }
+
+        assert!(
+            found.is_empty(),
+            "a document that denies what this checkout holds is a reader sent the wrong way first, \
+             and two such sentences stood in AGENTS.md while twenty-two gates were green: {found:?}"
+        );
+    }
+
+    /// Every refusal in one document, with the claim it stands on.
+    fn the_refusals_in(a_document: &str, the_paths: &[String]) -> Vec<String> {
+        let the_text = reading_the_checkout::the_text_at(
+            &reading_the_checkout::the_root_of_the_checkout().join(a_document),
+        );
+        the_claims_of(&the_text)
+            .iter()
+            .enumerate()
+            .filter_map(|(at, a_claim)| {
+                let why = what_is_wrong_with(a_claim, the_paths)?;
+                Some(format!("{a_document} claim {at} {why}"))
+            })
+            .collect()
+    }
+
+    #[test]
+    fn a_claim_naming_a_path_this_checkout_holds_is_refused() {
+        let the_paths = the_paths_the_checkout_holds();
+        let a_claim = "**None of these run yet** — there is no `Cargo.toml` in this repository.";
+
+        assert_eq!(
+            what_is_wrong_with(a_claim, &the_paths),
+            Some(
+                "says \"there is no\" and names [\"Cargo.toml\"], which this checkout holds"
+                    .to_string()
+            ),
+            "and the refusal quotes the phrase and the path, because \"somewhere in that document\" \
+             is not a place a reader can act on"
+        );
+    }
+
+    #[test]
+    fn a_claim_naming_a_path_nothing_holds_is_accepted() {
+        let a_claim = "**`ARepositoryToWriteTo`** — there is no `crates/desk/` and this file names it as the place one would be.";
+
+        assert_eq!(
+            what_is_wrong_with(a_claim, &the_paths_the_checkout_holds()),
+            None,
+            "**because a document is allowed to say what is not here** — that is the one claim \
+             that makes a target legible, and a rule that refused it would forbid this \
+             repository from saying what it is going to be"
+        );
+    }
+
+    #[test]
+    fn a_denial_that_names_nothing_is_accepted_and_that_is_what_this_rule_gives_up() {
+        let a_claim = "**Every rule in this file has a gate, and not one of them exists yet.**";
+
+        assert_eq!(
+            what_is_wrong_with(a_claim, &the_paths_the_checkout_holds()),
+            None,
+            "**because `them` is a pronoun and resolving it is reading the sentence** — and this \
+             repository refuses to judge prose. **This sentence stood in AGENTS.md while \
+             twenty-two gates were green, and this rule does not catch it**; it was caught by a \
+             person reading it, and the glossary says so. A rule that pretended to catch it would \
+             be judging meaning, and the first sentence it read wrongly would be a refusal nobody \
+             could act on"
+        );
+    }
+
+    #[test]
+    fn a_claim_making_no_denial_is_accepted() {
+        let a_claim = "**Every rule in this file has a gate, and every one of them exists.** `crates/domain/` holds the rules.";
+
+        assert_eq!(
+            what_is_wrong_with(a_claim, &the_paths_the_checkout_holds()),
+            None,
+            "and the same sentence with the denial taken out is accepted, which is what makes this \
+             a rule about the denial and not a rule about the words"
+        );
+    }
+
+    #[test]
+    fn a_layout_written_as_a_fenced_block_is_one_claim_with_the_denial_above_it() {
+        let a_claim = "**none of it exists yet.**\n\n```text\ncrates/\n  domain/\n  real/\n```";
+
+        let the_refusal = what_is_wrong_with(a_claim, &the_paths_the_checkout_holds());
+
+        assert_eq!(
+            the_refusal,
+            Some(
+                "says \"none of it exists\" and names [\"crates/\"], which this checkout holds"
+                    .to_string()
+            ),
+            "**because a layout is written as a block under the sentence that denies it** — a \
+             reader that split on blank lines asked the block on its own and found no denial in \
+             it, which is a reader that looks and reports nothing. **And `real/` is absent from \
+             the refusal while `crates/` is in it**, because that directory has not been made and \
+             a target this repository has written down is not a denial: the two are the same list \
+             and only one of them is a claim"
+        );
+    }
+
+    #[test]
+    fn the_denials_were_actually_read() {
+        let the_denials = the_words_a_denial_is_made_of(&the_glossary_text());
+
+        assert_eq!(
+            the_denials,
+            vec![
+                "there is no",
+                "not one of them exists",
+                "none of it exists",
+                "none of these run",
+                "do not exist",
+                "does not exist"
+            ],
+            "**because a gate that reads an empty list passes everything**, and six is the number \
+             the three sentences in AGENTS.md were written with — so a phrase dropped from the \
+             glossary is a sentence that rots with nothing watching it"
+        );
+    }
+}

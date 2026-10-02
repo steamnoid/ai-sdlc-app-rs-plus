@@ -1748,6 +1748,48 @@ dot**, and that is not a detail: this repository's own workflow contains a sente
 that the job has no stored credentials, and a rule drawn at the bare word would refuse the
 sentence recording the rule.
 
+**`ADenialOfWhatThisRepositoryHolds`** — a sentence in a document of this repository that says
+something here is **not** here, where this checkout holds the thing it names. **Refused, and the
+refusal names the document, the line and the path.**
+
+**The words a denial is made of, as a block and not as a paragraph, because the gate
+reads the block and not this paragraph.** These are the six ways the three false sentences
+in `AGENTS.md` were written, and they are drawn at the phrase rather than at the topic: **a gate
+that tried to understand what a sentence was *about* would be judging prose, and this repository
+refuses to judge prose.** It reads the phrase, and then asks the checkout whether the path the
+sentence names is here — **so the answer comes from the filesystem and never from a reader's
+opinion of what the sentence meant.**
+
+**A phrase and not a word, and a bar between the phrases.** Six of these are several words long
+and **whitespace cannot be the separator, because a phrase is exactly what whitespace is inside
+of** — so the block below is written one phrase to a bar, and a reader that split it on spaces
+got nineteen words and matched `there` in four hundred ordinary sentences. **This is the same
+lesson `the_words_the_vocabulary_gate_refuses` carries about its own anchor**, and it is here
+rather than there because the two lists are read by different gates over different things.
+
+```text
+there is no | not one of them exists | none of it exists | none of these run | do not exist | does not exist
+```
+
+**A path and not a word, and the path is spelled the way the checkout spells it.** A claim about
+`crates/run/` is held to `crates/run/`; **a claim about `run` is held to nothing**, because `run`
+is also a word and this repository uses it as one in four hundred places. **The first version of
+this reader matched a path's last segment and reported `docs` as a denial about a directory it
+names on a line that denies something else entirely** — the segment is a substring, and a
+substring of a path is not a path.
+
+**A claim and not a section, and a fenced block belongs to the claim above it.** Three of the
+three false sentences are in a section that also names something true — `# The gates` links the
+glossary, and `# Layout` lists `real/` — **so a reader scoped to a section refuses a section for
+something it says about its neighbour.** A claim is a paragraph, and a layout written as a fenced
+block under a paragraph that denies it is one claim.
+
+**A document and not the glossary alone, because the glossary is one of the three and was never
+the one that rotted.** `AGENTS.md` carried a second copy of the gate table and said five gates did
+not exist that were written, and the four-row copy passed every gate in this repository — **because
+no gate read `AGENTS.md` at all.** The one table in the glossary is checked, and the two documents
+a reader is sent to before the code were not.
+
 **`HowTheFileIsWritten`** — a source file, taken apart into the stretches it is made of,
 each one knowing what it is and where it starts. It is a value rather than a service,
 because six gates ask the same two questions of it and the answer must not be six
@@ -1973,6 +2015,7 @@ is the one that confirms the second.
 | `the_specification_and_the_code_have_not_drifted_apart` | `documentation_guards.rs` | with the transition table |
 | `the_glossary_blesses_every_type_the_domain_defines` | `documentation_guards.rs` | with the first types |
 | `the_documentation_says_what_the_code_does` | `documentation_guards.rs` | with the first gate |
+| `a_document_does_not_deny_what_this_checkout_holds` | `documentation_guards.rs` | with the first document a reader is sent to |
 | `the_gate_workflow_needs_no_secret` | `documentation_guards.rs` | with the workflow |
 | `the_core_never_names_a_trait_object` | `readability_guards.rs` | with the domain |
 | `an_ignored_test_says_why_it_is_ignored` | `readability_guards.rs` | with the tests |

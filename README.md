@@ -96,6 +96,15 @@ table in the glossary, because a gate holds that one.
 
 ## The three rules
 
-1. **RULE 0 — strict TDD.** Every behaviour change is RED → GREEN, as two commits.
+1. **RULE 0 — strict TDD.** Every behaviour change is RED → GREEN, as two commits. The RED must
+   fail on an assertion about behaviour and not on a missing import.
 2. **RULE 1 — readability is the highest priority.** The code is read far more often than it
-   is written, and it is read by a human. **There are no comments in the code.** `///` and
+   is written, and it is read by a human. **There are no comments in the code.** `///` and `//!`
+   are documentation and are allowed; `//` and `/* */` are refused by
+   `the_code_carries_no_comments`, which reads every `.rs` file and names the file and the line.
+   A function body is at most twenty lines, nests no deeper than two, and a file is at most three
+   hundred lines of code.
+3. **RULE 2 — the code mirrors the domain.** One concept has one name everywhere, the names come
+   from [`docs/domain-glossary.md`](docs/domain-glossary.md), and `aisdlc-domain` has no
+   `[dependencies]` section at all — **which is the one boundary rule the compiler enforces
+   without being asked**, and every other boundary rests on it.
