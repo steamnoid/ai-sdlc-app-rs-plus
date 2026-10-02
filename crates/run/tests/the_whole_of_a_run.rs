@@ -16,9 +16,7 @@ use aisdlc_domain::role::Role;
 use aisdlc_domain::stage::Stage;
 use aisdlc_domain::which_organisation_reasons::WhichOrganisationReasons;
 use aisdlc_run::a_model_is_asked_for_an_artifact::AReasoningModel;
-use aisdlc_run::the_whole_of_a_run::{
-    AWholeRunThatCouldNotBeHad, the_whole_of_a_run,
-};
+use aisdlc_run::the_whole_of_a_run::{AWholeRunThatCouldNotBeHad, the_whole_of_a_run};
 use aisdlc_run::the_words_inside_the_endpoints_envelope::AnAnswerNobodyCanRead;
 use aisdlc_run::where_a_run_stands::WhereARunStands;
 use aisdlc_run::{APersonToDecide, ApprovalQuestion};
@@ -204,20 +202,19 @@ fn a_run_every_gate_approves_ends_with_the_delivery_agent_holding_the_work() {
 fn a_person_who_refuses_ends_the_run_and_no_later_agent_is_asked() {
     let mut a_model = AModelThatAnswers::answering_everything();
 
-    let the_run = the_whole_of_a_run(
-        &a_run_standing_at_the_stage_its_first_agent_is_working_on(),
-        &mut a_model,
-        WhichOrganisationReasons::Openai,
-        &mut APersonWhoRules::who_refuses_at_the(3),
-    );
+    let mut whoever_answers = APersonWhoRules::who_refuses_at_the(3);
+    let the_run = the_run_given(&mut a_model, &mut whoever_answers);
+    let where_it_stands = the_run
+        .as_ref()
+        .map(WhereARunStands::the_stage_it_stands_at);
 
     assert_eq!(
-        the_run.as_ref().map(WhereARunStands::the_stage_it_stands_at),
+        where_it_stands,
         Ok(Stage::Done),
         "**because refusing is a decision and not a delay** — and a run that kept working after one \
          would be a run treating a decision as a delay, **which is the defect behind three \
-         delivered pull requests whose diff was two test files and no route.** It stands at {:?}",
-        the_run.as_ref().map(WhereARunStands::the_stage_it_stands_at)
+         delivered pull requests whose diff was two test files and no route.** It stands at \
+         {where_it_stands:?}"
     );
     assert_eq!(
         a_model.what_it_was_asked_for().len(),
@@ -250,6 +247,20 @@ fn a_model_that_could_not_be_reached_ends_the_run_and_names_the_artifact() {
     );
 }
 
+/// A whole run given a model and a person, **and it is one line so four of the five tests are about
+/// their own arrangement rather than about this call.**
+fn the_run_given(
+    a_model: &mut AModelThatAnswers,
+    whoever_answers: &mut APersonWhoRules,
+) -> Result<WhereARunStands, AWholeRunThatCouldNotBeHad> {
+    the_whole_of_a_run(
+        &a_run_standing_at_the_stage_its_first_agent_is_working_on(),
+        a_model,
+        WhichOrganisationReasons::Openai,
+        whoever_answers,
+    )
+}
+
 /// A run standing at the stage its first agent is working on, **and on the artifact that agent
 /// produces.**
 fn a_run_standing_at_the_stage_its_first_agent_is_working_on() -> WhereARunStands {
@@ -272,10 +283,9 @@ fn a_work_item_held_by_the_discovering_agent() -> aisdlc_domain::work_item::Work
     let the_id = aisdlc_domain::work_item_id::WorkItemId::try_from("WELLBEINGT-5").expect("a name");
     let who_asked =
         aisdlc_domain::who_commissioned::WhoCommissioned::try_from("a person").expect("a name");
-    let the_repository = aisdlc_domain::repository::Repository::try_from(
-        "steamnoid/wellbeing-tracker-public",
-    )
-    .expect("two halves");
+    let the_repository =
+        aisdlc_domain::repository::Repository::try_from("steamnoid/wellbeing-tracker-public")
+            .expect("two halves");
     let the_discipline = Role::try_from("PO").expect("a discipline");
     let the_agent = aisdlc_domain::agent_identifier::AgentIdentifier::try_from("aisdlc-discover")
         .expect("an agent name");

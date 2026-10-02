@@ -2225,6 +2225,35 @@ on purpose: **a run that named the stage and left the caller to guess the agent 
 orderings, and the second one would be the one the caller got right by accident.** `TheRunIsOver`
 names no agent, **because a run that is over is not held by anybody.**
 
+**`AWholeRunThatCouldNotBeHad`** — three refusals and three different things: nobody was asked for an
+artifact, a stage could not be worked for some other reason, and the walk refused to move the work.
+**A stage has no name of its own, so `AStageCouldNotBeWorked` carries the number counting from one**
+rather than a name a reader would have to look up.
+
+**`the_whole_of_a_run` walks one stage at a time and one walk per stage, and that is what keeps a
+refusal a decision.** The run asks its agent, asks its gate, and moves the work **before** the next
+agent is asked for anything — **a run that collected all seven rulings before walking any of them
+would have asked four agents about a work item a person had already refused.**
+
+**A walk of every ruling at once would also need all seven before the first**, which is the same
+defect in the other order, **and it is also the loop `a_run_is_walked_forward` already holds** — so
+walking one at a time is the same machinery with a different stopping rule.
+
+**A refusal that came from somewhere else keeps the type that refused it**: `TheWalkRefused` holds
+`AWalkThatWouldNotEnd`, **so a reader told "the walk refused" knows it was the routing and not a
+stage** — and those two send a reader to two different files.
+
+**`NobodyWasAskedFor` is the run's own fact and not the stage's, because the stage never began** —
+there is a place in the pipeline and no agent to fill it. **The artifact travels whole** because a
+caller that had to remember which one it was about would have to know the pipeline's order.
+
+**A run the delivery is holding has ended, and the test is the place rather than the agent's name** —
+**a name is a string and a place is the pipeline's own word for where it got to.**
+
+**The delivery is the end of this function and not an omission.** A delivery pushes a branch and opens
+a pull request, **and neither of those is a stage a person rules on** — so a whole run that also
+delivered would be asking somebody to approve a pull request that does not exist yet.
+
 **`a_stage_is_worked_and_ruled_on` is the three steps the walk does not do.** The walk takes a
 ruling per stage as an argument, **so it can walk a run whose seven artifacts do not exist** — this
 function asks the agent holding the work, presents it, and puts it to somebody. **It hands back only
