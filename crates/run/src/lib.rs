@@ -67,6 +67,7 @@ pub mod where_an_approved_artifact_leads;
 pub mod whether_a_model_rules_here;
 pub mod whether_an_agent_offers;
 pub mod whether_anything_stands_there;
+pub mod who_answers_the_gate;
 pub mod who_signs_a_comment;
 
 pub use the_path_inside_the_project::ThePathInsideTheProject;
