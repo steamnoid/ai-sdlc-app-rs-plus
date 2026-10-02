@@ -11,6 +11,7 @@
 
 use std::fmt;
 
+use aisdlc_domain::approval::AnArtifactVersion;
 use aisdlc_domain::approval::WhichArtifact;
 use aisdlc_domain::which_organisation_reasons::WhichOrganisationReasons;
 
@@ -31,6 +32,8 @@ use crate::{
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct WhatTheStageLeft {
     the_ruling_that_was_recorded: Option<aisdlc_domain::approval::Approval>,
+    what_the_agent_said: String,
+    which_version_was_produced: AnArtifactVersion,
 }
 
 impl WhatTheStageLeft {
@@ -43,6 +46,20 @@ impl WhatTheStageLeft {
     /// What was recorded at the gate, **and nothing when a person refused.**
     pub fn what_was_recorded(&self) -> Option<&aisdlc_domain::approval::Approval> {
         self.the_ruling_that_was_recorded.as_ref()
+    }
+
+    /// Exactly what the agent said, **and never a summary of it.**
+    ///
+    /// **A summary is prose nobody approved.** The gate rules on a document, **and a document that
+    /// is not the one the agent wrote is a document nobody has read** — so the words travel whole and
+    /// whoever writes them to disk writes what the agent said.
+    pub fn what_the_agent_said(&self) -> String {
+        self.what_the_agent_said.clone()
+    }
+
+    /// Which version of the artifact this production is, **and it is what the gate was asked about.**
+    pub fn which_version_was_produced(&self) -> AnArtifactVersion {
+        self.which_version_was_produced
     }
 }
 
@@ -102,18 +119,56 @@ pub fn a_stage_is_worked_and_ruled_on(
     who_reasoned: WhichOrganisationReasons,
     whoever_answers_the_gate: &mut impl APersonToDecide,
 ) -> Result<WhatTheStageLeft, AStageThatCouldNotBeWorked> {
-    let which_artifact = the_run
-        .which_artifact_it_is_on()
-        .ok_or(AStageThatCouldNotBeWorked::TheAgentCouldNotBeAsked {
-            which_artifact: WhichArtifact::try_from("DiscoveryReport")
-                .expect("a name is not blank"),
-            why_not: String::from("this run is on no artifact"),
-        })?
-        .clone();
-    the_agent_asked_the_model(a_model, the_run, &which_artifact, who_reasoned)?;
-    let presented = the_work_is_presented_for_a_ruling(the_run)
+    let which_artifact = the_artifact_this_run_is_on(the_run)?;
+    let what_the_agent_said =
+        the_agent_asked_the_model(a_model, the_run, &which_artifact, who_reasoned)?;
+    let which_version = the_version_this_production_is(the_run);
+    let produced = the_run_stands_on_what_was_just_produced(the_run, which_version);
+    let presented = the_work_is_presented_for_a_ruling(&produced)
         .map_err(|_refused| a_run_not_standing_where_a_gate_may_be_held())?;
-    the_question_is_asked_and_answered(&presented, &which_artifact, whoever_answers_the_gate)
+    the_question_is_asked_and_answered(
+        &presented,
+        &which_artifact,
+        which_version,
+        what_the_agent_said,
+        whoever_answers_the_gate,
+    )
+}
+
+/// The artifact this run is on, **and a run on none is refused by name rather than guessed at** —
+/// a stage asked for an artifact it was not on **is a stage asked to produce something the pipeline
+/// has no row for.**
+fn the_artifact_this_run_is_on(
+    the_run: &WhereARunStands,
+) -> Result<WhichArtifact, AStageThatCouldNotBeWorked> {
+    let on_one = the_run.which_artifact_it_is_on();
+    let on_one = on_one.ok_or(this_run_is_on_no_artifact())?;
+    Ok(on_one.clone())
+}
+
+/// The run saying it is on what was just produced, **and a run on no artifact is refused here rather
+/// than at the question** — the two are the same fact and the earlier one names the artifact.
+fn the_run_stands_on_what_was_just_produced(
+    the_run: &WhereARunStands,
+    which_version: AnArtifactVersion,
+) -> WhereARunStands {
+    the_run
+        .which_artifact_is_at(which_version)
+        .unwrap_or_else(|_no_version| the_run.clone())
+}
+
+/// The version this production is, **and it is one after an artifact nobody has produced and one more
+/// after the same one again.**
+///
+/// **A version counts within one artifact and not across the pipeline**, so a run whose `Requirements`
+/// reached version three and then moved on still produces `SecurityReport` at version one — **a
+/// requirements document at version eight would be a document nobody has seen seven of.** The run is
+/// asked rather than a list kept here, **because the run is the thing that knows which artifact it
+/// is on.**
+fn the_version_this_production_is(the_run: &WhereARunStands) -> AnArtifactVersion {
+    let the_last_one = the_run.which_version_of_its_artifact_exists();
+    let the_number = the_last_one.map_or(1, |the_last_one| the_last_one.0 + 1);
+    AnArtifactVersion::try_from(the_number).expect("a version at or above one")
 }
 
 /// The model is asked for the artifact, **and the answer is not kept here.**
@@ -143,12 +198,14 @@ fn the_agent_asked_the_model(
 fn the_question_is_asked_and_answered(
     the_presented: &WhereARunStands,
     which_artifact: &WhichArtifact,
+    which_version: AnArtifactVersion,
+    what_the_agent_said: String,
     whoever_answers_the_gate: &mut impl APersonToDecide,
 ) -> Result<WhatTheStageLeft, AStageThatCouldNotBeWorked> {
     let the_question = the_question_put_to_somebody(
         the_presented.the_work_item_it_is(),
         which_artifact,
-        the_version_this_stage_is_on(),
+        which_version,
     );
     let the_question =
         the_question.map_err(|_refused| a_run_not_standing_where_a_gate_may_be_held())?;
@@ -156,14 +213,18 @@ fn the_question_is_asked_and_answered(
         the_gate_records_what_the_human_decided(whoever_answers_the_gate, &the_question);
     Ok(WhatTheStageLeft {
         the_ruling_that_was_recorded: what_was_recorded.ok(),
+        what_the_agent_said,
+        which_version_was_produced: which_version,
     })
 }
 
-/// The version a stage is on, **and it is one because a stage that has never been revised has one
-/// version and not zero** — a gate that asked about version zero could not tell a fresh artifact
-/// from one that had been rewritten.
-fn the_version_this_stage_is_on() -> aisdlc_domain::approval::AnArtifactVersion {
-    aisdlc_domain::approval::AnArtifactVersion(1)
+/// The run is on no artifact, **and the refusal says so rather than naming a gate** — a run with
+/// nothing to version has nothing to approve either, **and the two are the same fact here.**
+fn this_run_is_on_no_artifact() -> AStageThatCouldNotBeWorked {
+    AStageThatCouldNotBeWorked::TheAgentCouldNotBeAsked {
+        which_artifact: WhichArtifact::try_from("DiscoveryReport").expect("a name is not blank"),
+        why_not: String::from("this run is on no artifact, so there is nothing to rule on"),
+    }
 }
 
 /// The question could not be put, **and the refusal names the gate rather than the stage.**

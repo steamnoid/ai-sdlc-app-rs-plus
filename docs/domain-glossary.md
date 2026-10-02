@@ -2225,6 +2225,27 @@ on purpose: **a run that named the stage and left the caller to guess the agent 
 orderings, and the second one would be the one the caller got right by accident.** `TheRunIsOver`
 names no agent, **because a run that is over is not held by anybody.**
 
+**`WhatTheStageLeft` carries what the agent said, and never a summary of it.** A summary is prose
+nobody approved: **the gate rules on a document, and a document that is not the one the agent wrote is
+a document nobody has read** — so the words travel whole and whoever writes them to disk writes what
+the agent said.
+
+**`the_version_this_production_is` counts within one artifact and not across the pipeline.** The run is
+asked rather than a list kept here, **because the run is the thing that knows which artifact it is
+on** — and a requirements document at version eight would be a document nobody has seen seven of.
+
+**`WhereARunStands::which_artifact_is_at` is not a move and does not go through `transition()`.** A
+version is not a stage, **and a work item does not move when an agent rewrites the document it is on**
+— routing it through the table **would make a rewrite look like a change of stage**, which is exactly
+what the version exists to distinguish. `AVersionThisRunCannotCarry` exists because a version on a run
+with nothing to version **is a claim about a document this repository does not hold.**
+
+**The only place a version is reset is `moved_onto`, and that is why a test cannot ask the question by
+setting a version.** A fixture that told a run it was on version seven of `DiscoveryReport` and then
+asserted a *different* artifact came back at version one **was answered eight, correctly** — it was
+the same artifact. **The fixture had to hand the work on, because that is the only thing that resets
+it.**
+
 **`AWholeRunThatCouldNotBeHad`** — three refusals and three different things: nobody was asked for an
 artifact, a stage could not be worked for some other reason, and the walk refused to move the work.
 **A stage has no name of its own, so `AStageCouldNotBeWorked` carries the number counting from one**

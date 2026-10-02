@@ -9,10 +9,35 @@
 //! opened a pull request.
 
 use aisdlc_domain::agent_identifier::AgentIdentifier;
-use aisdlc_domain::approval::WhichArtifact;
+use aisdlc_domain::approval::{AnArtifactVersion, WhichArtifact};
 use aisdlc_domain::stage::Stage;
 use aisdlc_domain::state_machine::{StateMachineError, transition};
 use aisdlc_domain::work_item::WorkItem;
+
+/// A run that cannot say which version of its artifact exists, **because it is on no artifact at
+/// all** — and a version on a run with nothing to version **is a claim about a document this
+/// repository does not hold.**
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct AVersionThisRunCannotCarry {
+    why: String,
+}
+
+impl AVersionThisRunCannotCarry {
+    /// Why this run cannot carry a version.
+    pub fn because(why: &str) -> Self {
+        Self {
+            why: why.to_string(),
+        }
+    }
+}
+
+impl std::fmt::Display for AVersionThisRunCannotCarry {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter.write_str(&self.why)
+    }
+}
+
+impl std::error::Error for AVersionThisRunCannotCarry {}
 
 /// Where a run stands, **and nothing about how it got there.**
 ///
@@ -23,6 +48,7 @@ use aisdlc_domain::work_item::WorkItem;
 pub struct WhereARunStands {
     the_work_item: WorkItem,
     which_artifact_it_is_on: Option<WhichArtifact>,
+    the_version_it_is_on: Option<AnArtifactVersion>,
 }
 
 impl WhereARunStands {
@@ -37,6 +63,7 @@ impl WhereARunStands {
             which_artifact_it_is_on: Some(
                 WhichArtifact::try_from(which_artifact).expect("a name is not blank"),
             ),
+            the_version_it_is_on: None,
         }
     }
 
@@ -45,7 +72,35 @@ impl WhereARunStands {
         Self {
             the_work_item,
             which_artifact_it_is_on: None,
+            the_version_it_is_on: None,
         }
+    }
+
+    /// This run saying which version of its artifact exists, **and it is not a move.**
+    ///
+    /// **A version is not a stage and this does not go through `transition()`** — a work item does
+    /// not move when an agent rewrites the document it is on, **and routing it through the table
+    /// would make a rewrite look like a change of stage**, which is exactly what the version exists
+    /// to distinguish.
+    pub fn which_artifact_is_at(
+        &self,
+        the_version: AnArtifactVersion,
+    ) -> Result<Self, AVersionThisRunCannotCarry> {
+        if self.which_artifact_it_is_on.is_none() {
+            return Err(AVersionThisRunCannotCarry::because(
+                "this run is on no artifact, so there is no version of it to carry",
+            ));
+        }
+        Ok(Self {
+            the_work_item: self.the_work_item.clone(),
+            which_artifact_it_is_on: self.which_artifact_it_is_on.clone(),
+            the_version_it_is_on: Some(the_version),
+        })
+    }
+
+    /// Which version of its artifact exists, **and `None` before the agent has produced one.**
+    pub fn which_version_of_its_artifact_exists(&self) -> Option<AnArtifactVersion> {
+        self.the_version_it_is_on
     }
 
     /// Which artifact this run is on, **and `None` before the first gate.**
@@ -88,6 +143,7 @@ impl WhereARunStands {
         Ok(Self {
             the_work_item: moved,
             which_artifact_it_is_on: self.which_artifact_it_is_on,
+            the_version_it_is_on: self.the_version_it_is_on,
         })
     }
 
@@ -109,6 +165,7 @@ impl WhereARunStands {
         Ok(Self {
             the_work_item: moved,
             which_artifact_it_is_on: Some(which_artifact_it_is_on),
+            the_version_it_is_on: None,
         })
     }
 }
