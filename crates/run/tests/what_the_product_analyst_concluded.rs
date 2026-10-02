@@ -58,15 +58,17 @@ fn requirements_naming_one_thing_may_be_shown_to_a_gate() {
 
 #[test]
 fn requirements_asking_for_nothing_are_refused() {
-    let the_refusal =
-        WhatTheProductAnalystConcluded {
-            requirements: vec![],
-            ambiguities: vec![],
-        }
-        .what_the_gate_may_be_shown();
+    let the_refusal = WhatTheProductAnalystConcluded {
+        requirements: vec![],
+        ambiguities: vec![],
+    }
+    .what_the_gate_may_be_shown();
 
     assert!(
-        matches!(the_refusal, Err(RequirementsThatAskForNothing)),
+        matches!(
+            &the_refusal,
+            Err(RequirementsThatAskForNothing::NothingWasAsked)
+        ),
         "**because an analysis that asked for nothing delivers nothing, and silence reaching a \
          gate carries the authority of a finished analysis** — a person cannot tell an empty \
          analysis from a real one by looking at it. What was refused: {the_refusal:?}"
@@ -126,8 +128,7 @@ fn an_ambiguity_the_code_can_answer_is_marked_as_such_and_not_as_a_person_s() {
         }],
     };
 
-    let only_a_person_can_settle = the_analyst_concluded
-        .the_ambiguities_only_a_person_can_settle();
+    let only_a_person_can_settle = the_analyst_concluded.the_ambiguities_only_a_person_can_settle();
 
     assert!(
         only_a_person_can_settle.is_empty(),
@@ -163,12 +164,10 @@ fn an_ambiguity_naming_nobody_to_ask_is_refused_before_a_gate_ever_sees_it() {
 
 #[test]
 fn a_requirement_nobody_could_check_is_named_by_a_refusal_of_its_own() {
-    let the_refusal = a_requirement_with_no_way_of_being_known_to_hold(
-        &ARequirement {
-            what_is_asked: String::from("the sidecar files are handled properly"),
-            how_it_is_known_to_hold: vec![],
-        },
-    );
+    let the_refusal = a_requirement_with_no_way_of_being_known_to_hold(&ARequirement {
+        what_is_asked: String::from("the sidecar files are handled properly"),
+        how_it_is_known_to_hold: vec![],
+    });
 
     assert_eq!(
         the_refusal.to_string(),
@@ -176,7 +175,6 @@ fn a_requirement_nobody_could_check_is_named_by_a_refusal_of_its_own() {
          requirement nobody could check is a wish delivered as a requirement",
         "**because the refusal quotes the requirement itself and not its position** — a person \
          reading this is told which of their words became unwatchable, and not which row of a \
-         list it was on. What it said: {}",
-        the_refusal
+         list it was on. What it said: {the_refusal}"
     );
 }
