@@ -2230,6 +2230,44 @@ artifact, a stage could not be worked for some other reason, and the walk refuse
 **A stage has no name of its own, so `AStageCouldNotBeWorked` carries the number counting from one**
 rather than a name a reader would have to look up.
 
+**`the_work_is_delivered_so_it_is_done` is the only edge into `DONE` and it comes from a gate.** The
+transition table has no edge from `IN_PROGRESS_BY_AGENT` into `DONE`, **so a delivery cannot finish a
+run by announcing itself** — it puts what it delivered to a person and the table's own edge carries
+the work home. **A refused delivery is left standing at the gate and does not reach `DONE`, and that
+asymmetry is the point**: a refused delivery happened and was not accepted, **and `DONE` says
+delivered**, so putting a refusal there would record a decision as a delivery.
+
+**A refusal and an absent gate both come back as `Err` from `the_gate_records_what_the_human_decided`,
+and telling them apart is the whole of `the_delivery_is_finished_because_of`.** The gate answers `Err`
+when no `Approval` was left behind, **and a refusal leaves no `Approval` because refusing is a
+decision and not a record** — so `Err` there means *the person said no*. **A gate that could not be
+asked at all is refused earlier, by `the_question_put_to_somebody`, so the two never reach the same
+line.**
+
+**`NotStandingAtTheGate` prints itself, and it did not until this cycle needed it to.** Every caller
+that kept this refusal had to flatten it to a `String` to write it down, **and a refusal a reader
+cannot read is a refusal a reader has to look up** — which is a place to send somebody rather than a
+thing to tell them.
+
+**`TheWorkCouldNotBePresented` and `TheQuestionCouldNotBeAsked` are two refusals and not one**,
+because the table refused a move and the gate refused a question — **and those two send a reader to
+two different files.**
+
+**`WhatADeliveryLeft` carries the branch, the pull request and the run, because a delivery is one
+fact about two things** — and splitting it would let a caller report a pushed branch as a delivery.
+`was_it_approved() == false` is **a delivery that happened and was not accepted, not a delivery that
+did not happen**, and those two read differently in a record.
+
+**`ADeliveryThatDidNotHappen` keeps the refusal that came from elsewhere**: `TheBranchDidNotGo` holds
+`WhyABranchDidNotGo` and `ThePullRequestDidNotOpen` holds `APullRequestWasNotOpened`, **so a reader
+told "the branch did not go" knows it was `git` and not the run.** `NotStandingAtTheDelivery` names
+the stage rather than the refused move, **because a reader told `AWAITING_AGENT_PICKUP may not be
+moved to DONE` would go looking for a fault in the table, and there is none.**
+
+**A test double's `did_it_work` is not a word count.** The first version answered a refusal with
+`did_it_work: true` and the words of the failure, **and the delivery pushed a branch `git` had
+already refused** — which is a delivery green on a branch that does not exist.
+
 **`the_whole_of_a_run` walks one stage at a time and one walk per stage, and that is what keeps a
 refusal a decision.** The run asks its agent, asks its gate, and moves the work **before** the next
 agent is asked for anything — **a run that collected all seven rulings before walking any of them

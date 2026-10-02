@@ -21,10 +21,8 @@ use aisdlc_run::a_program_we_run::{AProgramWeRun, WhatTheProgramSaid};
 use aisdlc_run::a_pull_request_is_opened::{
     APullRequestToOpen, the_request_a_run_makes_of_its_own_change,
 };
-use aisdlc_run::the_run_is_delivered::{
-    ADeliveryThatDidNotHappen, the_run_is_delivered,
-};
 use aisdlc_run::the_repository_to_clone_into::ARepositoryToClone;
+use aisdlc_run::the_run_is_delivered::{ADeliveryThatDidNotHappen, the_run_is_delivered};
 use aisdlc_run::what_we_tell_a_program_to_do::WhatWeTellAProgramToDo;
 use aisdlc_run::where_a_run_stands::WhereARunStands;
 use aisdlc_run::{APersonToDecide, ApprovalQuestion};
@@ -61,33 +59,38 @@ impl AProgramAnswering {
             refuses_the_pull_request: true,
         }
     }
-
-    fn refusing_nothing_but_telling_us_about_a_nothing() -> Self {
-        Self::answering_everything()
-    }
 }
 
 impl AProgramWeRun for AProgramAnswering {
+    /// **`did_it_work` and not a word count, because a program that failed still writes words** — and
+    /// a double that answered a refusal with a success flag was a delivery that pushed a branch `git`
+    /// had already refused.
     fn run(&self, what_it_is_asked_to_do: &WhatWeTellAProgramToDo) -> WhatTheProgramSaid {
-        WhatTheProgramSaid::of(true, &self.what_it_says_for(what_it_is_asked_to_do))
+        let (did_it_work, what_it_says) = self.what_it_says_for(what_it_is_asked_to_do);
+        WhatTheProgramSaid::of(did_it_work, &what_it_says)
     }
 }
 
 impl AProgramAnswering {
-    fn what_it_says_for(&self, what_it_is_asked_to_do: &WhatWeTellAProgramToDo) -> String {
+    fn what_it_says_for(&self, what_it_is_asked_to_do: &WhatWeTellAProgramToDo) -> (bool, String) {
         match what_it_is_asked_to_do {
-            WhatWeTellAProgramToDo::ReadTheRemote { .. } => String::new(),
+            WhatWeTellAProgramToDo::ReadTheRemote { .. } => (true, String::new()),
             WhatWeTellAProgramToDo::PushTheBranch { .. } if self.refuses_the_push => {
-                String::from("fatal: the remote end hung up")
+                (false, String::from("fatal: the remote end hung up"))
             }
-            WhatWeTellAProgramToDo::PushTheBranch { .. } => String::from("to ../remote.git"),
+            WhatWeTellAProgramToDo::PushTheBranch { .. } => {
+                (true, String::from("to ../remote.git"))
+            }
             WhatWeTellAProgramToDo::OpenAPullRequest { .. } if self.refuses_the_pull_request => {
-                String::from("gh: a pull request is not a filing")
+                (false, String::from("gh: a pull request is not a filing"))
             }
-            WhatWeTellAProgramToDo::OpenAPullRequest { .. } => String::from(
-                r#"{"number":17,"html_url":"https://github.com/steamnoid/wellbeing-tracker-public/pull/17"}"#,
+            WhatWeTellAProgramToDo::OpenAPullRequest { .. } => (
+                true,
+                String::from(
+                    r#"{"number":17,"html_url":"https://github.com/steamnoid/wellbeing-tracker-public/pull/17"}"#,
+                ),
             ),
-            every_other_request => format!("{every_other_request:?}"),
+            every_other_request => (true, format!("{every_other_request:?}")),
         }
     }
 }
@@ -150,15 +153,7 @@ fn a_delivery_pushes_the_branch_opens_the_pull_request_and_finishes_the_work_ite
     let the_program = AProgramAnswering::answering_everything();
     let mut whoever_answers = APersonWhoRules::who_approves();
 
-    let delivered = the_run_is_delivered(
-        &a_run_standing_at_the_delivery(),
-        &the_program,
-        &the_clone_the_change_was_made_in(),
-        &the_branch_this_run_pushes(),
-        &the_request_this_run_makes(),
-        Some(&a_credential()),
-        &mut whoever_answers,
-    );
+    let delivered = the_run_delivered_with(&the_program, &mut whoever_answers);
 
     assert_eq!(
         delivered
@@ -179,22 +174,16 @@ fn a_delivery_comes_back_with_the_number_and_the_address_github_composed() {
     let the_program = AProgramAnswering::answering_everything();
     let mut whoever_answers = APersonWhoRules::who_approves();
 
-    let delivered = the_run_is_delivered(
-        &a_run_standing_at_the_delivery(),
-        &the_program,
-        &the_clone_the_change_was_made_in(),
-        &the_branch_this_run_pushes(),
-        &the_request_this_run_makes(),
-        Some(&a_credential()),
-        &mut whoever_answers,
-    );
+    let delivered = the_run_delivered_with(&the_program, &mut whoever_answers);
 
     let where_it_answers = delivered
         .as_ref()
-        .map(|what| what.which_pull_request().where_it_answers());
+        .map(|what| what.which_pull_request().where_it_answers.clone());
     assert_eq!(
         where_it_answers,
-        Ok("https://github.com/steamnoid/wellbeing-tracker-public/pull/17"),
+        Ok(String::from(
+            "https://github.com/steamnoid/wellbeing-tracker-public/pull/17"
+        )),
         "**because a delivery that recorded an address it composed would record a link to a page \
          that does not exist** — which is the exact defect `CommissionedIssue` had and why \
          `AWhereItWasFiled` is the only door an address comes through. It answers at {where_it_answers:?}"
@@ -206,15 +195,7 @@ fn a_person_who_refuses_the_delivery_leaves_the_work_item_at_the_gate_and_not_fi
     let the_program = AProgramAnswering::answering_everything();
     let mut whoever_answers = APersonWhoRules::who_refuses();
 
-    let delivered = the_run_is_delivered(
-        &a_run_standing_at_the_delivery(),
-        &the_program,
-        &the_clone_the_change_was_made_in(),
-        &the_branch_this_run_pushes(),
-        &the_request_this_run_makes(),
-        Some(&a_credential()),
-        &mut whoever_answers,
-    );
+    let delivered = the_run_delivered_with(&the_program, &mut whoever_answers);
 
     let where_it_stands = delivered
         .as_ref()
@@ -227,7 +208,9 @@ fn a_person_who_refuses_the_delivery_leaves_the_work_item_at_the_gate_and_not_fi
          recorded as a delivery.** It stands at {where_it_stands:?}"
     );
     assert_eq!(
-        delivered.as_ref().ok().map(|what| what.was_it_approved()),
+        delivered
+            .as_ref()
+            .map(aisdlc_run::the_run_is_delivered::WhatADeliveryLeft::was_it_approved),
         Ok(false),
         "**because a refusal is a decision and a delivery that reported one as a yes is a run \
          approving its own work** — the one thing the gate exists to prevent. It said \
@@ -240,18 +223,13 @@ fn a_branch_that_did_not_go_leaves_the_work_item_where_it_was_and_opens_nothing(
     let the_program = AProgramAnswering::refusing_the_push();
     let mut whoever_answers = APersonWhoRules::who_approves();
 
-    let refused = the_run_is_delivered(
-        &a_run_standing_at_the_delivery(),
-        &the_program,
-        &the_clone_the_change_was_made_in(),
-        &the_branch_this_run_pushes(),
-        &the_request_this_run_makes(),
-        Some(&a_credential()),
-        &mut whoever_answers,
-    );
+    let refused = the_run_delivered_with(&the_program, &mut whoever_answers);
 
     assert!(
-        matches!(refused, Err(ADeliveryThatDidNotHappen::TheBranchDidNotGo { .. })),
+        matches!(
+            refused,
+            Err(ADeliveryThatDidNotHappen::TheBranchDidNotGo { .. })
+        ),
         "**because a branch that did not go is not a delivery** — and a run that moved on to the \
          pull request would be offering GitHub a head that does not exist. It refused: {refused:?}"
     );
@@ -269,15 +247,7 @@ fn a_pull_request_that_did_not_open_leaves_the_work_item_where_it_was() {
     let the_program = AProgramAnswering::refusing_the_pull_request();
     let mut whoever_answers = APersonWhoRules::who_approves();
 
-    let refused = the_run_is_delivered(
-        &a_run_standing_at_the_delivery(),
-        &the_program,
-        &the_clone_the_change_was_made_in(),
-        &the_branch_this_run_pushes(),
-        &the_request_this_run_makes(),
-        Some(&a_credential()),
-        &mut whoever_answers,
-    );
+    let refused = the_run_delivered_with(&the_program, &mut whoever_answers);
 
     assert!(
         matches!(
@@ -293,29 +263,60 @@ fn a_pull_request_that_did_not_open_leaves_the_work_item_where_it_was() {
 fn a_run_standing_nowhere_near_the_delivery_is_refused_rather_than_delivered() {
     let the_program = AProgramAnswering::answering_everything();
     let mut whoever_answers = APersonWhoRules::who_approves();
-    let not_at_the_delivery = WhereARunStands::before_anything(
-        a_work_item_nobody_holds(Stage::AwaitingAgentPickup),
-    );
+    let (the_id, who_asked, the_repository, the_discipline) = the_four_facts();
+    let at_a_gate = aisdlc_domain::work_item::WorkItem::standing_at(
+        the_id,
+        who_asked,
+        the_repository,
+        the_discipline,
+        Stage::AwaitingHumanApproval,
+    )
+    .expect("a gate holds no agent, and a work item answering a request may stand there");
+    let not_at_the_delivery = WhereARunStands::before_anything(at_a_gate);
 
-    let refused = the_run_is_delivered(
-        &not_at_the_delivery,
-        &the_program,
-        &the_clone_the_change_was_made_in(),
-        &the_branch_this_run_pushes(),
-        &the_request_this_run_makes(),
-        Some(&a_credential()),
-        &mut whoever_answers,
-    );
+    let refused =
+        the_run_delivered_from_with(&not_at_the_delivery, &the_program, &mut whoever_answers);
 
     assert!(
         matches!(
             refused,
             Err(ADeliveryThatDidNotHappen::NotStandingAtTheDelivery { .. })
         ),
-        "**because a work item at a pickup belongs to an agent and not to a delivery** — and \
-         pushing a branch for work nobody has verified **is how a repository ends up with branches \
-         nobody can account for.** It refused: {refused:?}"
+        "**because a work item at a gate belongs to a person and not to a delivery** — and pushing \
+         a branch for work nobody has verified **is how a repository ends up with branches nobody \
+         can account for.** It refused: {refused:?}"
     );
+}
+
+/// A delivery made from the run standing at the delivery, **and it is one call so four of the six
+/// tests are about their own arrangement and not about the order of seven arguments.**
+fn the_run_delivered_with(
+    the_program: &AProgramAnswering,
+    whoever_answers: &mut APersonWhoRules,
+) -> Result<aisdlc_run::the_run_is_delivered::WhatADeliveryLeft, ADeliveryThatDidNotHappen> {
+    the_run_delivered_from_with(
+        &a_run_standing_at_the_delivery(),
+        the_program,
+        whoever_answers,
+    )
+}
+
+/// A delivery made from whatever run it is given, **and the run is an argument because one test
+/// delivers from a run that is standing somewhere else entirely.**
+fn the_run_delivered_from_with(
+    the_run: &WhereARunStands,
+    the_program: &AProgramAnswering,
+    whoever_answers: &mut APersonWhoRules,
+) -> Result<aisdlc_run::the_run_is_delivered::WhatADeliveryLeft, ADeliveryThatDidNotHappen> {
+    the_run_is_delivered(
+        the_run,
+        the_program,
+        &the_clone_the_change_was_made_in(),
+        &the_branch_this_run_pushes(),
+        &the_request_this_run_makes(),
+        Some(&a_credential()),
+        whoever_answers,
+    )
 }
 
 /// The branch this run pushes, **and it is the run's own name for it.**
@@ -353,32 +354,18 @@ fn a_run_standing_at_the_delivery() -> WhereARunStands {
     WhereARunStands::at_the_first_stage(the_work_item, "VerificationReport")
 }
 
-/// A work item nobody holds, **and only the stages that allow it will build one.**
-fn a_work_item_nobody_holds(
-    where_it_stands: Stage,
-) -> aisdlc_domain::work_item::WorkItem {
-    let (the_id, who_asked, the_repository, the_discipline) = the_four_facts();
-    aisdlc_domain::work_item::WorkItem::standing_at(
-        the_id,
-        who_asked,
-        the_repository,
-        the_discipline,
-        where_it_stands,
-    )
-    .expect("a work item answering a request can stand where it is put")
-}
-
 fn the_four_facts() -> (
     aisdlc_domain::work_item_id::WorkItemId,
     aisdlc_domain::who_commissioned::WhoCommissioned,
     Repository,
     aisdlc_domain::role::Role,
 ) {
-    let the_id = aisdlc_domain::work_item_id::WorkItemId::try_from("WELLBEINGT-42").expect("a name");
+    let the_id =
+        aisdlc_domain::work_item_id::WorkItemId::try_from("WELLBEINGT-42").expect("a name");
     let who_asked =
         aisdlc_domain::who_commissioned::WhoCommissioned::try_from("a person").expect("a name");
-    let the_repository = Repository::try_from("steamnoid/wellbeing-tracker-public")
-        .expect("two halves");
+    let the_repository =
+        Repository::try_from("steamnoid/wellbeing-tracker-public").expect("two halves");
     let the_discipline = aisdlc_domain::role::Role::try_from("DEV").expect("a discipline");
     (the_id, who_asked, the_repository, the_discipline)
 }
