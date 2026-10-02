@@ -1825,6 +1825,28 @@ different facts**:
   unproved half is the half nobody will notice**: the scenarios all pass, the run reports green,
   and the requirement the plan forgot to check is the one that was never checked.
 
+**`WhatTheArchitectureIs`** — the `ArchitectureReport`: `modules` and `how_the_whole_is_put_
+together`. **Both, and not the sentence alone**, because a paragraph about how the whole is put
+together **is not a list anybody can plan against** — and it is also the shape a model answers in
+when nothing holds it to a list, **so the refusal is the fix and not a longer prompt.**
+
+**`AModule`** — `what_it_is_called`, `what_it_is_for`, `what_it_depends_on`. **A module named
+without a purpose is a filename**, and this system's naming rule says the same thing about code:
+**a name that does not say what the thing is is a name nobody can hold to.**
+
+**A claimed dependency the manifests do not declare is the worst thing in this artifact.** A
+module saying it depends on something the project never asked for is **a run planning a change
+against an architecture that does not exist** — and it is the failure the architecture tier already
+measured against a real model on a real repository, **and measured _passing_.** A model asked
+whether a dependency is real will answer yes, **so `the_dependencies_the_manifests_declare` is a
+comparison against the words the manifests say and not a judgement** — a manifest either names a
+crate or it does not.
+
+**`NoArchitectureWasDescribed`** — three refusals: no module named, a module named only, and a
+dependency no manifest declares. **And the check that refuses nothing is a fault of its own**: this
+repository's own history is six real runs spent on a run that refused everything it was asked to
+do, **so a gate has to be able to see this check pass.**
+
 **`TheModelRefused`** — one refusal naming the artifact and the field. A run asks eight
 agents for eight different artifacts, so *"the shape was wrong"* without saying which is a
 question rather than a diagnosis.

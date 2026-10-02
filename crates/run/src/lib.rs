@@ -52,6 +52,7 @@ pub mod what_an_agent_judged;
 pub mod what_an_agent_offered;
 pub mod what_discovery_concluded;
 pub mod what_the_agent_presents;
+pub mod what_the_architecture_is;
 pub mod what_the_product_analyst_concluded;
 pub mod what_this_filing_is_about;
 pub mod what_we_tell_a_program_to_do;
