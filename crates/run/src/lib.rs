@@ -65,6 +65,7 @@ pub mod what_to_do_around_a_conflict;
 pub mod what_to_repeat;
 pub mod what_we_tell_a_program_to_do;
 pub mod what_would_prove_the_work;
+pub mod where_a_run_stands;
 pub mod where_an_approved_artifact_leads;
 pub mod whether_a_model_rules_here;
 pub mod whether_an_agent_offers;
