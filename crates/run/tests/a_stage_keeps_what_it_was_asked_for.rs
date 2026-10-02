@@ -118,12 +118,16 @@ fn the_first_thing_a_stage_produces_is_version_one_of_its_artifact() {
     let worked = the_stage_worked_with(&mut a_model, &mut APersonWhoApproves::approving());
 
     assert_eq!(
-        worked.as_ref().map(|left| left.which_version_was_produced().0),
+        worked
+            .as_ref()
+            .map(|left| left.which_version_was_produced().0),
         Ok(1),
         "**because a version counts from one and a stage that has never been revised has one \
          version and not zero** — a gate asked about version zero could not tell a fresh artifact \
          from one that had been rewritten. It produced {:?}",
-        worked.as_ref().map(|left| left.which_version_was_produced().0)
+        worked
+            .as_ref()
+            .map(|left| left.which_version_was_produced().0)
     );
 }
 
@@ -133,20 +137,17 @@ fn the_same_artifact_produced_again_is_a_later_version_and_the_gate_is_asked_abo
     let mut whoever_answers = APersonWhoApproves::approving();
     let the_run = a_run_on_this_artifact_at_version(1);
 
-    let worked = a_stage_is_worked_and_ruled_on(
-        &the_run,
-        &mut a_model,
-        WhichOrganisationReasons::Openai,
-        &mut whoever_answers,
-    );
+    let worked = the_stage_worked_with_this_run(&the_run, &mut a_model, &mut whoever_answers);
+    let the_version = worked
+        .as_ref()
+        .map(|left| left.which_version_was_produced().0);
 
     assert_eq!(
-        worked.as_ref().map(|left| left.which_version_was_produced().0),
+        the_version,
         Ok(2),
         "**because the second document is not the first document** — and an approval naming version \
          one standing in for version two **is an approval a person never gave.** It produced \
-         version {:?}",
-        worked.as_ref().map(|left| left.which_version_was_produced().0)
+         version {the_version:?}"
     );
     assert_eq!(
         whoever_answers.asked_about(),
@@ -161,7 +162,7 @@ fn the_same_artifact_produced_again_is_a_later_version_and_the_gate_is_asked_abo
 #[test]
 fn a_different_artifact_is_version_one_whatever_happened_to_the_last_one() {
     let mut a_model = AModelAnsweringWith::saying("the requirements");
-    let the_run = a_run_on_this_artifact_at_version(7);
+    let the_run = a_run_handed_to_the_next_artifact();
 
     let worked = the_stage_worked_with_this_run(
         &the_run,
@@ -170,13 +171,43 @@ fn a_different_artifact_is_version_one_whatever_happened_to_the_last_one() {
     );
 
     assert_eq!(
-        worked.as_ref().map(|left| left.which_version_was_produced().0),
+        worked
+            .as_ref()
+            .map(|left| left.which_version_was_produced().0),
         Ok(1),
         "**because a version counts within one artifact and not across the pipeline** — a \
          requirements document at version eight would be a document nobody has seen seven of. It \
          produced version {:?}",
-        worked.as_ref().map(|left| left.which_version_was_produced().0)
+        worked
+            .as_ref()
+            .map(|left| left.which_version_was_produced().0)
     );
+}
+
+/// A run handed on to the next artifact the way a run hands work on, **and the version it carries is
+/// the one the move gave it — which is none.**
+///
+/// **The fixture this replaces was wrong in a way worth recording.** It told the run it was on
+/// version seven of `DiscoveryReport` and then asserted that a *different* artifact came back at
+/// version one — **and the code answered eight, correctly**, because it was the same artifact. The
+/// only place a version is reset is the run's own move onto a different one, **so that is what the
+/// fixture has to do to ask the question at all.**
+fn a_run_handed_to_the_next_artifact() -> WhereARunStands {
+    let on_the_first_artifact = a_run_on_this_artifact_at_version(7);
+    let the_product_analyst =
+        aisdlc_domain::agent_identifier::AgentIdentifier::try_from("aisdlc-po-analyze")
+            .expect("an agent name");
+    let handed_on = aisdlc_run::where_a_run_stands::the_work_is_handed_to_the_next_agent(
+        &on_the_first_artifact,
+        the_product_analyst.clone(),
+        aisdlc_domain::approval::WhichArtifact::try_from("Requirements").expect("a name"),
+    );
+    let at_a_pickup = handed_on.expect("the run may hand its work to the next stage");
+    let picked_up = aisdlc_run::where_a_run_stands::the_work_is_handed_to_an_agent(
+        &at_a_pickup,
+        the_product_analyst,
+    );
+    picked_up.expect("the next agent may pick the work up")
 }
 
 #[test]
@@ -198,7 +229,8 @@ fn an_agent_that_could_not_be_reached_leaves_no_document_and_no_version() {
 fn the_stage_worked_with(
     a_model: &mut AModelAnsweringWith,
     whoever_answers: &mut APersonWhoApproves,
-) -> Result<WhatTheStageLeft, aisdlc_run::a_stage_is_worked_and_ruled_on::AStageThatCouldNotBeWorked> {
+) -> Result<WhatTheStageLeft, aisdlc_run::a_stage_is_worked_and_ruled_on::AStageThatCouldNotBeWorked>
+{
     the_stage_worked_with_this_run(
         &a_run_on_this_artifact_at_version(0),
         a_model,
@@ -212,7 +244,8 @@ fn the_stage_worked_with_this_run(
     the_run: &WhereARunStands,
     a_model: &mut AModelAnsweringWith,
     whoever_answers: &mut APersonWhoApproves,
-) -> Result<WhatTheStageLeft, aisdlc_run::a_stage_is_worked_and_ruled_on::AStageThatCouldNotBeWorked> {
+) -> Result<WhatTheStageLeft, aisdlc_run::a_stage_is_worked_and_ruled_on::AStageThatCouldNotBeWorked>
+{
     a_stage_is_worked_and_ruled_on(
         the_run,
         a_model,
@@ -238,7 +271,8 @@ fn a_run_on_this_artifact_at_version(the_version: u32) -> WhereARunStands {
     }
     let the_version =
         aisdlc_domain::approval::AnArtifactVersion::try_from(the_version).expect("a version");
-    the_run.which_artifact_is_at(the_version)
+    the_run
+        .which_artifact_is_at(the_version)
         .expect("the run may say which version of its artifact exists")
 }
 
@@ -247,10 +281,9 @@ fn a_work_item_held_by_the_discovering_agent() -> aisdlc_domain::work_item::Work
     let the_id = aisdlc_domain::work_item_id::WorkItemId::try_from("WELLBEINGT-5").expect("a name");
     let who_asked =
         aisdlc_domain::who_commissioned::WhoCommissioned::try_from("a person").expect("a name");
-    let the_repository = aisdlc_domain::repository::Repository::try_from(
-        "steamnoid/wellbeing-tracker-public",
-    )
-    .expect("two halves");
+    let the_repository =
+        aisdlc_domain::repository::Repository::try_from("steamnoid/wellbeing-tracker-public")
+            .expect("two halves");
     let the_discipline = Role::try_from("PO").expect("a discipline");
     let the_agent = aisdlc_domain::agent_identifier::AgentIdentifier::try_from("aisdlc-discover")
         .expect("an agent name");
