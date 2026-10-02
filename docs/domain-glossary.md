@@ -2060,6 +2060,30 @@ invalid JSON body. **A place written with surrounding whitespace is still the pl
 model that indents its answer has not answered differently, **and refusing it would send a
 correction that comes back with the same spacing.**
 
+**`HowManyTimesARunMayBePutBack`** — **defaults to a number and never to _unlimited_.** A ceiling
+nobody noticed and an answer nobody asked for **are the same failure wearing different names.**
+`ABudgetThatIsNotANumber` refuses a setting that cannot be read, **because a setting nobody can read
+is a setting nobody is watching** and the alternative is a run that never stops and a deployment that
+believes it set something.
+
+**`is_this_repeat_permitted` is inside while the repetition is at or below the budget, and a check
+refused at `>=` would buy one fewer repair than a deployment asked for and would not say so.**
+**`ARepeatThatWasNotPermitted`** is the one refusal it answers, and `TheRepeatBudgetRanOut`
+carries **both** numbers, **because *ran out* is
+only useful to a reader who can see what was asked for.**
+
+**`TheRepairCouldNotHappen`** — three refusals, and **two of them are about different things and
+must stay different values**:
+
+- **`ThereIsNoSupervisorForThisRun`** — **a default that refuses is loud when it runs and silent
+  until then**, and this repository's history has a real run that reached a supervisor twenty
+  minutes in, found the field empty, and delivered nothing. **The refusal names the field.**
+- **`TheSupervisorJudgedThisIsNotRepairing`** — carries the model's own sentence, **because a
+  refusal that does not carry its reason is a refusal nobody can argue with or check.**
+- **`TheRepeatBudgetRanOut`** — **a fact about the setting and not about the model.** A run that
+  reported both this and a judgement as *the repair failed* **sends whoever reads the trace after the
+  wrong one**, and the test asserts they are distinct values rather than that both are errors.
+
 **`TheModelRefused`** — one refusal naming the artifact and the field. A run asks eight
 agents for eight different artifacts, so *"the shape was wrong"* without saying which is a
 question rather than a diagnosis.
