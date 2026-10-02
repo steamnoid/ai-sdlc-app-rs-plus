@@ -2027,6 +2027,39 @@ shown a fixed set of strings in a tool's shape answers with something outside it
 that does not repeat the answers does not help: the answer is refused, the correction is sent, and
 the same sentence comes back.**
 
+**`WhatToRepeat`** — `what_each_agent_must_do`, `where_the_run_starts_again`, and
+`what_has_not_changed`. **One verdict per agent and no default**, because **an agent the model left
+out is a missing verdict rather than a stage that quietly does not run** — and a stage that quietly
+does not run is the failure this mechanism exists to prevent. **Two verdicts for one agent is
+refused too**, because the second would silently win and the first would become a record of
+something that never happened.
+
+**`TheVerdict`** — `who_must_act`, `what_they_must_do` and `why_the_last_time_was_not_enough`.
+**The third field is the sentence that stops a loop**, and it is a field rather than something
+derived because **only the model knows which of its own reasons did not work.**
+
+**`WhereTheRunShouldStartAgain` is two places and not five, on purpose.** The four analysts are
+deliberately absent: **nothing observed so far has said the requirements, the scenarios, the
+architecture or the risk were wrong, and a route back past four gates on a guess is not a repair.**
+`TheChangeIsWrittenAgain` is what a red suite after the change is; `TheChangeIsPlannedAgain` is what
+a vacuous test is.
+
+**`the_agent_asked_to_do_it_again` is a literal and never read out of the model.** This is the whole
+of *"the model decides, the code routes"* — the answer names one of two places, **and this table is
+what sends the work, because a value read out of the model would be a model choosing its own
+destination, which is the one thing in this pipeline declared as code rather than reasoned about.**
+
+**`what_has_not_changed` may not be blank**, because a supervisor that cannot say what has not
+changed **will put the same agent back to work for ever**, and that sentence is the only thing
+telling the model whether another turn is worth anything.
+
+**`AStageNobodyMayRestartFrom`** — four refusals. **`NoSuchPlaceToStartAgain` carries the set it
+would have accepted**, because a model told its answer was wrong and not told what the answers are
+**will send the same sentence again** — which this repository paid for three times over with an
+invalid JSON body. **A place written with surrounding whitespace is still the place**, because a
+model that indents its answer has not answered differently, **and refusing it would send a
+correction that comes back with the same spacing.**
+
 **`TheModelRefused`** — one refusal naming the artifact and the field. A run asks eight
 agents for eight different artifacts, so *"the shape was wrong"* without saying which is a
 question rather than a diagnosis.

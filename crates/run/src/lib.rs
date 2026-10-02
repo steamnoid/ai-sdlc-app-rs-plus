@@ -59,6 +59,7 @@ pub mod what_the_architecture_is;
 pub mod what_the_product_analyst_concluded;
 pub mod what_this_filing_is_about;
 pub mod what_to_do_around_a_conflict;
+pub mod what_to_repeat;
 pub mod what_we_tell_a_program_to_do;
 pub mod what_would_prove_the_work;
 pub mod where_an_approved_artifact_leads;
