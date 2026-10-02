@@ -57,6 +57,13 @@ pub enum WhatWeTellAProgramToDo {
         of_which_repository: Repository,
     },
 
+    /// Ask GitHub to open a pull request, **and change something in a repository.**
+    OpenAPullRequest {
+        /// Where the request goes, which is the repository the code was written in.
+        where_it_goes: String,
+        /// The request, built by the JSON library and never by a hand.
+        the_body: String,
+    },
     /// Read the remote, and change nothing.
     ReadTheRemote {
         /// Which clone's remote, which is the only remote this system has.
@@ -138,7 +145,16 @@ impl WhatWeTellAProgramToDo {
             WhatWeTellAProgramToDo::ReadTheFiling { which_filing } => {
                 which_filing.which_issue().to_string()
             }
+            WhatWeTellAProgramToDo::OpenAPullRequest { where_it_goes, .. } => where_it_goes.clone(),
             _ => String::new(),
+        }
+    }
+
+    /// Ask GitHub to open a pull request, **and carry the credential as one argument.**
+    pub fn open_a_pull_request(where_it_goes: &str, the_body: &str) -> Self {
+        WhatWeTellAProgramToDo::OpenAPullRequest {
+            where_it_goes: where_it_goes.to_string(),
+            the_body: the_body.to_string(),
         }
     }
 
@@ -158,12 +174,22 @@ impl WhatWeTellAProgramToDo {
         }
     }
 
-    /// Whether this request moves the remote, **and the reading is the one that does not.**
+    /// Whether this request moves a repository, **and the readings are the ones that do not.**
     ///
     /// **Asked as a property because that is the rule:** `ls-remote` is read before anything is
-    /// pushed, which is the only reason a refusal can happen before a push has landed.
+    /// pushed, which is the only reason a refusal can happen before a push has landed — **and
+    /// opening a pull request is a change a repository can refuse for a reason of its own.**
     pub fn does_this_change_the_remote(&self) -> bool {
-        matches!(self, WhatWeTellAProgramToDo::PushTheBranch { .. })
+        matches!(
+            self,
+            WhatWeTellAProgramToDo::PushTheBranch { .. }
+                | WhatWeTellAProgramToDo::OpenAPullRequest { .. }
+        )
+    }
+
+    /// Whether this request is answered over HTTPS, **and a pull request and a filing are.**
+    pub fn is_answered_by_github_over_https(&self) -> bool {
+        matches!(self, WhatWeTellAProgramToDo::OpenAPullRequest { .. })
     }
 
     /// The branch this request is about, **for a request that is about one branch.**
@@ -235,6 +261,7 @@ impl WhatWeTellAProgramToDo {
     pub fn what_it_is_asked_about(&self) -> &str {
         match self {
             WhatWeTellAProgramToDo::AskAModel { the_body, .. } => the_body,
+            WhatWeTellAProgramToDo::OpenAPullRequest { the_body, .. } => the_body,
             _ => "",
         }
     }
@@ -276,6 +303,7 @@ impl WhatWeTellAProgramToDo {
             | WhatWeTellAProgramToDo::PushTheBranch { the_clone_of, .. } => Some(the_clone_of),
             WhatWeTellAProgramToDo::ListTheFilingsAlreadyOnFile { .. } => None,
             WhatWeTellAProgramToDo::AskAModel { .. }
+            | WhatWeTellAProgramToDo::OpenAPullRequest { .. }
             | WhatWeTellAProgramToDo::ReadTheFiling { .. } => None,
         }
     }
@@ -323,6 +351,7 @@ impl WhatWeTellAProgramToDo {
             | WhatWeTellAProgramToDo::AskAModel { .. }
             | WhatWeTellAProgramToDo::ReadTheRemote { .. }
             | WhatWeTellAProgramToDo::PushTheBranch { .. }
+            | WhatWeTellAProgramToDo::OpenAPullRequest { .. }
             | WhatWeTellAProgramToDo::ReadTheFiling { .. }
             | WhatWeTellAProgramToDo::ListTheFilingsAlreadyOnFile { .. } => None,
         }

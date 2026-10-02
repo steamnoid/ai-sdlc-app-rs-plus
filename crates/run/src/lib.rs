@@ -25,6 +25,7 @@ pub mod a_model_is_asked_for_an_artifact;
 pub mod a_model_is_asked_how_it_rules;
 pub mod a_path_in_the_project;
 pub mod a_program_we_run;
+pub mod a_pull_request_is_opened;
 pub mod a_ruling_is_recorded;
 pub mod a_ruling_moves_the_work;
 pub mod a_run_asks_what_is_in_its_own_checkout;

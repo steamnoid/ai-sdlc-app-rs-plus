@@ -78,7 +78,8 @@ impl TheProgramAsItRuns {
         what_it_is_asked_to_do: &WhatWeTellAProgramToDo,
     ) -> WhichProgramWeRun {
         match what_it_is_asked_to_do {
-            WhatWeTellAProgramToDo::AskAModel { .. } => WhichProgramWeRun::Curl,
+            WhatWeTellAProgramToDo::AskAModel { .. }
+            | WhatWeTellAProgramToDo::OpenAPullRequest { .. } => WhichProgramWeRun::Curl,
             _ => self.which_program,
         }
     }
@@ -99,6 +100,10 @@ impl TheProgramAsItRuns {
                 the_body,
                 ..
             } => self.asked_a_model_of(the_endpoint, the_body),
+            WhatWeTellAProgramToDo::OpenAPullRequest {
+                where_it_goes,
+                the_body,
+            } => self.asked_of_the_api(where_it_goes, the_body),
             _ => what_git_is_asked_for(what_it_is_asked_to_do),
         }
     }
@@ -217,24 +222,63 @@ impl TheProgramAsItRuns {
     /// unauthenticated comes back in words this system did not write, and **the one fact a caller
     /// can usefully be given is that nothing left.**
     fn asked_a_model_of(&self, the_endpoint: &str, the_body: &str) -> Vec<String> {
-        let Some(the_credential) = self.the_credential.as_ref() else {
+        self.asked_over_https_of(the_endpoint, the_body, &["-s"])
+    }
+
+    /// The arguments a request to the API is run with, **and they are not the model's.**
+    ///
+    /// **`-f` and not the model's arguments, because only a `2xx` is a pull request** and
+    /// `curl` without it writes a `422` body and returns zero. **A run that read a number out of
+    /// a refusal page would be recording a delivery at a link to nothing** — and the rule this
+    /// repository already follows for a file is the same one, read the other way round.
+    fn asked_of_the_api(&self, where_it_goes: &str, the_body: &str) -> Vec<String> {
+        self.asked_over_https_of(where_it_goes, the_body, &["-s", "-f"])
+    }
+
+    /// The arguments any request over HTTPS is run with, **and the credential is one of them.**
+    ///
+    /// **A list and not a `String`,** because a formatted command line is a shell's opinion
+    /// about what it means and there is no shell here to have that opinion.
+    fn asked_over_https_of(
+        &self,
+        where_it_goes: &str,
+        the_body: &str,
+        the_flags: &[&str],
+    ) -> Vec<String> {
+        let Some(the_authorization) = self.the_authorization_for_a_request() else {
             return Vec::new();
         };
-        let the_authorization = format!(
-            "Authorization: Bearer {}",
-            the_credential.the_key_to_authenticate_with()
-        );
-        let mut the_arguments = vec!["-s", "-X", "POST", the_endpoint, "-H"];
-        the_arguments.push("Content-Type: application/json");
-        the_arguments.push("-H");
-        the_arguments.push(&the_authorization);
+        let mut the_arguments: Vec<String> =
+            the_flags.iter().map(|one| (*one).to_string()).collect();
+        the_arguments.extend(["-X", "POST", where_it_goes].map(str::to_string));
+        let the_headers = ["Content-Type: application/json", "-H", &the_authorization];
+        the_arguments.extend(the_headers.map(str::to_string));
+        self.each_header_a_deployment_named_into(&mut the_arguments);
+        the_arguments.push(String::from("-d"));
+        the_arguments.push(the_body.to_string());
+        the_arguments
+    }
+
+    /// The header carrying the credential, **or nothing at all when there is no credential.**
+    ///
+    /// **`None` and not an empty `Authorization: Bearer `, because that is a claim about the
+    /// caller that is false** and a host may answer it differently from a request that makes no
+    /// claim at all.
+    fn the_authorization_for_a_request(&self) -> Option<String> {
+        let the_credential = self.the_credential.as_ref()?;
+        let the_key = the_credential.the_key_to_authenticate_with();
+        Some(format!("Authorization: Bearer {the_key}"))
+    }
+
+    /// Every header a deployment named, **each one whole and beside its own `-H`.**
+    ///
+    /// **A header is a name and a value and not two arguments** — and a name split from its
+    /// value is a header `curl` will send to a host it was not addressed to.
+    fn each_header_a_deployment_named_into(&self, the_arguments: &mut Vec<String>) {
         for one_header in &self.what_a_deployment_named_besides {
-            the_arguments.push("-H");
-            the_arguments.push(one_header);
+            the_arguments.push(String::from("-H"));
+            the_arguments.push(one_header.clone());
         }
-        the_arguments.push("-d");
-        the_arguments.push(the_body);
-        the_arguments.into_iter().map(str::to_string).collect()
     }
 }
 
