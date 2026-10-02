@@ -148,3 +148,64 @@ impl aisdlc_run::a_program_we_run::AProgramWeRun for AProgramThatAnswers {
         aisdlc_run::a_program_we_run::WhatTheProgramSaid::of(true, &self.0)
     }
 }
+
+/// A model that answers with fixed words, and is not a program at all.
+///
+/// **It hands over the content and not an envelope, and that is the assertion inside the
+/// double.** A path that unwrapped an envelope itself would be handed something that is
+/// not one and would refuse — so this double cannot be used by code that reads the far
+/// end's own wrapping, which is the half this cycle removes.
+struct AModelThatSays {
+    what_it_would_say: String,
+    how_many_times_it_was_asked: std::cell::RefCell<usize>,
+}
+
+impl AModelThatSays {
+    /// A model that will say this, whenever it is asked.
+    fn saying(what_it_would_say: &str) -> Self {
+        Self {
+            what_it_would_say: what_it_would_say.to_string(),
+            how_many_times_it_was_asked: std::cell::RefCell::new(0),
+        }
+    }
+}
+
+impl aisdlc_run::AReasoningModel for AModelThatSays {
+    fn what_it_says_when_asked_for(
+        &mut self,
+        _which_artifact: &aisdlc_domain::approval::WhichArtifact,
+        _which_organisation: aisdlc_domain::which_organisation_reasons::WhichOrganisationReasons,
+        _the_question: &str,
+    ) -> Result<
+        String,
+        aisdlc_run::the_words_inside_the_endpoints_envelope::AnAnswerNobodyCanRead,
+    > {
+        *self.how_many_times_it_was_asked.borrow_mut() += 1;
+        Ok(self.what_it_would_say.clone())
+    }
+}
+
+#[test]
+fn a_model_that_is_not_a_program_is_asked_what_it_would_file() {
+    let its_content = r#"{"offers":[{"title":"an offer path is never checked","what_it_asks_for":"compare each cited path with the listing","paths":["crates/run/src/what_an_agent_offered.rs"]}],"what_it_found":"nothing compares the paths","what_it_could_not_settle":"nothing","what_it_expects_next":"add the comparison"}"#;
+    let mut the_model = AModelThatSays::saying(its_content);
+
+    let what_was_offered = an_agent_is_asked_what_it_would_file(
+        &mut the_model,
+        &aisdlc_run::the_filings_already_on_file::TheFilingsAlreadyOnFile::none_yet(),
+        &the_repository_it_read(),
+        &what_the_run_actually_saw(),
+    )
+    .expect("an answer in the shape it was asked for, grounded in the listing");
+
+    assert_eq!(
+        (what_was_offered.offers.len(), *the_model.how_many_times_it_was_asked.borrow()),
+        (1, 1),
+        "**because a model asked through a program is a model asked through the wrong door** — the \
+         port exists, `TheModelAsItIsAsked` answers it, and this use case still takes a program and \
+         a `WhereAModelIs` and unwraps the envelope itself **twice**: once for the offers and once \
+         for the three judgements. A double that hands over content and not an envelope cannot be \
+         used by a path that reads the far end's own wrapping, **and the offers and the judgements \
+         are one answer read once**: {what_was_offered:?}"
+    );
+}
