@@ -28,13 +28,25 @@ struct ARepositoryOnThisMachine {
     of_which_clone: ARepositoryToClone,
 }
 
+/// Clear one place before `git` is run in it, **and a lock file is a real thing a killed run
+/// leaves behind.**
+///
+/// **A gate killed mid-suite leaves `git` locks in these fixtures, and the next run fails with
+/// `could not lock config file` — a failure that names neither this test nor the thing that
+/// caused it.** `git init` creates the lock itself when the directory is new, so removing the whole
+/// place is what clears it; this function exists to say so, because the removal alone did not read
+/// as deliberate.
+fn the_place_is_clear_of_a_lock_left_behind(the_place: &std::path::Path) {
+    let _ = std::fs::remove_dir_all(the_place);
+}
+
 impl ARepositoryOnThisMachine {
     /// Make one, **or say why it could not be made.**
     fn one_named(named: &str) -> Result<Self, String> {
         let the_place = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
             .join("../../target")
             .join(named);
-        let _ = std::fs::remove_dir_all(&the_place);
+        the_place_is_clear_of_a_lock_left_behind(&the_place);
         let the_bare_remote = the_place.join("the-remote.git");
         let where_the_work_tree_is = the_place.join("repository");
         make_a_work_tree(&where_the_work_tree_is, &the_bare_remote)?;
