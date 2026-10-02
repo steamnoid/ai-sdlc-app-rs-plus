@@ -11,9 +11,9 @@
 
 use aisdlc_domain::approval::WhichArtifact;
 use aisdlc_domain::stage::Stage;
-use aisdlc_run::a_run_is_put_back_to_work_again::{HowManyTimesARunMayBePutBack, the_repeat_budget};
-use aisdlc_run::a_run_is_handed_back_to_work_again::{
-    TheRepairCouldNotHappen, a_run_is_handed_back_to_work_again,
+use aisdlc_run::a_run_is_handed_back_to_work_again::a_run_is_handed_back_to_work_again;
+use aisdlc_run::a_run_is_put_back_to_work_again::{
+    HowManyTimesARunMayBePutBack, TheRepairCouldNotHappen, the_repeat_budget,
 };
 use aisdlc_run::what_to_repeat::{
     TheVerdict, WhatToRepeat, WhereTheRunShouldStartAgain, the_agent_asked_to_do_it_again,
@@ -90,7 +90,9 @@ fn the_artifact_a_handed_back_run_is_on_is_what_that_stage_produces_again() {
         .map(|run| run.which_artifact_it_is_on().cloned());
     assert_eq!(
         which_artifact,
-        Ok(Some(WhichArtifact::try_from("ImplementationPlan").expect("a name is not blank"))),
+        Ok(Some(
+            WhichArtifact::try_from("ImplementationPlan").expect("a name is not blank")
+        )),
         "**because the planner produces the plan and nothing else** — a run handed back to the \
          planner while still standing on `VerificationReport` would route onwards into the \
          verification it just failed. It stands on {which_artifact:?}"
@@ -109,7 +111,10 @@ fn a_repetition_the_budget_does_not_permit_is_refused_as_the_budget_running_out(
     );
 
     assert!(
-        matches!(refused, Err(TheRepairCouldNotHappen::TheRepeatBudgetRanOut { .. })),
+        matches!(
+            refused,
+            Err(TheRepairCouldNotHappen::TheRepeatBudgetRanOut { .. })
+        ),
         "**because the ceiling is a fact about the setting and not about the model** — and a run \
          that reported this as *the supervisor judged it will not change* sends whoever reads the \
          trace after a model that was never asked. It refused: {refused:?}"
@@ -137,6 +142,27 @@ fn a_repetition_the_budget_does_permit_is_handed_back_even_at_the_boundary() {
 
 #[test]
 fn a_run_standing_nowhere_a_failure_happened_is_refused_rather_than_handed_back() {
+    let refused = a_run_is_handed_back_to_work_again(
+        &a_run_standing_at_a_gate(),
+        1,
+        &the_repeat_budget(Some("3")).expect("a number"),
+        &a_supervisors_answer(WhereTheRunShouldStartAgain::TheChangeIsWrittenAgain),
+    );
+
+    assert!(
+        matches!(
+            refused,
+            Err(TheRepairCouldNotHappen::TheRunIsNotStandingWhereAFailureHappened { .. })
+        ),
+        "**because a work item at a gate belongs to a person and not to an agent** — handing it to \
+         one is the forgery the whole approval boundary exists to prevent, **and the transition \
+         table has one edge out of a gate carrying two meanings, so the stage is asked first.** It \
+         refused: {refused:?}"
+    );
+}
+
+/// A run standing at its gate, **and the stage whose one outgoing edge carries two meanings.**
+fn a_run_standing_at_a_gate() -> WhereARunStands {
     let the_id = aisdlc_domain::work_item_id::WorkItemId::try_from("WELLBEINGT-5").expect("a name");
     let who_asked =
         aisdlc_domain::who_commissioned::WhoCommissioned::try_from("a person").expect("a name");
@@ -152,21 +178,5 @@ fn a_run_standing_nowhere_a_failure_happened_is_refused_rather_than_handed_back(
         Stage::AwaitingHumanApproval,
     )
     .expect("a work item answering a request can stand where it is put");
-
-    let refused = a_run_is_handed_back_to_work_again(
-        &WhereARunStands::before_anything(at_a_gate),
-        1,
-        &the_repeat_budget(Some("3")).expect("a number"),
-        &a_supervisors_answer(WhereTheRunShouldStartAgain::TheChangeIsWrittenAgain),
-    );
-
-    assert!(
-        matches!(
-            refused,
-            Err(TheRepairCouldNotHappen::TheRunIsNotStandingWhereAFailureHappened { .. })
-        ),
-        "**because a work item at a gate belongs to a person and not to an agent** — handing it to \
-         one is the forgery the whole approval boundary exists to prevent, **and this refusal is \
-         the walk's and the domain's said in the walk's own file.** It refused: {refused:?}"
-    );
+    WhereARunStands::before_anything(at_a_gate)
 }

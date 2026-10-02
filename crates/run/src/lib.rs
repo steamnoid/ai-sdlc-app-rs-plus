@@ -33,6 +33,7 @@ pub mod a_record_of_a_change;
 pub mod a_ruling_is_recorded;
 pub mod a_ruling_moves_the_work;
 pub mod a_run_asks_what_is_in_its_own_checkout;
+pub mod a_run_is_handed_back_to_work_again;
 pub mod a_run_is_put_back_to_work_again;
 pub mod a_run_is_stepped_forward;
 pub mod a_run_is_walked_forward;

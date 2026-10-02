@@ -50,6 +50,22 @@ impl Stage {
     pub fn an_agent_must_be_holding_it(self) -> bool {
         matches!(self, Stage::AwaitingAgentPickup | Stage::InProgressByAgent)
     }
+
+    /// Whether a failure could have happened to work standing at this stage.
+    ///
+    /// **One and not two, and the second is the finding.** `AWAITING_AGENT_PICKUP` is a stage an
+    /// agent must be holding too, **and the table has one edge out of `AWAITING_HUMAN_APPROVAL`
+    /// into `AWAITING_AGENT_PICKUP` carrying two different meanings**: a gate was approved and the
+    /// run goes on, or a repair was claimed and the work is taken off a gate. Only the first is
+    /// legitimate — **a work item at a gate belongs to a person, and taking it from one is the
+    /// forgery the whole approval boundary exists to prevent.**
+    ///
+    /// **So the question is asked of the stage rather than checked by the caller**, because a
+    /// caller asking "is an agent holding this?" would be told yes for both stages and would hand
+    /// gated work to an implementer.
+    pub fn a_failure_could_have_happened_here(self) -> bool {
+        matches!(self, Stage::InProgressByAgent)
+    }
 }
 
 /// Every stage, in the order the specification lists them.
