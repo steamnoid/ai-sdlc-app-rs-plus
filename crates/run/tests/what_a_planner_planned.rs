@@ -14,9 +14,7 @@
 //! would carry the authority of a finished analysis, **and a person cannot tell an empty plan from
 //! a real one by looking at it.**
 
-use aisdlc_run::what_a_planner_planned::{
-    APlanThatSaysNothing, WhatAPlannerPlanned, the_plan_a_model_proposed,
-};
+use aisdlc_run::what_a_planner_planned::{APlanThatSaysNothing, the_plan_a_model_proposed};
 
 /// The answer a model gives, **in the shape it was asked for.**
 const A_MODEL_WROTE_A_PLAN: &str = r#"{
@@ -29,8 +27,8 @@ const A_MODEL_WROTE_A_PLAN: &str = r#"{
 
 #[test]
 fn what_a_model_said_becomes_a_plan_naming_every_list() {
-    let what_a_planner_concluded =
-        the_plan_a_model_proposed(A_MODEL_WROTE_A_PLAN).expect("a plan in the shape it was asked for");
+    let what_a_planner_concluded = the_plan_a_model_proposed(A_MODEL_WROTE_A_PLAN)
+        .expect("a plan in the shape it was asked for");
 
     assert_eq!(
         (
@@ -57,7 +55,11 @@ fn a_plan_naming_nothing_is_refused_rather_than_approved() {
 
     assert_eq!(
         the_refusal,
-        Err(APlanThatSaysNothing::of(["files_to_change", "files_to_add", "tests_to_add"])),
+        Err(APlanThatSaysNothing::of(&[
+            "files_to_change",
+            "files_to_add",
+            "tests_to_add"
+        ])),
         "**because a plan naming nothing is a fault and not a plan** — and silence that reached a \
          human at a gate would carry the authority of a finished analysis. The refusal names the \
          lists that were empty, **because 'the plan said nothing' is a sentence and the five lists \
@@ -67,8 +69,7 @@ fn a_plan_naming_nothing_is_refused_rather_than_approved() {
 
 #[test]
 fn a_dependencies_list_alone_is_still_a_plan_that_says_nothing() {
-    let a_model_that_named_only_dependencies =
-        r#"{"files_to_change":[],"files_to_add":[],"tests_to_add":[],"dependencies":["serde"],"migrations":[]}"#;
+    let a_model_that_named_only_dependencies = r#"{"files_to_change":[],"files_to_add":[],"tests_to_add":[],"dependencies":["serde"],"migrations":[]}"#;
 
     let the_refusal = the_plan_a_model_proposed(a_model_that_named_only_dependencies);
 
