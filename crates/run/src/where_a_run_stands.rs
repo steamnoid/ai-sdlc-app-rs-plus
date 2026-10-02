@@ -69,6 +69,15 @@ impl WhereARunStands {
         &self.the_work_item
     }
 
+    /// The work item, **read only and by reference.**
+    ///
+    /// **Read only is the whole of what this exposes.** A caller that needs to move the work goes
+    /// through the moves below, **because a work item handed out by value is a second writer** — and
+    /// the table is the only thing allowed to write a stage.
+    pub fn the_work_item_it_is(&self) -> &WorkItem {
+        &self.the_work_item
+    }
+
     /// This run at another stage, **and it is the only place a move is made.**
     fn moved_to(
         self,

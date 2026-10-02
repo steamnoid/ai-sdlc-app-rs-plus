@@ -38,6 +38,7 @@ pub mod a_run_is_put_back_to_work_again;
 pub mod a_run_is_stepped_forward;
 pub mod a_run_is_walked_forward;
 pub mod a_run_picks_up_the_work;
+pub mod a_stage_is_worked_and_ruled_on;
 pub mod an_agent_is_asked_what_it_would_file;
 pub mod an_issue_read;
 pub mod an_issue_to_read;

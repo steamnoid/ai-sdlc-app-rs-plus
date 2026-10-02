@@ -11,15 +11,13 @@
 
 use std::cell::RefCell;
 
-use aisdlc_domain::approval::{
-    AnArtifactVersion, ApprovalDecision, WhichArtifact, WhoDecided,
-};
+use aisdlc_domain::approval::{ApprovalDecision, WhichArtifact, WhoDecided};
 use aisdlc_domain::role::Role;
 use aisdlc_domain::stage::Stage;
 use aisdlc_domain::which_organisation_reasons::WhichOrganisationReasons;
 use aisdlc_run::a_model_is_asked_for_an_artifact::AReasoningModel;
 use aisdlc_run::a_stage_is_worked_and_ruled_on::{
-    AStageThatCouldNotBeWorked, a_stage_is_worked_and_ruled_on,
+    AStageThatCouldNotBeWorked, WhatTheStageLeft, a_stage_is_worked_and_ruled_on,
 };
 use aisdlc_run::the_words_inside_the_endpoints_envelope::AnAnswerNobodyCanRead;
 use aisdlc_run::where_a_run_stands::WhereARunStands;
@@ -57,11 +55,9 @@ impl AReasoningModel for AModelThatAnswers {
         self.what_it_was_asked_for
             .borrow_mut()
             .push(which_artifact.0.clone());
-        let what_it_says = self
-            .what_it_says
+        self.what_it_says
             .clone()
-            .ok_or_else(|| AnAnswerNobodyCanRead::because("there is no endpoint"));
-        what_it_says
+            .ok_or_else(|| AnAnswerNobodyCanRead::because("there is no endpoint"))
     }
 }
 
@@ -94,10 +90,9 @@ impl APersonWhoRules {
 impl APersonToDecide for APersonWhoRules {
     fn how_they_rule_on(&mut self, a_question: &ApprovalQuestion) -> ApprovalDecision {
         let the_version = a_question.about_which_version().0;
-        self.what_they_were_asked.borrow_mut().push((
-            a_question.about_which_artifact().0.clone(),
-            the_version,
-        ));
+        self.what_they_were_asked
+            .borrow_mut()
+            .push((a_question.about_which_artifact().0.clone(), the_version));
         ApprovalDecision::the_ruling_about(
             a_question.about_which_work_item(),
             a_question.about_which_artifact(),
@@ -172,7 +167,9 @@ fn a_person_who_approves_leaves_an_approval_naming_them_verbatim() {
     );
 
     assert_eq!(
-        worked.map(|what_the_stage_left| what_the_stage_left.was_the_artifact_approved()),
+        worked
+            .as_ref()
+            .map(WhatTheStageLeft::was_the_artifact_approved),
         Ok(true),
         "**because a ruling nobody answered leaves the run where it was** — and a walk handed a \
          `true` it invented is a run approving its own work. It said: {worked:?}"
@@ -191,7 +188,9 @@ fn a_person_who_refuses_leaves_no_approval_and_the_stage_says_so() {
     );
 
     assert_eq!(
-        worked.map(|what_the_stage_left| what_the_stage_left.was_the_artifact_approved()),
+        worked
+            .as_ref()
+            .map(WhatTheStageLeft::was_the_artifact_approved),
         Ok(false),
         "**because refusing is the half that stops work** — and a stage that reported a refusal as \
          a delay would be a run treating a decision as a delay, which is the defect behind three \
@@ -224,22 +223,33 @@ fn a_model_that_could_not_be_reached_stops_the_stage_and_names_the_artifact() {
 /// A run standing at the stage its first agent is working on, **and on the artifact that agent
 /// produces.**
 fn a_run_in_the_middle_of_its_first_stage() -> WhereARunStands {
-    let the_id = aisdlc_domain::work_item_id::WorkItemId::try_from("WELLBEINGT-5").expect("a name");
-    let who_asked =
-        aisdlc_domain::who_commissioned::WhoCommissioned::try_from("a person").expect("a name");
-    let the_repository = aisdlc_domain::repository::Repository::try_from(
-        "steamnoid/wellbeing-tracker-public",
-    )
-    .expect("two halves");
-    let the_discipline = Role::try_from("PO").expect("a discipline");
-    let the_agent = aisdlc_domain::agent_identifier::AgentIdentifier::try_from("aisdlc-discover")
-        .expect("an agent name");
     let the_request = aisdlc_domain::commissioned_request::CommissionedRequest {
         title: String::from("untrack the sqlite sidecar files"),
         body: String::from("e2e.db-wal and e2e.db-shm are 4.1 MB and are committed"),
         filed_as: None,
     };
-    let the_work_item = aisdlc_domain::work_item::WorkItem::held_by(
+    let the_work_item = a_work_item_held_by_the_discovering_agent();
+    let answering = the_work_item.answering(the_request);
+    WhereARunStands::at_the_first_stage(
+        answering.expect("a work item answering a request may stand where it was put"),
+        "DiscoveryReport",
+    )
+}
+
+/// The work item the discovery agent is holding, **and a request is added to it afterwards** — the
+/// builder takes the request rather than the constructor, **so the two facts are separate and a
+/// caller that forgot the request is refused by the model rather than silently asked nothing.**
+fn a_work_item_held_by_the_discovering_agent() -> aisdlc_domain::work_item::WorkItem {
+    let the_id = aisdlc_domain::work_item_id::WorkItemId::try_from("WELLBEINGT-5").expect("a name");
+    let who_asked =
+        aisdlc_domain::who_commissioned::WhoCommissioned::try_from("a person").expect("a name");
+    let the_repository =
+        aisdlc_domain::repository::Repository::try_from("steamnoid/wellbeing-tracker-public")
+            .expect("two halves");
+    let the_discipline = Role::try_from("PO").expect("a discipline");
+    let the_agent = aisdlc_domain::agent_identifier::AgentIdentifier::try_from("aisdlc-discover")
+        .expect("an agent name");
+    aisdlc_domain::work_item::WorkItem::held_by(
         the_id,
         who_asked,
         the_repository,
@@ -248,7 +258,4 @@ fn a_run_in_the_middle_of_its_first_stage() -> WhereARunStands {
         the_agent,
     )
     .expect("a work item may be held at a stage that requires one")
-    .answering(the_request)
-    .expect("a work item answering a request may stand where it was put");
-    WhereARunStands::at_the_first_stage(the_work_item, "DiscoveryReport")
 }

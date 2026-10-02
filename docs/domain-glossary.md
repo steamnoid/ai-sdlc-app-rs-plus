@@ -2225,6 +2225,37 @@ on purpose: **a run that named the stage and left the caller to guess the agent 
 orderings, and the second one would be the one the caller got right by accident.** `TheRunIsOver`
 names no agent, **because a run that is over is not held by anybody.**
 
+**`a_stage_is_worked_and_ruled_on` is the three steps the walk does not do.** The walk takes a
+ruling per stage as an argument, **so it can walk a run whose seven artifacts do not exist** — this
+function asks the agent holding the work, presents it, and puts it to somebody. **It hands back only
+whether the answer was yes**, and that is deliberately the smallest thing: a function returning the
+whole run **would be a second walk, and a walk that asks a model is a walk whose loop cannot be tested
+without one.**
+
+**The order is ask, present, rule, and it is the only order that works.** Ruling before the
+presentation would put an approval on a work item not at a gate — **and the gate's own check refuses
+that, so a reordering is not a rearrangement but a way of producing an approval that names a document
+nobody has seen.**
+
+**`AStageThatCouldNotBeWorked`** — two refusals and two different facts: the agent could not be
+asked, **carrying the artifact whole**; and the work is not standing where a gate may be held, **which
+is the domain's own refusal restated in the stage's own words** rather than quoted twice.
+
+**`WhatTheStageLeft` carries an `Option<Approval>` and not a flag, because a refusal leaves no
+approval at all.** A type carrying a refusal beside an empty approval **would let a caller mistake one
+for the other** — which is precisely the moment somebody needs to tell an approval from a refusal.
+
+**The artifact comes from the run and is not an argument.** A caller naming it could ask for the
+artifact a stage is not producing, **and the run would then be ruled on something it never wrote.**
+
+**`TheAgentCouldNotBeAsked` carries the artifact whole**, because a refusal that named no artifact
+sends a reader to the run's own state to find it — **and a caller that had to remember which one it
+was about would have to know the pipeline's order.**
+
+**`WhereARunStands::the_work_item_it_is` is read only and by reference**, because a work item handed
+out by value **is a second writer**, and the transition table is the only thing allowed to write a
+stage.
+
 **`Stage::a_failure_could_have_happened_here` is one stage and not two, and the second is the
 finding.** `AWAITING_AGENT_PICKUP` is a stage an agent must be holding too, **and the transition table
 has one edge out of `AWAITING_HUMAN_APPROVAL` into `AWAITING_AGENT_PICKUP` carrying two different
