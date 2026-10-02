@@ -1686,6 +1686,27 @@ streaming and forcing are the same problem seen from two sides. Worse, a streami
 happens *inside* that parse, so the answer never reaches the correction loop — **and the
 correction loop is the only route to a plan on a model that does not do structured output.**
 
+**`WhatAPlannerPlanned`** — the five lists the specification gives a plan, each reached as a list:
+`files_to_change`, `files_to_add`, `tests_to_add`, `dependencies`, `migrations`. **Five and not
+one string, because the five are checked differently** — a file to change must exist, a file to
+be added must not, and a test has to land in a directory the runner already collects — **and a
+plan that carried them as prose could be checked for none of those without parsing an argument out
+of a sentence.**
+
+**`APlanThatSaysNothing`** — a plan naming no file, **and it names the lists that were empty
+rather than saying the plan said nothing.** A gate refusing with a sentence sends a person
+looking for a paragraph; **the five lists are the fact and a person deciding whether to approve
+needs to know which half is missing.** It also carries what came back verbatim, because a model
+asked for a plan and answering with a sentence is the case this repository has been burned by
+three times, **and the words that came back are what tells a person whether to retry.**
+
+**`dependencies` and `migrations` are not files, and a plan naming only those changes nothing.**
+A gate that approved it would be approving a delivery with no change in it, **and this
+repository's own history records a run that verified green twice and delivered nothing.**
+
+**The same file written twice is one file**, because a downstream list of writes carrying one path
+twice is a run that would write it twice and report two changes.
+
 **`TheModelRefused`** — one refusal naming the artifact and the field. A run asks eight
 agents for eight different artifacts, so *"the shape was wrong"* without saying which is a
 question rather than a diagnosis.
