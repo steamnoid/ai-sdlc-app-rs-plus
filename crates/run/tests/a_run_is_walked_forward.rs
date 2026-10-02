@@ -140,7 +140,6 @@ fn more_rulings_than_there_are_stages_is_a_loop_and_is_refused() {
     );
 }
 
-
 #[test]
 fn a_run_walked_through_every_gate_ends_with_the_delivery_agent_holding_the_work() {
     let every_ruling = vec![true; 7];
@@ -176,12 +175,16 @@ fn the_artifact_the_last_stage_is_on_is_the_one_it_verified() {
 
     let the_walk = a_run_is_walked_forward(&a_run_at_its_first_stage(), &every_ruling);
 
-    let which_artifact = the_walk
-        .as_ref()
-        .map(|walk| walk.where_the_work_ended_up().which_artifact_it_is_on().cloned());
+    let which_artifact = the_walk.as_ref().map(|walk| {
+        walk.where_the_work_ended_up()
+            .which_artifact_it_is_on()
+            .cloned()
+    });
     assert_eq!(
         which_artifact,
-        Ok(Some(WhichArtifact::try_from("VerificationReport").expect("a name is not blank"))),
+        Ok(Some(
+            WhichArtifact::try_from("VerificationReport").expect("a name is not blank")
+        )),
         "**because the delivery presents what was verified** — it does not produce another \
          artifact, **and a run standing on a name the delivery invented would be a pull request \
          about a document nobody wrote.** It stands on {which_artifact:?}"
@@ -195,7 +198,10 @@ fn a_walk_that_has_reached_the_delivery_takes_no_further_ruling() {
     let refused = a_run_is_walked_forward(&a_run_at_its_first_stage(), &too_many);
 
     assert!(
-        matches!(refused, Err(AWalkThatWouldNotEnd::MoreRulingsThanStages { .. })),
+        matches!(
+            refused,
+            Err(AWalkThatWouldNotEnd::MoreRulingsThanStages { .. })
+        ),
         "**because the delivery is the end and there is no eighth gate** — the same refusal as any \
          other walk past the end, **and a different one here would mean the pipeline has two \
          endings.** It refused: {refused:?}"
