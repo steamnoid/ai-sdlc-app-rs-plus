@@ -107,3 +107,29 @@ pub fn where_a_gate_outcome_leads(
     }
     where_an_approved_artifact_leads(which_artifact)
 }
+
+/// What the work is on once a stage has produced it, **and `None` for the two destinations that
+/// produce nothing an artifact could be read from.**
+///
+/// **The same seven rows read from the other side, and that is why it lives beside them.** A walk
+/// needs to know what the stage it has just entered will produce, **and a second table somewhere
+/// else would be the second ordering this module exists to prevent** — the router's own rows are
+/// checked against it here, because the two are one list and not two a reader keeps in step.
+///
+/// **A delivery produces a pull request and not an artifact**, so `TheDelivery` answers `None`, and
+/// a walk stops there rather than inventing an artifact for the last stage.
+pub fn which_a_stage_produces(where_the_run_goes: WhereARunGoesNext) -> Option<WhichArtifact> {
+    let which_artifact = match where_the_run_goes {
+        WhereARunGoesNext::TheProductAnalysis => Some("Requirements"),
+        WhereARunGoesNext::TheQualityAnalysis => Some("QaPlan"),
+        WhereARunGoesNext::TheArchitectureAnalysis => Some("ArchitectureReport"),
+        WhereARunGoesNext::TheSecurityAnalysis => Some("SecurityReport"),
+        WhereARunGoesNext::ThePlanning => Some("ImplementationPlan"),
+        WhereARunGoesNext::TheImplementation => Some("VerificationReport"),
+        WhereARunGoesNext::TheDelivery | WhereARunGoesNext::TheRunIsOver => None,
+    };
+    which_artifact.map(|name| {
+        WhichArtifact::try_from(name)
+            .expect("a name read out of this module's own table is not blank")
+    })
+}

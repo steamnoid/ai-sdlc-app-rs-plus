@@ -128,17 +128,27 @@ pub fn what_a_step_leads(
     was_the_artifact_approved: bool,
 ) -> Result<WhatOneStepLeadsTo, TheRunWasNotStepped> {
     let where_the_run_goes = where_a_run_goes_from_here(the_run, was_the_artifact_approved)?;
-    let agent =
-        the_agent_at(where_the_run_goes).ok_or(TheRunWasNotStepped::TheStageNamesNoAgent)?;
+    let agent = the_agent_asked_to_do_it(where_the_run_goes)
+        .ok_or(TheRunWasNotStepped::TheStageNamesNoAgent)?;
     Ok(WhatOneStepLeadsTo {
         where_the_run_goes,
         who_answers_at_there: String::from(agent),
     })
 }
 
-/// The agent at a destination, **and `None` for the one destination that names no agent** — a run
-/// that is over is not held by anybody.
-fn the_agent_at(where_the_run_goes: WhereARunGoesNext) -> Option<&'static str> {
+/// Every destination and the agent at it, **and a walk reads its ceiling from here rather than
+/// counting a list of its own.**
+///
+/// **One table and not two.** A walk that held its own copy of the destinations would drift from
+/// this one silently, **and a walk that loops because two tables disagree is a loop nobody can see
+/// in either file.**
+pub fn every_agent_the_pipeline_hands_work_to() -> &'static [(WhereARunGoesNext, &'static str)] {
+    &THE_AGENT_AT_EACH_DESTINATION
+}
+
+/// The agent asked to work at a destination, **and `None` for the one destination that names no
+/// agent** — a run that is over is not held by anybody.
+pub fn the_agent_asked_to_do_it(where_the_run_goes: WhereARunGoesNext) -> Option<&'static str> {
     THE_AGENT_AT_EACH_DESTINATION
         .iter()
         .find(|(one_destination, _)| *one_destination == where_the_run_goes)
