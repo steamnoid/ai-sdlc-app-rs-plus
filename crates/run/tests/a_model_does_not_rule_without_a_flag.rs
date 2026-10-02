@@ -35,7 +35,8 @@ impl AProgramWeRun for AProgramThatWouldNotice {
         _what_it_is_asked_to_do: &aisdlc_run::what_we_tell_a_program_to_do::WhatWeTellAProgramToDo,
     ) -> WhatTheProgramSaid {
         self.was_run.set(true);
-        WhatTheProgramSaid::of(true, &the_answer_a_model_endpoint_gives_for("APPROVED"))
+        let a_ruling = a_ruling_of("APPROVED");
+        WhatTheProgramSaid::of(true, &the_answer_a_model_endpoint_gives_for(&a_ruling))
     }
 }
 
@@ -47,6 +48,13 @@ fn the_answer_a_model_endpoint_gives_for(what_the_model_said: &str) -> String {
         "choices": [{"message": {"role": "assistant", "content": what_the_model_said}}],
     })
     .to_string()
+}
+
+/// A verdict word and a reason on a second line, **which is the shape a model is held to** — and
+/// **`serde_json` escapes the newline for us**, so the envelope stays valid JSON and these tests
+/// keep testing the flag rather than the envelope.
+fn a_ruling_of(the_word: &str) -> String {
+    format!("{the_word}\nthe requirement is clear and the tests exist")
 }
 
 fn a_question_about_one_artifact() -> ApprovalQuestion {

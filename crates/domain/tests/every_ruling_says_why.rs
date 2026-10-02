@@ -10,7 +10,8 @@
 //! the same table — a person might skip it and a policy would never.**
 
 use aisdlc_domain::approval::{
-    ADecisionNobodyGaveAReasonFor, AnArtifactVersion, ApprovalDecision, WhichArtifact, WhoDecided,
+    ADecisionNobodyGaveAReasonFor, AnArtifactVersion, Approval, ApprovalDecision, WhichArtifact,
+    WhoDecided,
 };
 use aisdlc_domain::work_item_id::WorkItemId;
 
@@ -51,10 +52,10 @@ fn a_ruling_with_no_reason_leaves_no_record() {
 
 #[test]
 fn the_record_carries_the_reason_word_for_word() {
-    let the_reason_a_person_wrote = "the requirements name one file and one way of knowing it holds";
+    let the_reason_a_person_wrote =
+        "the requirements name one file and one way of knowing it holds";
 
-    let the_record = a_ruling(the_reason_a_person_wrote)
-        .what_the_ruling_left_behind()
+    let the_record = Approval::what_the_ruling_left_behind(&a_ruling(the_reason_a_person_wrote))
         .expect("a reason is present and the ruling was yes");
 
     assert_eq!(
@@ -67,8 +68,8 @@ fn the_record_carries_the_reason_word_for_word() {
 
 #[test]
 fn a_refusal_leaves_no_record_and_still_carries_its_reason() {
-    let what_the_refusal_left_behind = a_refusal("the plan names a file nobody approved")
-        .what_the_ruling_left_behind();
+    let the_refusing = a_refusal("the plan names a file nobody approved");
+    let what_the_refusal_left_behind = Approval::what_the_ruling_left_behind(&the_refusing);
 
     assert_eq!(
         what_the_refusal_left_behind, None,

@@ -69,19 +69,51 @@ pub fn the_question_a_model_is_asked(
 /// anything on its own.
 pub fn the_ruling_a_model_gave(
     what_the_endpoint_said: &str,
-) -> Result<bool, AnAnswerThatIsNotARuling> {
+) -> Result<WhatAModelRuled, AnAnswerThatIsNotARuling> {
     let the_content = the_words_inside_the_endpoints_envelope(what_the_endpoint_said).map_err(
         |nobody_can_read| AnAnswerThatIsNotARuling::because(nobody_can_read.what_it_said()),
     )?;
     the_ruling_in(&the_content)
 }
 
-/// The one word a model is held to, and nothing else.
-fn the_ruling_in(what_it_said: &str) -> Result<bool, AnAnswerThatIsNotARuling> {
-    match what_it_said.trim() {
+/// What a model ruled and why, **and the two are separate because the verdict is one word and the
+/// reason is a sentence.**
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct WhatAModelRuled {
+    /// Whether it said yes.
+    pub approved: bool,
+    /// Why, **in the model's own words and never this system's paraphrase of them.**
+    pub reason: String,
+}
+
+/// The one word on the first line, **and the reason on everything after it.**
+///
+/// **The verdict stays one word on a line of its own, and that is the whole of why a sentence on
+/// the same line is still refused.** A reader that accepted the first word it found would be
+/// accepting a model that opens a gate and then explains itself afterwards — **so the reason is a
+/// second line, where it cannot be confused with the decision, and where its absence is visible.**
+fn the_ruling_in(what_it_said: &str) -> Result<WhatAModelRuled, AnAnswerThatIsNotARuling> {
+    let the_two_lines = what_it_said.trim().split_once('\n');
+    let Some((the_verdict, the_reason)) = the_two_lines else {
+        return Err(AnAnswerThatIsNotARuling::because(what_it_said));
+    };
+    let what_the_verdict_says = what_the_model_ruled(the_verdict)?;
+    let the_reason = the_reason.trim();
+    if the_reason.is_empty() {
+        return Err(AnAnswerThatIsNotARuling::because(what_it_said));
+    }
+    Ok(WhatAModelRuled {
+        approved: what_the_verdict_says,
+        reason: the_reason.to_string(),
+    })
+}
+
+/// The one word, **and nothing else on that line.**
+fn what_the_model_ruled(the_verdict: &str) -> Result<bool, AnAnswerThatIsNotARuling> {
+    match the_verdict.trim() {
         "APPROVED" => Ok(true),
         "REFUSED" => Ok(false),
-        _ => Err(AnAnswerThatIsNotARuling::because(what_it_said)),
+        _ => Err(AnAnswerThatIsNotARuling::because(the_verdict)),
     }
 }
 
@@ -166,13 +198,14 @@ pub fn the_model_is_asked_how_it_rules_on(
         &where_the_model_is.which_model,
         &the_body,
     ));
-    let approved = the_ruling_a_model_gave(what_it_said.the_words())?;
+    let the_ruling = the_ruling_a_model_gave(what_it_said.the_words())?;
     ApprovalDecision::the_ruling_about(
         the_work_item,
         a_question.about_which_artifact(),
         a_question.about_which_version(),
-        approved,
+        the_ruling.approved,
         who_ruled.clone(),
+        &the_ruling.reason,
     )
     .map_err(|a_why| AnAnswerThatIsNotARuling::because(&a_why.0))
 }

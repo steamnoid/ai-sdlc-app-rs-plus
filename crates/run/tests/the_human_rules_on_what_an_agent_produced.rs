@@ -46,6 +46,7 @@ impl aisdlc_run::APersonToDecide for APersonWhoRules {
             a_question.about_which_version(),
             true,
             WhoDecided::try_from("paligakrzychu").expect("a name is not blank"),
+            THE_REASON_THE_DECIDER_GAVE,
         )
         .expect("a person may rule")
     }
@@ -107,6 +108,11 @@ fn the_question_about_what_was_produced() -> aisdlc_run::ApprovalQuestion {
     )
     .expect("a work item standing at the gate may be put to somebody")
 }
+
+/// The reason every ruling in this file carries, **and it says something so the
+/// new rule about grounds is never what these tests are about.**
+const THE_REASON_THE_DECIDER_GAVE: &str =
+    "the discovery report names two languages and a build system";
 
 #[test]
 fn the_gate_moves_a_work_item_from_being_worked_on_to_waiting_for_a_person() {
