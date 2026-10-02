@@ -19,12 +19,18 @@ pub enum WhichProgramWeRun {
     Git,
     /// `curl`, and only for a question asked of a model.
     Curl,
+    /// `docker`, and only to run a repository's own tests inside a container.
+    Docker,
 }
 
 impl WhichProgramWeRun {
     /// Every program this system runs.
     pub fn every_program() -> Vec<WhichProgramWeRun> {
-        vec![WhichProgramWeRun::Git, WhichProgramWeRun::Curl]
+        vec![
+            WhichProgramWeRun::Git,
+            WhichProgramWeRun::Curl,
+            WhichProgramWeRun::Docker,
+        ]
     }
 
     /// The name the host knows this program by.
@@ -32,6 +38,7 @@ impl WhichProgramWeRun {
         match self {
             WhichProgramWeRun::Git => "git",
             WhichProgramWeRun::Curl => "curl",
+            WhichProgramWeRun::Docker => "docker",
         }
     }
 }

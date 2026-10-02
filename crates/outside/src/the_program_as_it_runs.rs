@@ -11,7 +11,10 @@
 //! never travel as data, and the first argument is what to do rather than which program.
 
 use aisdlc_run::a_program_we_run::{AProgramWeRun, WhatTheProgramSaid, WhichProgramWeRun};
+use std::path::Path;
+
 use aisdlc_run::the_repository_to_clone_into::ARepositoryToClone;
+use aisdlc_run::the_tests_are_run_in_a_container::TheSuiteARepositoryDeclares;
 use aisdlc_run::what_we_tell_a_program_to_do::WhatWeTellAProgramToDo;
 
 use crate::the_environment::TheEnvironment;
@@ -80,6 +83,9 @@ impl TheProgramAsItRuns {
         match what_it_is_asked_to_do {
             WhatWeTellAProgramToDo::AskAModel { .. }
             | WhatWeTellAProgramToDo::OpenAPullRequest { .. } => WhichProgramWeRun::Curl,
+            WhatWeTellAProgramToDo::TheToolchainImageIsThere
+            | WhatWeTellAProgramToDo::TheSuiteIsInstalled { .. }
+            | WhatWeTellAProgramToDo::TheSuiteIsRun { .. } => WhichProgramWeRun::Docker,
             _ => self.which_program,
         }
     }
@@ -104,6 +110,11 @@ impl TheProgramAsItRuns {
                 where_it_goes,
                 the_body,
             } => self.asked_of_the_api(where_it_goes, the_body),
+            WhatWeTellAProgramToDo::TheToolchainImageIsThere
+            | WhatWeTellAProgramToDo::TheSuiteIsInstalled { .. }
+            | WhatWeTellAProgramToDo::TheSuiteIsRun { .. } => {
+                what_a_container_is_asked_for(what_it_is_asked_to_do)
+            }
             _ => what_git_is_asked_for(what_it_is_asked_to_do),
         }
     }
@@ -155,6 +166,107 @@ fn what_git_is_asked_about(request: &WhatWeTellAProgramToDo) -> Vec<String> {
         }
         _ => Vec::new(),
     }
+}
+
+/// What `docker` is asked for anything to do with a repository's own tests, **and one function
+/// rather than three arms in the match above.
+///
+/// **The match grew by six lines when the container arrived and the twenty-line guard refused it**,
+/// so the arms moved here whole. **A translation with three containers in it was two translations
+/// wearing one name**, and this is the same reason `what_git_is_asked_about` exists for the six
+/// requests about a clone.
+fn what_a_container_is_asked_for(request: &WhatWeTellAProgramToDo) -> Vec<String> {
+    match request {
+        WhatWeTellAProgramToDo::TheToolchainImageIsThere => to_ask_whether_a_container_is_there(),
+        WhatWeTellAProgramToDo::TheSuiteIsInstalled {
+            the_suite,
+            where_the_clone_lands,
+        } => to_install_what_the_suite_needs(the_suite, where_the_clone_lands),
+        WhatWeTellAProgramToDo::TheSuiteIsRun {
+            the_suite,
+            where_the_clone_lands,
+        } => to_run_the_suite(the_suite, where_the_clone_lands),
+        _ => Vec::new(),
+    }
+}
+
+/// Where the clone is inside the container, **and it is `/the-clone` because that is the only
+/// path the container is ever told about.**
+const WHERE_THE_CLONE_IS_INSIDE_THE_CONTAINER: &str = "/the-clone";
+
+/// What `docker` is asked when this system needs to know whether it can run anything at all.
+fn to_ask_whether_a_container_is_there() -> Vec<String> {
+    vec![String::from("info")]
+}
+
+/// The arguments every container of a repository's own code is given, **in this order.
+///
+/// **`--cap-drop=ALL`, because a container that may do anything may do anything to the mount.** A
+/// half-configured container is worse than no container, **because it reads as isolation while
+/// still handing over the host's keys.**
+///
+/// **`--user` and not root, because the clone is mounted read-write and a container running as
+/// root can write to the working tree it was only asked to read.**
+///
+/// **One `-v` and never two, and it is the clone. The developer's home directory, the SSH keys,
+/// the `~/.config/gh` a delivery needs and the docker socket are all on this machine, and a
+/// second mount is a second thing to audit and a second thing to forget.**
+fn the_arguments_every_container_is_given(
+    the_suite: &TheSuiteARepositoryDeclares,
+    where_it_lands: &Path,
+) -> Vec<String> {
+    vec![
+        String::from("run"),
+        String::from("--rm"),
+        String::from("--cap-drop=ALL"),
+        String::from("--user"),
+        the_suite.who_runs_it.clone(),
+        String::from("-v"),
+        format!(
+            "{}:{WHERE_THE_CLONE_IS_INSIDE_THE_CONTAINER}",
+            where_it_lands.display()
+        ),
+        String::from("-w"),
+        String::from(WHERE_THE_CLONE_IS_INSIDE_THE_CONTAINER),
+    ]
+}
+
+/// Install what the suite needs, **and this is the one step given a network.**
+///
+/// **A network and not none, and only here.** A suite that has never installed its dependencies
+/// has never run, **so the install is the one moment the container is allowed to reach out** — and
+/// the run itself, which is the part that executes the repository's own code, gets `none`.
+fn to_install_what_the_suite_needs(
+    the_suite: &TheSuiteARepositoryDeclares,
+    where_it_lands: &Path,
+) -> Vec<String> {
+    let mut the_arguments = the_arguments_every_container_is_given(the_suite, where_it_lands);
+    the_arguments.push(String::from("-e"));
+    the_arguments.push(String::from("HOME=/tmp"));
+    the_arguments.push(the_suite.the_toolchain_image.clone());
+    the_arguments.push(String::from("sh"));
+    the_arguments.push(String::from("-c"));
+    the_arguments.push(the_suite.how_to_install.join(" "));
+    the_arguments
+}
+
+/// Run a repository's own suite, **and this is the request the whole sandbox exists for.**
+///
+/// **`--network none` here and nowhere else.** A test suite that can open a socket can send this
+/// machine's credential to a host of its choosing, **and the credential is the reason the container
+/// gets no mount of the home directory in the first place** — so closing the network is what makes
+/// the missing mount mean something.
+fn to_run_the_suite(the_suite: &TheSuiteARepositoryDeclares, where_it_lands: &Path) -> Vec<String> {
+    let mut the_arguments = the_arguments_every_container_is_given(the_suite, where_it_lands);
+    the_arguments.push(String::from("--network"));
+    the_arguments.push(String::from("none"));
+    the_arguments.push(String::from("-e"));
+    the_arguments.push(String::from("HOME=/tmp"));
+    the_arguments.push(the_suite.the_toolchain_image.clone());
+    the_arguments.push(String::from("sh"));
+    the_arguments.push(String::from("-c"));
+    the_arguments.push(the_suite.how_to_run.join(" "));
+    the_arguments
 }
 
 /// What a commit would be run with, **staged and committed in one program and then read back.**

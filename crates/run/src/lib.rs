@@ -42,6 +42,7 @@ pub mod the_path_inside_the_project;
 pub mod the_project_on_disk;
 pub mod the_repository_to_clone_into;
 pub mod the_run_makes_a_checkout;
+pub mod the_tests_are_run_in_a_container;
 pub mod the_words_inside_the_endpoints_envelope;
 pub mod the_work_each_filing_becomes;
 pub mod what_a_model_said;

@@ -3218,12 +3218,20 @@ mod a_test_is_not_its_own_proof {
     /// **Every way, and not the ways that existed when this was written** — so a name added here
     /// without its call site is a hole, and a call site added without its name here is a file this
     /// rule refuses for being correct.
+    ///
+    /// **`std::process::Command::new(` joined because the container tests build `docker`'s
+    /// arguments and then hand them to it that way.** The container is the first program this
+    /// system runs that `AProgramWeRun` does not stand in front of — **a container is not a
+    /// subprocess and cannot be** — so a file that proves the sandbox by attempting has to reach
+    /// for the operating system itself. **The rule's own words demand this entry**: a call site
+    /// added without its name here is exactly what this guard exists to catch.
     fn ever_runs_a_program(the_text: &str) -> bool {
         the_text.contains(".run(")
             || the_text.contains("it_is_asked_to(")
             || the_text.contains("the_outcome_of(")
             || the_text.contains("the_run_makes_a_checkout(")
             || the_text.contains("the_filing_it_makes(")
+            || the_text.contains("std::process::Command::new(")
     }
 
     #[test]
