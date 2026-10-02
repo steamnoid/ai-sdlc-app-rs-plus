@@ -10,9 +10,10 @@
 //! is — and a shallow clone answers none of them.
 
 use aisdlc_domain::repository::Repository;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use crate::the_repository_to_clone_into::ARepositoryToClone;
+use crate::the_tests_are_run_in_a_container::TheSuiteARepositoryDeclares;
 
 /// What we tell one of our programs to do.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -57,6 +58,22 @@ pub enum WhatWeTellAProgramToDo {
         of_which_repository: Repository,
     },
 
+    /// Ask the container runtime whether this machine has one at all.
+    TheToolchainImageIsThere,
+    /// Install what a repository's own suite needs, **which is the one step given a network.**
+    TheSuiteIsInstalled {
+        /// What the repository declared.
+        the_suite: TheSuiteARepositoryDeclares,
+        /// Where the clone is, **and it is the only thing of this machine that crosses over.**
+        where_the_clone_lands: PathBuf,
+    },
+    /// Run a repository's own suite, **with no network and nobody's credentials.**
+    TheSuiteIsRun {
+        /// What the repository declared.
+        the_suite: TheSuiteARepositoryDeclares,
+        /// Where the clone is, **and it is the only thing of this machine that crosses over.**
+        where_the_clone_lands: PathBuf,
+    },
     /// Record the change, **by staging exactly the paths named and then committing them.**
     RecordTheChange {
         /// Every path, one argument each and never a line.
@@ -157,6 +174,33 @@ impl WhatWeTellAProgramToDo {
             }
             WhatWeTellAProgramToDo::OpenAPullRequest { where_it_goes, .. } => where_it_goes.clone(),
             _ => String::new(),
+        }
+    }
+
+    /// Whether this machine has a container runtime at all.
+    pub fn the_toolchain_image_is_there() -> Self {
+        WhatWeTellAProgramToDo::TheToolchainImageIsThere
+    }
+
+    /// Install what the suite needs, **and this is the only step given a network.**
+    pub fn the_suite_is_installed(
+        the_suite: &TheSuiteARepositoryDeclares,
+        where_the_clone_lands: &Path,
+    ) -> Self {
+        WhatWeTellAProgramToDo::TheSuiteIsInstalled {
+            the_suite: the_suite.clone(),
+            where_the_clone_lands: where_the_clone_lands.to_path_buf(),
+        }
+    }
+
+    /// Run the suite, **with no network, no credential and nobody's file system.**
+    pub fn the_suite_is_run(
+        the_suite: &TheSuiteARepositoryDeclares,
+        where_the_clone_lands: &Path,
+    ) -> Self {
+        WhatWeTellAProgramToDo::TheSuiteIsRun {
+            the_suite: the_suite.clone(),
+            where_the_clone_lands: where_the_clone_lands.to_path_buf(),
         }
     }
 
@@ -341,6 +385,9 @@ impl WhatWeTellAProgramToDo {
             WhatWeTellAProgramToDo::AskAModel { .. }
             | WhatWeTellAProgramToDo::OpenAPullRequest { .. }
             | WhatWeTellAProgramToDo::RecordTheChange { .. }
+            | WhatWeTellAProgramToDo::TheToolchainImageIsThere
+            | WhatWeTellAProgramToDo::TheSuiteIsInstalled { .. }
+            | WhatWeTellAProgramToDo::TheSuiteIsRun { .. }
             | WhatWeTellAProgramToDo::ReadTheFiling { .. } => None,
         }
     }
@@ -392,6 +439,9 @@ impl WhatWeTellAProgramToDo {
             | WhatWeTellAProgramToDo::RecordTheChange { .. }
             | WhatWeTellAProgramToDo::ReadTheCommit { .. }
             | WhatWeTellAProgramToDo::ReadTheFiling { .. }
+            | WhatWeTellAProgramToDo::TheToolchainImageIsThere
+            | WhatWeTellAProgramToDo::TheSuiteIsInstalled { .. }
+            | WhatWeTellAProgramToDo::TheSuiteIsRun { .. }
             | WhatWeTellAProgramToDo::ListTheFilingsAlreadyOnFile { .. } => None,
         }
     }

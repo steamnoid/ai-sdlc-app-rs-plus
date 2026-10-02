@@ -162,7 +162,7 @@ fn a_suite_that_ran_is_given_the_clone_and_nothing_else_of_this_machine() {
 
     let every_word_it_was_handed = the_docker.what_it_was_handed.borrow().join("\n");
     assert!(
-        !what_it_said.is_err(),
+        what_it_said.is_ok(),
         "**because the ordinary case has to be able to pass** — a container rule that refused \
          everything would deliver nothing. What it said: {what_it_said:?} and it was handed: \
          {every_word_it_was_handed}"

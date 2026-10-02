@@ -1870,6 +1870,74 @@ the model happened to put it.**
 **`WhatCouldGoWrong`** — two refusals: a finding about nowhere, and **a severity with no risk
 attached to it**. The second exists because a chart is the one artefact a person cannot act on.
 
+**`TheSuiteARepositoryDeclares`** — what a repository says about its own tests: the toolchain
+image, `how_to_install`, `how_to_run`, and **`who_runs_it`**, which is a non-root user inside that
+image. **Four fields and not a command line**, because the image, the install and the run are
+checked differently and a suite carried as one string could be checked for none of them.
+
+**`the_tests_in` takes `Option<TheSuiteARepositoryDeclares>` and not an empty suite**, because
+absence has to be *representable*: a checkout saying nothing about its own tests and a checkout
+declaring a suite that installs nothing **are two different things, and only one of them is a
+repository this system cannot work on.**
+
+**`WhatTheSuiteSaid`** — `did_the_dependencies_install` and `what_it_wrote`. **`how_the_run_is_
+reported` refuses an install that failed**, because **a suite whose dependencies did not install
+has not run** and reporting it red **would be a claim about code nobody executed** — the half of a
+finding the sister implementation's history records, and the half that was right. When it did run,
+**the words are copied out of what the suite wrote and never summarised**, because a person reading
+the report wants the suite's own sentence.
+
+**`TheTestsCouldNotBeRun`** — **two refusals, and the order is a rule:** `NoContainerToRunThemIn`
+comes before `NoSuiteWasDeclared`, **because a run that inspected the work before refusing would
+already have done the work it was refusing to do safely.**
+
+**A third refusal was written and deleted: `TheContainerRefused`,** for a `docker` that refused to
+start. **Nothing in the system could raise it** — an install that failed is already the *the suite
+never ran* answer, and a run that failed is a red suite — **and a refusal variant nothing can raise
+is an abstraction without a caller.** Telling a container-start failure from a failing test by
+reading `stderr` would be exactly the guess these ports exist to avoid, **so `the_suite_is_run`
+answers the suite and not a `Result`.**
+
+**`the_arguments_every_container_is_given` is where the sandbox lives, and it is asserted on the
+arguments and not on a field.** `--cap-drop=ALL`, **because a container that may do anything may do
+anything to the mount**; `--user` and never root, **because the clone is mounted and a container
+running as root can write to the working tree it was only asked to read**; **exactly one `-v`, and
+it is the clone** — the developer's home, their SSH keys, the `~/.config/gh` a delivery needs and
+the docker socket are all on this machine, **and a second mount is a second thing to audit and a
+second thing to forget.**
+
+**`--network none` is on the run and not on the install, and that asymmetry is the design.** The
+install is the one moment the container reaches out — **a suite that has never installed its
+dependencies has never run** — **and the run, which is the part that executes the repository's own
+code, gets `none`, because a test suite that can open a socket can send this machine's credential
+to a host of its choosing.**
+
+**Every path in the arguments is the clone or where the clone goes, and there are only those two
+kinds.** `WHERE_THE_CLONE_IS_INSIDE_THE_CONTAINER` is `/the-clone`, **which names nothing on this
+machine at all** — `/etc`, `/var/run/docker.sock` or a developer's home would each hand over
+somebody else's machine by one argument.
+
+**The isolation is proved by an attempt, and the attempt steps out of the mount with `..` rather
+than naming a host path.** An absolute host path simply does not exist inside a container, **so
+reading it would be refused by any mount set there is and would prove nothing**; stepping out is
+refused only because the mount is the clone and not its parent directory. **And that was run, not
+assumed: mounting `target/` instead of the clone, with the same command, reads the file** — one
+mount, and *which* directory it is is the whole boundary. `WhyTheFileWasNotRead` separates the
+container's own `cat` from a `docker` that never started, **because a test that read "it did not
+work" would be green while proving nothing.**
+
+**`ASuiteThatRan`** — the suite's own words, **copied and never summarised.** A person reading
+the report wants the suite's sentence and not this system's paraphrase of it.
+
+**`AReportOfASuiteThatNeverRan`** — the install's words, **quoted whole because the words are the
+only evidence that anything ran at all.**
+
+**`ever_runs_a_program` learned `std::process::Command::new(`.** The container is the first program
+this system runs that `AProgramWeRun` does not stand in front of — **a container is not a
+subprocess and cannot be** — so the file that proves the sandbox by attempting has to reach for the
+operating system itself. **The guard's own docstring demands the entry**, because a call site
+added without its name is exactly what that guard exists to catch.
+
 **`TheModelRefused`** — one refusal naming the artifact and the field. A run asks eight
 agents for eight different artifacts, so *"the shape was wrong"* without saying which is a
 question rather than a diagnosis.

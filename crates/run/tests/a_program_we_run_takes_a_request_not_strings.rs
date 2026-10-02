@@ -29,8 +29,15 @@ fn every_program_this_system_runs_is_named() {
 
     assert_eq!(
         every_one,
-        vec![WhichProgramWeRun::Git, WhichProgramWeRun::Curl],
-        "**because a program we run is a closed set and not a name a caller supplies** — a port that runs whatever string it is given is a port that runs whatever reaches it"
+        vec![
+            WhichProgramWeRun::Git,
+            WhichProgramWeRun::Curl,
+            WhichProgramWeRun::Docker,
+        ],
+        "**because a program we run is a closed set and not a name a caller supplies** — a port \
+         that runs whatever string it is given is a port that runs whatever reaches it. `Docker` \
+         joined it for the one operation that runs a repository's own code, and **it is the only \
+         program in this set that is given a path of the host's to hand to another machine**"
     );
 }
 
