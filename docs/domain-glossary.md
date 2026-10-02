@@ -2225,6 +2225,37 @@ on purpose: **a run that named the stage and left the caller to guess the agent 
 orderings, and the second one would be the one the caller got right by accident.** `TheRunIsOver`
 names no agent, **because a run that is over is not held by anybody.**
 
+**`Stage::a_failure_could_have_happened_here` is one stage and not two, and the second is the
+finding.** `AWAITING_AGENT_PICKUP` is a stage an agent must be holding too, **and the transition table
+has one edge out of `AWAITING_HUMAN_APPROVAL` into `AWAITING_AGENT_PICKUP` carrying two different
+meanings**: a gate was approved and the run goes on, or a repair was claimed and the work is taken
+off a gate. Only the first is legitimate — **a work item at a gate belongs to a person, and taking it
+from one is the forgery the whole approval boundary exists to prevent.** **The table cannot tell them
+apart because the two meanings are the same move**, so the question is asked of the stage.
+
+**`a_run_is_handed_back_to_work_again` asks that question before it asks the ceiling.** The order is
+not a precaution: **a run past its budget is left exactly where the failure left it, so a reader
+finding the work item after a dead run finds the failure and not a half-finished repair.**
+
+**`what_the_place_produces` is the second half of `the_agent_asked_to_do_it_again` and not a table
+of its own.** A run handed back to the planner while still standing on `VerificationReport` **routes
+onwards into the verification it just failed**, so the place the supervisor named and the artifact
+that place produces move together.
+
+**`TheRunIsNotStandingWhereAFailureHappened` and `TheDomainRefusedTheMove` are two variants and not
+one, and they are not merged.** The stage question is asked **before** the move is attempted, so the
+first **names a stage** and the second **quotes the table** — a reader told only
+`AWAITING_HUMAN_APPROVAL may not be moved to AWAITING_AGENT_PICKUP` **would go looking for a fault in
+the transition table, and there is none**: the fault would be in whatever tried to make that move.
+
+**`From<ARepeatThatWasNotPermitted> for TheRepairCouldNotHappen`** exists because the two carry the
+same two numbers, **and the permitted count is the setting's** — a function that recomputed it could
+disagree with the setting it was asked about.
+
+**The supervisor's answer arrives already validated** because `what_to_repeat` is the door, **and a
+node that re-checked it would be a second place to forget** — the reason this one does not is that
+the type carries the answer rather than the words it came from.
+
 **`WhatOneStepLeadsTo`** is a value so a caller can read a step before obeying it, **and the field
 is asked by name because it is a closed set and a caller matching on the shape would be matching on
 a shape.**

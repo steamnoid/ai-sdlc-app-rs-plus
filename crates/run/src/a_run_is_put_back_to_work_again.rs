@@ -10,6 +10,8 @@
 
 use std::fmt;
 
+use aisdlc_domain::state_machine::StateMachineError;
+
 use crate::what_to_repeat::WhatToRepeat;
 
 /// What a deployment gets when it names no budget, **and it is a number and not *unlimited*.**
@@ -137,6 +139,30 @@ pub enum TheRepairCouldNotHappen {
         /// The model's own sentence, **quoted whole because it is the only evidence for the call.**
         what_has_not_changed: String,
     },
+    /// The work is standing somewhere a repair cannot be claimed from, **and the domain's own
+    /// refusal travels with it.**
+    ///
+    /// **A work item at a gate belongs to a person and not to an agent**, so handing it to one is
+    /// the forgery the whole approval boundary exists to prevent. **The name is the run's and not
+    /// the table's** — a reader told only `AWAITING_HUMAN_APPROVAL may not be moved to
+    /// AWAITING_AGENT_PICKUP` would go looking for a fault in the transition table, **and there is
+    /// none: the fault would be in whatever tried to make that move.**
+    TheRunIsNotStandingWhereAFailureHappened {
+        /// Which stage the work is standing at, **in the stage's own words.**
+        where_the_work_stands: String,
+    },
+    /// The transition table refused the move the repair was about to make, **and the domain's own
+    /// refusal is kept rather than written out.**
+    ///
+    /// **A different variant from the one above, and they are not merged.** The stage question is
+    /// asked before the move is attempted, so the stage refusal **names a stage** and this one
+    /// **quotes the table** — and a reader told only `AWAITING_HUMAN_APPROVAL may not be moved to
+    /// AWAITING_AGENT_PICKUP` would go looking for a fault in the table, **and there is none: the
+    /// fault would be in whatever tried to make that move.**
+    TheDomainRefusedTheMove {
+        /// What the domain said, in its own words.
+        why: StateMachineError,
+    },
     /// The ceiling stopped it, **which is a fact about the setting and not about the model.**
     TheRepeatBudgetRanOut {
         /// Which repetition this was.
@@ -160,6 +186,15 @@ impl fmt::Display for TheRepairCouldNotHappen {
                 "a supervisor judged the failure will not change, and its reason is: \
                  {what_has_not_changed}"
             ),
+            TheRepairCouldNotHappen::TheRunIsNotStandingWhereAFailureHappened {
+                where_the_work_stands,
+            } => format!(
+                "the work is standing at {where_the_work_stands}, where nothing can fail, so no \
+                 agent may be handed the work back"
+            ),
+            TheRepairCouldNotHappen::TheDomainRefusedTheMove { why } => {
+                format!("the transition table refused to hand the work back: {why}")
+            }
             TheRepairCouldNotHappen::TheRepeatBudgetRanOut { .. } => String::from(
                 "the repeat budget ran out, which is a fact about the setting and not about the \
                  model — **a run that reported both this and a judgement as *the repair failed* \
@@ -179,6 +214,22 @@ impl TheRepairCouldNotHappen {
     pub fn the_supervisor_judged_this_is_not_repairing(the_answer: &WhatToRepeat) -> Self {
         TheRepairCouldNotHappen::TheSupervisorJudgedThisIsNotRepairing {
             what_has_not_changed: the_answer.what_has_not_changed.clone(),
+        }
+    }
+}
+
+/// The ceiling's refusal becomes the node's refusal, **and both carry the same two numbers** — the
+/// permitted count is the setting's, and a function that recomputed it could disagree with it.
+impl From<ARepeatThatWasNotPermitted> for TheRepairCouldNotHappen {
+    fn from(the_refusal: ARepeatThatWasNotPermitted) -> Self {
+        match the_refusal {
+            ARepeatThatWasNotPermitted::TheRepeatBudgetRanOut {
+                how_many_were_asked_for,
+                how_many_were_permitted,
+            } => TheRepairCouldNotHappen::TheRepeatBudgetRanOut {
+                how_many_were_asked_for,
+                how_many_were_permitted,
+            },
         }
     }
 }

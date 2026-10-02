@@ -11,6 +11,7 @@
 use std::fmt;
 
 use aisdlc_domain::agent_identifier::AgentIdentifier;
+use aisdlc_domain::approval::WhichArtifact;
 
 /// Where a run may be put back to, **and it is two and not five on purpose.**
 ///
@@ -236,6 +237,21 @@ pub fn the_agent_asked_to_do_it_again(
         WhereTheRunShouldStartAgain::TheChangeIsWrittenAgain => the_agent_named("aisdlc-dev-impl"),
         WhereTheRunShouldStartAgain::TheChangeIsPlannedAgain => the_agent_named("aisdlc-dev-plan"),
     }
+}
+
+/// What the run is on once that place is worked again, **and it is beside the agent table because
+/// the two are one row.**
+///
+/// **A run handed back to the planner while still standing on `VerificationReport` routes onwards
+/// into the verification it just failed**, so the place the supervisor named and the artifact that
+/// place produces move together — **and this is the second half of `the_agent_asked_to_do_it_again`
+/// rather than a table of its own.**
+pub fn what_the_place_produces(from_which_place: WhereTheRunShouldStartAgain) -> WhichArtifact {
+    let what_it_is_called = match from_which_place {
+        WhereTheRunShouldStartAgain::TheChangeIsWrittenAgain => "VerificationReport",
+        WhereTheRunShouldStartAgain::TheChangeIsPlannedAgain => "ImplementationPlan",
+    };
+    WhichArtifact::try_from(what_it_is_called).expect("an artifact name this table is written with")
 }
 
 /// The agent with this name, **and it is refused rather than a blank if the name is wrong** — so a
