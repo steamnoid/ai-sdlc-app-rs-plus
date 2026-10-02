@@ -24,26 +24,22 @@ fn a_suite_that_passed() -> WhatTheSuiteSaid {
 }
 
 /// One side of the comparison, **standing on a commit.**
-fn the_suite_before(before: &str) -> Option<ASuiteOutcome> {
-    Some(ASuiteOutcome {
+///
+/// **It answers the outcome and not an `Option`, and the caller wraps it** — a helper whose return
+/// type is `Option` is a helper that cannot say *which* absence it is, **and "absent" is the
+/// subject of two of the four tests here.**
+fn the_suite_on(before: &str) -> ASuiteOutcome {
+    ASuiteOutcome {
         which_commit_it_stood_on: String::from(before),
         what_the_suite_said: a_suite_that_passed(),
-    })
-}
-
-/// The same suite, **and on the same commit, which is the whole of what is wrong with it.**
-fn the_suite_after(after: &str) -> Option<ASuiteOutcome> {
-    Some(ASuiteOutcome {
-        which_commit_it_stood_on: String::from(after),
-        what_the_suite_said: a_suite_that_passed(),
-    })
+    }
 }
 
 /// A verification with two sides on two commits, **which is the ordinary case.**
 fn what_a_verification_concluded() -> WhatAVerificationConcluded {
     WhatAVerificationConcluded {
-        the_suite_before: the_suite_before("bf38697"),
-        the_suite_after: the_suite_after("c2a9015"),
+        the_suite_before: Some(the_suite_on("bf38697")),
+        the_suite_after: Some(the_suite_on("c2a9015")),
     }
 }
 
@@ -63,13 +59,16 @@ fn two_suites_on_two_commits_is_what_a_gate_may_be_shown() {
 #[test]
 fn a_verification_with_one_side_is_refused() {
     let the_refusal = WhatAVerificationConcluded {
-        the_suite_before: the_suite_before("bf38697"),
+        the_suite_before: Some(the_suite_on("bf38697")),
         the_suite_after: None,
     }
     .what_the_gate_may_be_shown();
 
     assert!(
-        matches!(&the_refusal, Err(WhyAVerificationProvesNothing::ASuiteRanOnlyOnce { .. })),
+        matches!(
+            &the_refusal,
+            Err(WhyAVerificationProvesNothing::ASuiteRanOnlyOnce { .. })
+        ),
         "**because a suite run once has nothing to be compared with** — and a report with one side \
          reads as thorough, because it has a real suite result in it. What was refused: \
          {the_refusal:?}"
@@ -79,8 +78,8 @@ fn a_verification_with_one_side_is_refused() {
 #[test]
 fn two_suites_on_the_same_commit_are_refused_by_name() {
     let the_refusal = WhatAVerificationConcluded {
-        the_suite_before: the_suite_before("bf38697"),
-        the_suite_after: the_suite_after("bf38697"),
+        the_suite_before: Some(the_suite_on("bf38697")),
+        the_suite_after: Some(the_suite_on("bf38697")),
     }
     .what_the_gate_may_be_shown();
 
@@ -96,17 +95,24 @@ fn two_suites_on_the_same_commit_are_refused_by_name() {
     );
 }
 
+/// A suite whose dependencies did not install, **and it is named here rather than in the test
+/// because a struct literal inside a struct literal inside a struct literal is four levels deep
+/// and this repository's own guard refuses the third.**
+fn a_side_whose_install_never_worked() -> ASuiteOutcome {
+    ASuiteOutcome {
+        which_commit_it_stood_on: String::from("c2a9015"),
+        what_the_suite_said: WhatTheSuiteSaid {
+            did_the_dependencies_install: false,
+            what_it_wrote: String::from("no matching distribution found"),
+        },
+    }
+}
+
 #[test]
 fn a_side_whose_install_never_worked_is_not_a_side() {
     let the_refusal = WhatAVerificationConcluded {
-        the_suite_before: the_suite_before("bf38697"),
-        the_suite_after: Some(ASuiteOutcome {
-            which_commit_it_stood_on: String::from("c2a9015"),
-            what_the_suite_said: WhatTheSuiteSaid {
-                did_the_dependencies_install: false,
-                what_it_wrote: String::from("no matching distribution found"),
-            },
-        }),
+        the_suite_before: Some(the_suite_on("bf38697")),
+        the_suite_after: Some(a_side_whose_install_never_worked()),
     }
     .what_the_gate_may_be_shown();
 

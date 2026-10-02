@@ -1969,6 +1969,31 @@ runs a single test.** A read-only container with no writable home fails on the f
 the failure reads as a broken repository rather than as a sandbox that was right** — which is why a
 test demands that one word as well as the refusals.
 
+**`WhatAVerificationConcluded`** — the `VerificationReport`: `the_suite_before` and
+`the_suite_after`, **both `Option` and both `ASuiteOutcome`.**
+
+**A suite is run twice and the two runs are the evidence.** One is the repository before the change
+and one is after, **and the difference between them is the only thing a verification report is
+about** — a report with one side has run a suite once and called the result a verdict. **Both sides
+are `Option` because absence has to be representable, and a report with one side reads as thorough
+because it has a real suite result in it.**
+
+**`ASuiteOutcome` is `WhatTheSuiteSaid` plus the one thing a comparison needs and a suite cannot
+know: which commit it stood on.** The suite's answer is **reused and not redefined** — a second type
+with the same two fields would be a second name for one thing.
+
+**`WhyAVerificationProvesNothing`** — three refusals, and **a missing side is refused first**
+because the other two both need two commits to compare, **and a refusal that came out of a
+comparison the reader cannot see would send them looking for a difference that is not there.**
+
+- **`ASuiteRanOnlyOnce`** — carries `WhichSide`, **because "one of them" is not an answer.**
+- **`OneSideNeverRan`** — a suite whose dependencies did not install **has not run**, and counting
+  it as a side **turns "the suite could not start" into "the change broke the suite"** — which is
+  the report this system would hand a person to rule on.
+- **`TheTwoSidesWereTheSameCommit`** — **the first real run on this system reported a green suite
+  before and after a change that was a byte-identical rewrite of a file, with both sides on the same
+  repository**, so this is refused by name rather than reported as two green suites.
+
 **`TheModelRefused`** — one refusal naming the artifact and the field. A run asks eight
 agents for eight different artifacts, so *"the shape was wrong"* without saying which is a
 question rather than a diagnosis.

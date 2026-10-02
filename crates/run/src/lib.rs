@@ -48,6 +48,7 @@ pub mod the_work_each_filing_becomes;
 pub mod what_a_model_said;
 pub mod what_a_model_said_would_restate;
 pub mod what_a_planner_planned;
+pub mod what_a_verification_concluded;
 pub mod what_an_agent_has_produced;
 pub mod what_an_agent_judged;
 pub mod what_an_agent_offered;
