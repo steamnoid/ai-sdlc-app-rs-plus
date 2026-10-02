@@ -1795,6 +1795,36 @@ nothing was asked, **a requirement nobody could check**, and **an ambiguity nami
 The last exists because **a blank on a person's copy of the question is a question with no question
 in it.**
 
+**`WhatWouldProveTheWork`** — the `QaPlan`: `requirements` and `scenarios`. **The requirements
+are `ARequirement` and not a second type with the same fields**, because the requirements the
+quality analyst is handed *are* the ones a person approved at the gate before it — **and two types
+with the same shape are two names for one thing, which is the defect the naming rules exist to
+prevent.**
+
+**`AScenario`** — `which_requirement_it_proves`, `what_is_checked` and `where_it_runs`. **A scenario
+is not a wish and a requirement is not a test**: a test somebody writes and then watches pass
+proves nothing about the work, **and a test written from a requirement is the only thing that turns
+a requirement into evidence.** So the scenario **names the requirement it proves**, and that link is
+a fact about this artifact rather than a matter of taste.
+
+**`WhatWouldProveNothing`** — four refusals, and **two of them have the same shape and are
+different facts**:
+
+- **`AScenarioAboutSomethingElse`** — a scenario proving a requirement nobody asked for. It reads as
+  harmless and is not: **it is a test that will keep passing after the work is done wrong**, and a
+  line in a pull request somebody has to read.
+- **`NothingWouldBeChecked`** — a plan of requirements with no scenario on any of them approves
+  evidence for work that was never proved, **and it reads as thorough because the requirement list
+  is right there.**
+- **`AScenarioThatWouldProveNothing`** — a scenario naming no check is **the most convincing line
+  in a plan and the least useful**: it reads as coverage and proves nothing at all.
+- **`ARequirementNothingChecks`** — a requirement with no way of being known to hold is a wish,
+  **and a scenario pointed at one checks a thing nobody could have checked either**, so the
+  refusal names the requirement rather than the scenario, **which is where the fault is.**
+- **`ARequirementNoScenarioProves`** — one requirement proved out of two is **a delivery whose
+  unproved half is the half nobody will notice**: the scenarios all pass, the run reports green,
+  and the requirement the plan forgot to check is the one that was never checked.
+
 **`TheModelRefused`** — one refusal naming the artifact and the field. A run asks eight
 agents for eight different artifacts, so *"the shape was wrong"* without saying which is a
 question rather than a diagnosis.

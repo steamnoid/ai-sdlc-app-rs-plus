@@ -134,10 +134,13 @@ fn a_requirement_nothing_checks_is_refused_as_the_thing_it_is() {
 #[test]
 fn a_requirement_no_scenario_proves_is_refused() {
     let the_refusal = WhatWouldProveTheWork {
-        requirements: vec![a_requirement(), ARequirement {
-            what_is_asked: String::from("the home page keeps the emoji it already had"),
-            how_it_is_known_to_hold: vec![String::from("the home page still shows it")],
-        }],
+        requirements: vec![
+            a_requirement(),
+            ARequirement {
+                what_is_asked: String::from("the home page keeps the emoji it already had"),
+                how_it_is_known_to_hold: vec![String::from("the home page still shows it")],
+            },
+        ],
         scenarios: vec![a_scenario()],
     }
     .what_the_gate_may_be_shown();
