@@ -2190,6 +2190,35 @@ thing produced by the run being judged.**
 **`WhatWasShownToThem`** is `TheArtifact` or `Nothing`, and it is asked for by name **rather than by
 reading the string back** — a caller matching on prose would be matching on a document.
 
+**`WhereARunStands`** — a work item and the artifact the run is on, **and nothing about how it got
+there.** **A run is a state and a state is one value**: eight stages, seven gates, a suite that ran
+twice, **and none of it is any use unless a reader can ask a run where it is and be told one
+thing.**
+
+**`which_artifact_it_is_on` is `Option` and that is the whole of "before the first gate"** — a run
+that has not reached an artifact has not reached a gate, **and naming one anyway would put a name in
+a record for work nobody has presented.**
+
+**The artifact is an argument and is never derived**, because which stage a run is at is the
+framework's business **and which artifact it is producing is the pipeline's** — a function that
+worked the second out from the first would be a second ordering nobody chose.
+
+**Every move goes through `transition()` and this module writes nothing.** Recording a move and
+commissioning are two functions, **and one function answering both could only answer one** — which is
+how a register froze at one stage while a real run went through eight gates and opened a pull
+request, **with no test seeing it because the unit tests only made one move and the whole-run test
+never read the stage back.**
+
+**`the_work_is_handed_to_an_agent` moves and hands over in one fact**, because an agent holding work
+that is still standing at `AWAITING_AGENT_PICKUP` is a state the table forbids, **and checking that
+in two places would be two places to forget.** **`the_work_is_presented_for_a_ruling` lets the agent
+go at that moment**, **because a work item at a gate with an agent still holding it is a state the
+invariant forbids, and the refusal would come from a check reading a field nobody set.**
+
+**`Stage::an_agent_must_be_holding_it` includes `AWAITING_AGENT_PICKUP`**, which is worth knowing
+before a fixture is written: a work item cannot be *put* at that stage without an agent, **so the
+pickup node assigns one and the handover moves it to `IN_PROGRESS_BY_AGENT`.**
+
 **`TheModelRefused`** — one refusal naming the artifact and the field. A run asks eight
 agents for eight different artifacts, so *"the shape was wrong"* without saying which is a
 question rather than a diagnosis.
