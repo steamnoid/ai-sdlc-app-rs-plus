@@ -47,11 +47,12 @@ impl aisdlc_run::AReasoningModel for AModelThatAnswers {
         which_artifact: &WhichArtifact,
         _which_organisation: WhichOrganisationReasons,
         the_question: &str,
-    ) -> String {
+    ) -> Result<String, aisdlc_run::the_words_inside_the_endpoints_envelope::AnAnswerNobodyCanRead>
+    {
         self.what_it_was_asked_for.push(which_artifact.clone());
         self.the_questions_it_was_asked
             .push(the_question.to_string());
-        self.the_answer.clone()
+        Ok(self.the_answer.clone())
     }
 }
 

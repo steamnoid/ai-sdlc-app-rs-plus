@@ -20,6 +20,7 @@ pub mod a_credential;
 pub mod a_filing_is_answered;
 pub mod a_filing_is_read;
 pub mod a_git_hub_we_write_to;
+pub mod a_model_is_asked_for_an_artifact;
 pub mod a_model_is_asked_how_it_rules;
 pub mod a_path_in_the_project;
 pub mod a_program_we_run;
@@ -72,9 +73,18 @@ use aisdlc_domain::agent_identifier::AgentIdentifier;
 use aisdlc_domain::approval::{AnArtifactVersion, Approval, ApprovalDecision, WhichArtifact};
 use aisdlc_domain::stage::Stage;
 use aisdlc_domain::state_machine::{StateMachineError, transition};
-use aisdlc_domain::which_organisation_reasons::WhichOrganisationReasons;
 use aisdlc_domain::work_item::WorkItem;
 use aisdlc_domain::work_item_id::WorkItemId;
+
+/// Asking a model for an artifact, re-exported so this crate's root stays its one entry point.
+///
+/// **A re-export and not a new path, because a move that changes every call site is a move a
+/// reader has to verify.** The module is where the code lives; the root is where a caller looks
+/// for it, and the two answers being the same is worth more than the path being shorter.
+pub use crate::a_model_is_asked_for_an_artifact::{
+    AReasoningModel, AnAnswerIsNotYetAnArtifact, AnUnanswerableRequest,
+    the_agent_asks_a_model_about_the_project, the_agent_asks_for_its_artifact,
+};
 
 /// Takes a work item off the queue and puts it in front of an agent.
 ///
@@ -114,126 +124,6 @@ pub fn the_agent_takes_the_work_item_into_its_own_hands(
         Stage::InProgressByAgent,
         Some(the_agent_taking_it),
     )
-}
-
-/// A model that answers with a validated artifact.
-pub trait AReasoningModel {
-    /// What the model says when asked for one artifact.
-    fn what_it_says_when_asked_for(
-        &mut self,
-        which_artifact: &WhichArtifact,
-        which_organisation: WhichOrganisationReasons,
-        the_question: &str,
-    ) -> String;
-}
-
-/// What a model said when it was asked for an artifact, before anything checked it.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct AnAnswerIsNotYetAnArtifact {
-    which_artifact: WhichArtifact,
-    who_reasoned: WhichOrganisationReasons,
-    the_question: String,
-    what_the_model_said: String,
-}
-
-impl AnAnswerIsNotYetAnArtifact {
-    /// Which artifact the model was asked for.
-    pub fn which_artifact_was_asked_for(&self) -> WhichArtifact {
-        self.which_artifact.clone()
-    }
-
-    /// The same answer, with what the project holds written into the question.
-    ///
-    /// **A copy and not a mutation**, because the answer came back from a call already spent and
-    /// a model cannot be asked the same question twice for one listing.
-    #[must_use]
-    pub fn with_the_project_named_in_the_question(
-        &self,
-        what_is_in_it: &[String],
-    ) -> AnAnswerIsNotYetAnArtifact {
-        let mut the_answer = self.clone();
-        the_answer.the_question = format!(
-            "{}\n\nthe project holds:\n{}",
-            self.the_question,
-            what_is_in_it.join("\n")
-        );
-        the_answer
-    }
-
-    /// Which organisation's model answered.
-    pub fn who_reasoned(&self) -> WhichOrganisationReasons {
-        self.who_reasoned
-    }
-
-    /// The question the model was given.
-    pub fn the_question_it_was_given(&self) -> String {
-        self.the_question.clone()
-    }
-
-    /// The words the model said, unaltered.
-    pub fn what_the_model_said(&self) -> String {
-        self.what_the_model_said.clone()
-    }
-}
-
-/// An agent asks a model for the artifact its work item needs.
-///
-/// **The question is the request somebody typed, and not a summary of it.** A model asked a
-/// question nobody asked is a model answering a question of its own, and the request on a work
-/// item is the only record that this piece of work is this person's work.
-///
-/// **The return type is an answer and not an artifact**, so a caller cannot get hold of
-/// something with a name that could be mistaken for a plan until something has checked one. A
-/// work item with no request cannot be asked about, so it is refused here rather than sent to a
-/// model with nothing to answer.
-pub fn the_agent_asks_for_its_artifact(
-    the_model: &mut impl AReasoningModel,
-    the_work_item: &WorkItem,
-    which_artifact: &WhichArtifact,
-    who_reasoned: WhichOrganisationReasons,
-) -> Result<AnAnswerIsNotYetAnArtifact, AnUnanswerableRequest> {
-    let the_request = the_work_item.the_request_it_answers();
-    let Some(requested) = the_request else {
-        return Err(AnUnanswerableRequest::because(
-            which_artifact,
-            "the work item answers no request",
-        ));
-    };
-    let what_the_model_said =
-        the_model.what_it_says_when_asked_for(which_artifact, who_reasoned, &requested.title);
-    Ok(AnAnswerIsNotYetAnArtifact {
-        which_artifact: which_artifact.clone(),
-        who_reasoned,
-        the_question: requested.title,
-        what_the_model_said,
-    })
-}
-
-/// A work item whose request a model cannot be asked about, named with the artifact and why.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct AnUnanswerableRequest {
-    which_artifact: WhichArtifact,
-    why_not: String,
-}
-
-impl AnUnanswerableRequest {
-    /// The artifact the model was about to be asked for.
-    pub fn which_artifact_was_asked_for(&self) -> WhichArtifact {
-        self.which_artifact.clone()
-    }
-
-    /// Why no question could be built.
-    pub fn why_it_could_not_be_asked(&self) -> String {
-        self.why_not.clone()
-    }
-
-    /// This refusal, for a caller that has the artifact and the reason.
-    pub fn because(which_artifact: &WhichArtifact, why_not: &str) -> Self {
-        Self {
-            which_artifact: which_artifact.clone(),
-            why_not: why_not.to_string(),
-        }
-    }
 }
 
 /// An agent presents what it produced, putting the work item at the gate.
@@ -384,50 +274,4 @@ pub fn the_agent_reads(
 ) -> Result<String, AFileTheProjectDoesNotHave> {
     let the_text = the_project.the_text_of(a_path);
     the_text.ok_or_else(|| AFileTheProjectDoesNotHave::because(a_path))
-}
-
-/// The agent asks a model about the project, and the question carries what the project holds.
-///
-/// **The question is the request and the listing**, because a model asked a question with no
-/// repository in it is answering about a repository it has not seen. **The listing is read once
-/// and the read has to be used**, or the port is opened, the answer is read, and it is thrown
-/// away — which is the shape a call site takes when the thing it reads is not yet needed.
-///
-/// **A project holding nothing is refused before the call and not after.** A model asked about
-/// a repository with nothing in it is answering about nothing, and a refusal that has already
-/// spent a call has paid for it.
-pub fn the_agent_asks_a_model_about_the_project(
-    the_model: &mut impl AReasoningModel,
-    the_project: &mut impl TheProjectOnDisk,
-    the_work_item: &WorkItem,
-    which_artifact: &WhichArtifact,
-    who_reasoned: WhichOrganisationReasons,
-) -> Result<AnAnswerIsNotYetAnArtifact, AnUnanswerableRequest> {
-    let what_is_in_it = the_project.what_is_in_it();
-    if what_is_in_it.is_empty() {
-        return Err(AnUnanswerableRequest::because(
-            which_artifact,
-            "the project holds nothing, and a model asked about a repository with nothing in it is answering about nothing",
-        ));
-    }
-    the_agent_asks_a_question_naming(
-        the_model,
-        the_work_item,
-        which_artifact,
-        who_reasoned,
-        &what_is_in_it,
-    )
-}
-
-/// The same call, with what the project holds written into the question.
-fn the_agent_asks_a_question_naming(
-    the_model: &mut impl AReasoningModel,
-    the_work_item: &WorkItem,
-    which_artifact: &WhichArtifact,
-    who_reasoned: WhichOrganisationReasons,
-    what_is_in_it: &[String],
-) -> Result<AnAnswerIsNotYetAnArtifact, AnUnanswerableRequest> {
-    let the_answer =
-        the_agent_asks_for_its_artifact(the_model, the_work_item, which_artifact, who_reasoned)?;
-    Ok(the_answer.with_the_project_named_in_the_question(what_is_in_it))
 }
