@@ -91,7 +91,7 @@ fn a_work_an_agent_is_working_on() -> aisdlc_domain::work_item::WorkItem {
 
 #[test]
 fn a_models_ruling_that_reached_the_gate_is_recorded_under_its_own_name() {
-    let (_the_ruling, what_it_left) = the_ruling_and_its_record("APPROVED");
+    let (_the_ruling, what_it_left) = the_ruling_and_its_record(&a_ruling_of("APPROVED"));
 
     assert_eq!(
         what_it_left
@@ -105,7 +105,7 @@ fn a_models_ruling_that_reached_the_gate_is_recorded_under_its_own_name() {
 
 #[test]
 fn a_ruling_that_refused_leaves_no_record_because_a_refusal_is_a_decision_and_not_an_approval() {
-    let (_the_ruling, what_it_left) = the_ruling_and_its_record("REFUSED");
+    let (_the_ruling, what_it_left) = the_ruling_and_its_record(&a_ruling_of("REFUSED"));
 
     assert_eq!(
         what_it_left, None,
@@ -113,4 +113,11 @@ fn a_ruling_that_refused_leaves_no_record_because_a_refusal_is_a_decision_and_no
          a record of something that was approved, which is the one thing a record must not be: \
          {what_it_left:?}"
     );
+}
+
+/// The verdict word and a reason on a second line, **which is the shape a model is held to, and
+/// `serde_json` escapes the newline for us** — so the envelope stays valid and this file keeps
+/// testing the record rather than the envelope.
+fn a_ruling_of(the_word: &str) -> String {
+    format!("{the_word}\nthe requirement is clear and the tests exist")
 }

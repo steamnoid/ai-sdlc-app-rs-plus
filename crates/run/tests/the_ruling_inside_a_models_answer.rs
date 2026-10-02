@@ -19,13 +19,20 @@ fn an_answer_carrying(what_the_model_said: &str) -> String {
     )
 }
 
+/// The verdict word and a reason, **and the backslash is what the JSON needs** — a real newline
+/// inside a JSON string is not JSON, **and a fixture that breaks its own envelope would test the
+/// envelope rather than the ruling.**
+fn a_ruling_of(the_word: &str) -> String {
+    format!("{the_word}\\nthe requirement is clear and the tests exist")
+}
+
 #[test]
 fn a_ruling_inside_an_answer_is_read() {
-    let approved = the_ruling_a_model_gave(&an_answer_carrying("APPROVED"));
-    let refused = the_ruling_a_model_gave(&an_answer_carrying("REFUSED"));
+    let approved = the_ruling_a_model_gave(&an_answer_carrying(&a_ruling_of("APPROVED")));
+    let refused = the_ruling_a_model_gave(&an_answer_carrying(&a_ruling_of("REFUSED")));
 
     assert!(
-        approved.as_ref().is_ok_and(|it_approved| *it_approved) && !refused.expect("a word"),
+        approved.as_ref().is_ok_and(|it| it.approved) && !refused.expect("a ruling").approved,
         "**because the envelope is the endpoint's and not the ruling** — a model that said APPROVED in a JSON body has approved, and a reader that wants the whole answer to *be* the word has decided no model can ever rule: {approved:?}"
     );
 }
@@ -42,7 +49,7 @@ fn an_answer_nobody_can_read_is_never_an_approval() {
 
     let any_was_approved = the_broken_ones
         .iter()
-        .any(|one| the_ruling_a_model_gave(one).is_ok_and(|approved| approved));
+        .any(|one| the_ruling_a_model_gave(one).is_ok_and(|it| it.approved));
 
     assert!(
         !any_was_approved,
@@ -55,14 +62,18 @@ fn an_answer_nobody_can_read_is_never_an_approval() {
 }
 
 #[test]
-fn a_model_that_explained_itself_has_not_ruled() {
+fn a_model_that_explained_itself_on_the_same_line_has_not_ruled() {
     let with_a_reason = the_ruling_a_model_gave(&an_answer_carrying(
         "APPROVED, because the requirement is clear and the tests exist",
     ));
 
     assert!(
         with_a_reason.is_err(),
-        "**because a model that added a sentence has not said the fixed form** — and a reader that accepted the first word it found would be accepting a model that opens a gate and then explains itself afterwards, which is not a decision anybody recorded"
+        "**because a sentence on the same line has not said the fixed form** — and a reader that \
+         accepted the first word it found would be accepting a model that opens a gate and then \
+         explains itself afterwards. **This is why the reason went on a second line rather than \
+         after a dash**: the verdict has to be a line of its own for a reason to exist at all, and \
+         this test is what says so."
     );
 }
 

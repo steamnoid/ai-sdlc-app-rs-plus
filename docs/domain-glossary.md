@@ -2084,6 +2084,34 @@ must stay different values**:
   reported both this and a judgement as *the repair failed* **sends whoever reads the trace after the
   wrong one**, and the test asserts they are distinct values rather than that both are errors.
 
+**`reason` is on `ApprovalDecision` and on `Approval`, and it is required of both.** A ruling
+recorded who decided and what and never why — **and `approved` is a boolean while a refusal leaves no
+record at all**, so refusing is the half that stops work and approving is the half that hands it on.
+**A record with no reason is a decision somebody else could have made**, and a trace recording
+*approved* with no grounds is **a coin flip written down at the one place a coin flip is worst.**
+
+**It is required and not optional, because an optional reason is two standards of evidence in one
+table — a person might skip it and a policy would never.** It is required of a **refusal** too,
+**because the trace after a refused run is exactly where somebody needs to know why**, and a refusal
+leaves no record of work done — **so the reason lives on the ruling and not on the record.**
+
+**`ADecisionNobodyGaveAReasonFor`** has one variant, `TheReasonWasBlank`, **and it is refused
+rather than filled in** — because a reason this system composed would be a reason nobody gave, and
+the whole of this field is that somebody did.
+
+**`why_it_carries_no_ground` is a separate question and not a check inside
+`what_the_ruling_left_behind`.** A caller asking *why was nothing recorded* and a caller asking *may
+this be recorded* are two readers: **the first is reading a trace after the fact and the second is
+standing at a gate and needs to be told now.** The words are copied and never summarised, **because
+a paraphrase is where a decision quietly changes.**
+
+**`WhatAModelRuled` — the verdict is one word on a line of its own and the reason is everything
+after it.** **A sentence on the same line is still refused, and `a_model_that_explained_itself_on_
+the_same_line_has_not_ruled` is the test that says so**: a reader that accepted the first word it
+found **would be accepting a model that opens a gate and then explains itself afterwards.** The
+reason went on a second line rather than after a dash **because the verdict has to be a line of its
+own for a reason to exist at all.**
+
 **`TheModelRefused`** — one refusal naming the artifact and the field. A run asks eight
 agents for eight different artifacts, so *"the shape was wrong"* without saying which is a
 question rather than a diagnosis.

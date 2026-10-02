@@ -51,9 +51,15 @@ fn a_ruling_by(decided_by: WhoDecided, approved: bool) -> ApprovalDecision {
         the_first_version(),
         approved,
         decided_by,
+        THE_REASON_THE_DECIDER_GAVE,
     )
     .expect("this is not an agent")
 }
+
+/// The reason every ruling in this file carries, **and it says something so the
+/// new rule about grounds is never what these tests are about.**
+const THE_REASON_THE_DECIDER_GAVE: &str =
+    "the discovery report names two languages and a build system";
 
 #[test]
 fn an_agent_may_not_rule_on_its_own() {
@@ -66,6 +72,7 @@ fn an_agent_may_not_rule_on_its_own() {
             the_first_version(),
             true,
             who,
+            THE_REASON_THE_DECIDER_GAVE,
         );
 
         assert_eq!(
@@ -84,6 +91,7 @@ fn an_agent_is_refused_even_when_it_refuses() {
         the_first_version(),
         false,
         an_agent(),
+        THE_REASON_THE_DECIDER_GAVE,
     );
 
     assert!(
@@ -211,6 +219,7 @@ fn the_prefix_is_matched_exactly_and_the_shapes_that_only_resemble_an_agent_are_
             the_first_version(),
             true,
             who,
+            THE_REASON_THE_DECIDER_GAVE,
         );
 
         assert!(

@@ -8,7 +8,7 @@
 //! **The model is asked in a fixed form, and anything else is a refusal.** A free-text ruling has
 //! no shape to validate, and a contract a model can miss is not a contract.
 
-use aisdlc_domain::approval::{AnArtifactVersion, WhichArtifact, WhoDecided};
+use aisdlc_domain::approval::{AnArtifactVersion, ApprovalDecision, WhichArtifact, WhoDecided};
 use aisdlc_domain::repository::Repository;
 use aisdlc_domain::work_item_id::WorkItemId;
 use aisdlc_run::a_model_is_asked_how_it_rules::{
@@ -31,6 +31,12 @@ impl AModelThatAnswersWith {
     /// double that proves the plumbing and not the contract, so it now says what an
     /// OpenAI-compatible endpoint says, and the escaping is `serde_json`'s because a model that
     /// explains itself puts newlines and quotes in there.
+    /// The verdict word and a reason on a second line, **which is the shape a model is held to.**
+    fn ruling(with_the_word: &str) -> Self {
+        let the_reason = "the requirement is clear and the tests exist";
+        Self::saying(&format!("{with_the_word}\n{the_reason}"))
+    }
+
     fn saying(what_it_says: &str) -> Self {
         Self {
             what_it_says: what_it_says.to_string(),
@@ -93,7 +99,7 @@ fn a_question_about_one_artifact() -> ApprovalQuestion {
 
 #[test]
 fn a_plain_yes_is_a_ruling_naming_whoever_this_system_was_told() {
-    let a_model = AModelThatAnswersWith::saying("APPROVED");
+    let a_model = AModelThatAnswersWith::ruling("APPROVED");
 
     let the_ruling = the_model_is_asked_how_it_rules_on(
         &a_model,
@@ -111,21 +117,36 @@ fn a_plain_yes_is_a_ruling_naming_whoever_this_system_was_told() {
     );
 }
 
+/// A model that offers a decider cannot name one.
+///
+/// **This test used to demand a refusal, and the refusal was an implementation of the rule rather
+/// than the rule.** The rule is that **a record must not name a decider nobody appointed**, and it
+/// was enforced by noticing that the model had added a line. Now the verdict is one word on a line
+/// of its own and everything after it is the reason, **so a model that offers a decider is no
+/// longer refused — it is recorded under whoever this system was told, and its offer lands in the
+/// reason where a reader sees it.**
+///
+/// **The protection is now structural rather than inspected.** `decided_by` is an argument the
+/// caller passes and **there is no path from the answer into it**, so Alice can appear in the
+/// reason and nowhere else. **A record naming Alice for a decision no person made looks exactly
+/// like a real one at the moment somebody needs to tell them apart.**
 #[test]
-fn a_model_that_offers_a_decider_is_refused_rather_than_obeyed() {
-    let a_model =
-        AModelThatAnswersWith::saying("APPROVED\ndecided_by: Alice\nbecause it looks right to me");
+fn a_model_that_offers_a_decider_cannot_name_one() {
+    let a_model = a_model_that_offers_alice();
+    let whoever_this_system_was_told = this_system_was_told();
 
-    let how_it_went = the_model_is_asked_how_it_rules_on(
-        &a_model,
-        &a_question_about_one_artifact(),
-        &WhoDecided::try_from("a model: the configured one").expect("a name"),
-        &a_configured_model(),
+    let the_ruling = the_ruling_this_model_gave(&a_model, &whoever_this_system_was_told);
+    let what_the_record_says = (
+        the_ruling.decided_by.clone(),
+        is_alice_only_in_the_reason(&the_ruling),
     );
 
-    assert!(
-        how_it_went.is_err(),
-        "**because a model that adds a name has stopped answering in the fixed form, and obedience here is the forgery** — reading the first word would take the yes and drop the name in the same step, and a record naming Alice for a decision no person made looks exactly like a real one at the moment somebody needs to tell them apart"
+    assert_eq!(
+        (what_the_record_says.0, what_the_record_says.1),
+        (whoever_this_system_was_told, true),
+        "**because the model was told it could rule and not who ruled** — and the name it offered \
+         has to survive as evidence rather than be lost: {:?}",
+        the_ruling.reason
     );
 }
 
@@ -148,7 +169,7 @@ fn an_answer_that_is_not_the_fixed_form_is_refused_rather_than_guessed_at() {
 
 #[test]
 fn the_question_it_is_asked_names_the_artifact_and_its_version() {
-    let a_model = AModelThatAnswersWith::saying("REFUSED");
+    let a_model = AModelThatAnswersWith::ruling("REFUSED");
 
     let _ = the_model_is_asked_how_it_rules_on(
         &a_model,
@@ -163,4 +184,36 @@ fn the_question_it_is_asked_names_the_artifact_and_its_version() {
             && what_it_was_asked[0].contains("WELLBEINGT-5"),
         "**because a model asked about nothing cannot rule about something** — and the question is built here rather than by the model, so a model cannot ask itself a different question and answer it"
     );
+}
+
+/// Whether the name the model offered is in the reason and nowhere else, **and the record is
+/// asked separately** — because one helper holding both would let a reader miss which was which.
+fn is_alice_only_in_the_reason(the_ruling: &ApprovalDecision) -> bool {
+    the_ruling.reason.contains("Alice")
+}
+
+/// Whoever this system was told ruled, **and it is a model and not a person** — the whole of what
+/// makes the assertion about a model rather than about Alice.
+fn this_system_was_told() -> WhoDecided {
+    WhoDecided::try_from("a model: the configured one").expect("a name")
+}
+
+/// A model that answers yes and then offers to name the decider, **and the offer is on its own
+/// line so the verdict is still a line of its own.**
+fn a_model_that_offers_alice() -> AModelThatAnswersWith {
+    AModelThatAnswersWith::saying("APPROVED\ndecided_by: Alice\nbecause it looks right to me")
+}
+
+/// What this model ruled about one artifact.
+fn the_ruling_this_model_gave(
+    a_model: &AModelThatAnswersWith,
+    whoever_this_system_was_told: &WhoDecided,
+) -> ApprovalDecision {
+    the_model_is_asked_how_it_rules_on(
+        a_model,
+        &a_question_about_one_artifact(),
+        whoever_this_system_was_told,
+        &a_configured_model(),
+    )
+    .expect("one word on the first line is a ruling")
 }

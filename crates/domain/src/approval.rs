@@ -136,6 +136,52 @@ pub struct ApprovalDecision {
     pub approved: bool,
     /// Who ruled, verbatim.
     pub decided_by: WhoDecided,
+    /// Why, in the words of whoever ruled, **and never a blank and never a paraphrase.**
+    ///
+    /// **A ruling with no reason is a decision somebody else could have made.** Refusing costs
+    /// nothing to express and leaves no record at all, **so approving is the half where an
+    /// unreasoned answer would be hidden** — and this is the field that says what was looked at.
+    ///
+    /// **Required of a refusal too**, because the trace after a refused run is exactly where
+    /// somebody needs to know why — **and an optional reason is two standards of evidence in one
+    /// table, where a person might skip it and a policy would never.**
+    pub reason: String,
+}
+
+/// A ruling that carries no ground for anybody to read.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ADecisionNobodyGaveAReasonFor {
+    /// The reason is blank, **and it is refused rather than filled in** because a reason this
+    /// system composed would be a reason nobody gave.
+    TheReasonWasBlank,
+}
+
+impl fmt::Display for ADecisionNobodyGaveAReasonFor {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            formatter,
+            "the reason is blank, and a record with no reason is a decision somebody else could \
+             have made — refusing costs nothing to express and leaves no record at all, so this is \
+             the half where an unreasoned answer would be hidden"
+        )
+    }
+}
+
+impl std::error::Error for ADecisionNobodyGaveAReasonFor {}
+
+impl ApprovalDecision {
+    /// Whether this ruling may be recorded, **and a blank reason is the only thing that stops it.**
+    ///
+    /// **A separate question and not a check inside `what_the_ruling_left_behind`,** because a
+    /// caller that asks *why was nothing recorded* and a caller that asks *may this be recorded*
+    /// are two readers: the first is reading a trace after the fact, **and the second is standing
+    /// at a gate and needs to be told now.**
+    pub fn why_it_carries_no_ground(&self) -> Result<(), ADecisionNobodyGaveAReasonFor> {
+        if self.reason.trim().is_empty() {
+            return Err(ADecisionNobodyGaveAReasonFor::TheReasonWasBlank);
+        }
+        Ok(())
+    }
 }
 
 /// An agent tried to rule.
@@ -157,6 +203,8 @@ pub struct Approval {
     pub the_version: AnArtifactVersion,
     /// Who ruled, verbatim.
     pub decided_by: WhoDecided,
+    /// Why, **in the words of whoever ruled, copied and never summarised.**
+    pub reason: String,
 }
 
 impl std::error::Error for AgentDecidedError {}
@@ -179,6 +227,7 @@ impl ApprovalDecision {
         the_version: AnArtifactVersion,
         approved: bool,
         decided_by: WhoDecided,
+        reason: &str,
     ) -> Result<Self, AgentDecidedError> {
         if decided_by.0.starts_with(THE_PREFIX_AN_AGENT_IS_NAMED_WITH) {
             return Err(AgentDecidedError(decided_by.0));
@@ -189,13 +238,26 @@ impl ApprovalDecision {
             the_version,
             approved,
             decided_by,
+            reason: String::from(reason),
         })
     }
 }
 
 impl Approval {
     /// What an affirmative ruling left behind, and nothing at all after a refusal.
+    /// The record a ruling leaves behind, **and nothing at all for a refusal.**
+    ///
+    /// **A refusal leaves no record of work done**, and it still has to carry its reason on the
+    /// ruling itself — **because the trace after a refused run is exactly where somebody needs to
+    /// know why**, and a record is the wrong place because there is no record.
+    ///
+    /// **A blank reason leaves nothing either, and that is checked before the ruling is read for
+    /// anything else** — **a record carrying no reason is a decision somebody else could have
+    /// made**, and it would be handed on looking exactly like a considered one.
     pub fn what_the_ruling_left_behind(a_ruling: &ApprovalDecision) -> Option<Self> {
+        if a_ruling.why_it_carries_no_ground().is_err() {
+            return None;
+        }
         if !a_ruling.approved {
             return None;
         }
@@ -204,6 +266,7 @@ impl Approval {
             which_artifact: a_ruling.which_artifact.clone(),
             the_version: a_ruling.the_version,
             decided_by: a_ruling.decided_by.clone(),
+            reason: a_ruling.reason.clone(),
         })
     }
 }
