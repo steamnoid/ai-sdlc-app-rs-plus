@@ -1847,6 +1847,29 @@ dependency no manifest declares. **And the check that refuses nothing is a fault
 repository's own history is six real runs spent on a run that refused everything it was asked to
 do, **so a gate has to be able to see this check pass.**
 
+**`WhatIsAtRisk`** — the `SecurityReport`: `findings` and `what_was_inspected`. **An empty
+`findings` list is a result and not a fault**, and the second field is here because of it: a report
+saying "nothing" has to say **what it looked at** to mean anything, **and a model asked *what
+could go wrong here* answers with something** — an analyst that has to produce a finding to be
+believed will produce one, **so a rule demanding at least one would convert a calm repository into
+a made-up vulnerability, and that made-up finding is what a person then rules on at a gate.**
+
+**`ASecurityFinding`** — `what_is_at_risk`, `where_in_the_repository`, `how_bad_it_is`. **A finding
+naming no place is refused**, because **a finding about nowhere is a finding about nothing** — and
+the sister implementation's history records a real run citing a path that resolved to nothing
+**while looking exactly like a link.**
+
+**`HowBadItIs` is `AMinorRisk`, `AModerateRisk`, `ARiskThatStopsAShipment` and not `Low`, `Medium`
+and `High`.** A colour scale says how somebody felt and not what happens next, **and each level
+here names what it does to the run — which is the only part a gate can act on.**
+
+**`the_findings_worst_first` sorts them, because a person reads a list top to bottom and stops
+reading.** A list in the order a model produced it **puts the risk that stops a shipment wherever
+the model happened to put it.**
+
+**`WhatCouldGoWrong`** — two refusals: a finding about nowhere, and **a severity with no risk
+attached to it**. The second exists because a chart is the one artefact a person cannot act on.
+
 **`TheModelRefused`** — one refusal naming the artifact and the field. A run asks eight
 agents for eight different artifacts, so *"the shape was wrong"* without saying which is a
 question rather than a diagnosis.
