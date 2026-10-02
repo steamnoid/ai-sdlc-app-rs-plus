@@ -25,6 +25,7 @@ pub mod a_git_hub_we_write_to;
 pub mod a_model_is_asked_for_an_artifact;
 pub mod a_model_is_asked_how_it_rules;
 pub mod a_path_in_the_project;
+pub mod a_person_answers_at_a_terminal;
 pub mod a_policy_answers_the_gate;
 pub mod a_program_we_run;
 pub mod a_pull_request_is_opened;

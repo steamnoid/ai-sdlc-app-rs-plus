@@ -26,7 +26,8 @@ fn a_question() -> ApprovalQuestion {
     let the_work_item = aisdlc_domain::work_item::WorkItem::standing_at(
         aisdlc_domain::work_item_id::WorkItemId::try_from("WELLBEINGT-5").expect("a name"),
         aisdlc_domain::who_commissioned::WhoCommissioned::try_from("a person").expect("a name"),
-        aisdlc_domain::repository::Repository::try_from("steamnoid/ai-sdlc-app-rs-plus").expect("two halves"),
+        aisdlc_domain::repository::Repository::try_from("steamnoid/ai-sdlc-app-rs-plus")
+            .expect("two halves"),
         aisdlc_domain::role::Role::try_from("PO").expect("a discipline"),
         aisdlc_domain::stage::Stage::AwaitingHumanApproval,
     )
@@ -47,11 +48,14 @@ fn the_artifact_on_disk() -> String {
 
 /// A terminal somebody is answering at.
 fn a_terminal(what_they_typed: &str) -> APersonAtTheTerminal {
+    let the_words_they_wrote = String::from(what_they_typed);
+
     APersonAtTheTerminal::the_person_at(
         a_person_who_is(),
-        || what_they_typed.to_string(),
+        move || the_words_they_wrote.clone(),
         the_artifact_on_disk,
     )
+    .expect("a person is not a machine")
 }
 
 #[test]
@@ -62,7 +66,7 @@ fn a_person_is_shown_the_artifact_itself_and_names_what_it_is() {
 
     let what_was_shown = the_terminal.what_they_were_shown();
     assert!(
-        matches!(&what_was_shown, WhatWasShownToThem::TheArtifact { .. }),
+        matches!(what_was_shown, Some(WhatWasShownToThem::TheArtifact { .. })),
         "**because a person shown a summary is not looking at the thing they are approving** — and \
          the summary is a lossy thing produced by the run being judged. What they were shown: \
          {what_was_shown:?}"
@@ -93,31 +97,32 @@ fn a_person_is_recorded_in_their_own_name_and_never_in_a_machines_namespace() {
     let the_ruling = the_terminal.how_they_rule_on(&a_question());
 
     assert_eq!(
-        the_ruling.decided_by.to_string(), "paligakrzychu",
+        the_ruling.decided_by.to_string(),
+        "paligakrzychu",
         "**because a person's name in a record is the one thing that cannot be edited** — and a \
          person who could be recorded as `autopilot:` would be a person whose decision could not be \
-         told apart from a machine's. It recorded: {:?}", the_ruling.decided_by
+         told apart from a machine's. It recorded: {:?}",
+        the_ruling.decided_by
     );
 }
 
 #[test]
 fn a_person_may_not_sign_as_an_agent_and_is_refused_before_anything_is_shown() {
-    let mut somebody_pretending = APersonAtTheTerminal::the_person_at(
+    let somebody_pretending = APersonAtTheTerminal::the_person_at(
         WhoDecided::try_from("aisdlc-dev-impl").expect("a name is not blank"),
         || they_typed("yes", "the report names a build system"),
         the_artifact_on_disk,
     );
 
-    let the_refusal = somebody_pretending.how_they_rule_on(&a_question());
-    let nothing_was_shown = somebody_pretending.what_they_read().is_empty();
+    let why_it_was_refused = somebody_pretending.err().map(|why| why.0);
 
-    assert!(
-        !the_refusal.approved && nothing_was_shown,
+    assert_eq!(
+        why_it_was_refused,
+        Some(String::from("aisdlc-dev-impl")),
         "**because a name in the agent namespace at this terminal is somebody trying to make a \
-         machine's decision** — and refusing before the artifact is shown means a run that cannot \
-         produce a human ruling stops **without having spent the person's attention on it.** The \
-         ruling said: {:?} and what they were shown was: {:?}",
-        the_refusal.decided_by, the_refusal.reason
+         machine's decision** — and refusing at construction means it happens **before the artifact \
+         is read**, so a run that cannot produce a human ruling stops **without having spent the \
+         person's attention on it.**"
     );
 }
 
