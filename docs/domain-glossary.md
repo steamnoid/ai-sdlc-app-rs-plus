@@ -1758,6 +1758,43 @@ repository's own history records a run that verified green twice and delivered n
 **The same file written twice is one file**, because a downstream list of writes carrying one path
 twice is a run that would write it twice and report two changes.
 
+**`WhatTheProductAnalystConcluded`** — two lists and no other field: `requirements` and
+`ambiguities`. **The acceptance criteria live inside their requirement and not beside it**, because
+a criterion that could belong to either of two requirements is a criterion that will.
+
+**`ARequirement`** — `what_is_asked` and `how_it_is_known_to_hold`. **The criteria are inside it
+because a requirement with no observable is a wish**, and **a wish delivered as a requirement is a
+pull request nobody can check**: `the sidecar files are handled properly` names nothing anyone can
+look at. **`a_requirement_with_no_way_of_being_known_to_hold` quotes the requirement and not its
+position in a list**, because a person reading the refusal is told **which of their own words**
+became unwatchable.
+
+**`AnAmbiguity`** — `what_is_unsettled` and `who_can_answer_it`, and the second is
+**`WhoCanAnswerThisAmbiguity`: `APerson` or `WhatTheCodeShows`.** It is not `TheRepository`,
+because a name may not end on `Repository` — that word is this system's own public GitHub
+repository, **and the question here is not which repository but whether the answer is already
+written down.**
+
+**An ambiguity is carried and not obeyed, and that is a reversal with six real runs behind it.** An
+approved requirement held three things nobody had settled; the analyst said who could answer each
+and **a run stopped and asked when a person had to.** Then a run refused a request that named the
+file to add, with *"the inspection does not show whether the existing `.gitignore` already ignores
+`e2e.db-wal`"* — **a true sentence and not a reason, because the implementer opens the file.** Four
+attempts to steer it failed and the sixth refused a request to change **one word on a home page**.
+**A run that refuses plannable work delivers nothing, and every gate passes while it does.** What
+replaced the refusal is the gate this system already had: **the person ruling on the plan reads the
+ambiguity there, with better evidence than the analyst had.**
+
+**`the_ambiguities_only_a_person_can_settle` is the list the planner's question is marked from**,
+and `WhatTheCodeShows` is not in it — **the implementer opens the file**, so an ambiguity the
+checkout already settles is handed on as settled, **and marking it as a person's question sends a
+run back to somebody for an answer `.gitignore` already holds.**
+
+**`RequirementsThatAskForNothing`** — three refusals, and they are three different facts:
+nothing was asked, **a requirement nobody could check**, and **an ambiguity naming nothing to ask**.
+The last exists because **a blank on a person's copy of the question is a question with no question
+in it.**
+
 **`TheModelRefused`** — one refusal naming the artifact and the field. A run asks eight
 agents for eight different artifacts, so *"the shape was wrong"* without saying which is a
 question rather than a diagnosis.
