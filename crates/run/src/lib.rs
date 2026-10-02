@@ -14,6 +14,7 @@
 //! the type and into a line of code.
 
 pub mod a_branch_goes_to_a_remote;
+pub mod a_change_is_made_in_the_clone;
 pub mod a_comment_is_left;
 pub mod a_creative_agent_files_what_it_concluded;
 pub mod a_creative_run_files_what_it_would_file;
@@ -26,6 +27,7 @@ pub mod a_model_is_asked_how_it_rules;
 pub mod a_path_in_the_project;
 pub mod a_program_we_run;
 pub mod a_pull_request_is_opened;
+pub mod a_record_of_a_change;
 pub mod a_ruling_is_recorded;
 pub mod a_ruling_moves_the_work;
 pub mod a_run_asks_what_is_in_its_own_checkout;

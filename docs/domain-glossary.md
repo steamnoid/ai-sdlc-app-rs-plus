@@ -313,6 +313,7 @@ two of the splits are not inventions — they are lines this domain had already 
 | `AGitHubWeReadFrom` | for a checkout, and for a file at a ref | HTTPS, no credential |
 | `AGitHubWeWriteTo` | for a branch, and for a pull request | `git` over SSH, always a credential |
 | `TheProjectOnDisk` | for a listing, and for a file's text | the local filesystem |
+| `AChangeIsRecorded` | for a file's text, and for a commit | the local filesystem, and `git` |
 | `AProgramWeRun` | for our own programs, on the host | `git` and this project's tooling |
 | `AnUntrustedTestSuite` | for a repository's own tests, in a container | Docker, no host credential |
 | `TheClock` | how long it has been, and to wait | the operating system, or a test's zero |
@@ -1685,6 +1686,56 @@ incrementally cannot complete a forced call until the fragments are all there, s
 streaming and forcing are the same problem seen from two sides. Worse, a streaming failure
 happens *inside* that parse, so the answer never reaches the correction loop — **and the
 correction loop is the only route to a plan on a model that does not do structured output.**
+
+**`TheProjectAsItIsChanged`** — a project on a real disk that this system writes into, and **the
+one implementation of `AChangeIsRecorded`.** **A read and a write are two types and not one**,
+because `TheProjectAsItIsChanged` writes and `TheProjectAsItIsOnDisk` only reads, **and one type
+doing both would be a type whose reading boundary nobody could state.** It is generic over
+nothing and holds the clone's place and nothing else, **because the clone's place is the boundary** —
+a path outside it is a file in somebody else's project.
+
+**`..` is refused by name and not by comparison, and the first version compared.** `Path::join`
+keeps the `..` and `starts_with` compares components, **so `<clone>/../a-file` starts with
+`<clone>` and every such write passed** — a lexical comparison doing the job of a rule about
+where a file may land. **A boundary that is a string comparison is not a boundary.**
+
+**`AFileToWrite`** — a path and the text. **The shape rule and not the confinement one, and the
+difference is the point:** every path here is *relative to the repository*, because that is how a
+plan names a file, **and two relative paths are compared to find out whether the plan named this
+one.** What has to be refused before anything is written is a path that could be an address
+somewhere else — absolute, or stepping out with `..`.
+
+**`WhatWasWritten`** — the paths written and the commit that records them, **both read out of what
+`git` wrote.** The commit is the last word before the bracket in `[branch 9f1c2a4] the subject`,
+**because the branch name carries slashes and the text after the bracket is a sentence** — and a
+commit this system composed would be a record of something that never happened.
+
+**`AChangeIsRecorded`** — writing one file, and asking what a file already holds. **A read and
+a write are two ports and not one, and that is the point:** `TheProjectOnDisk`'s own docstring
+says *"Two questions and no others: what is in it, and what does one file say"*, **so a run that
+could write through it would be a run whose reading boundary nobody could state** — and a
+repository this system writes into is somebody else's working tree.
+
+**`one_file_is_written` answers a `Result` and not nothing, because a write that quietly did not
+happen is a lie a run carries for the rest of its life** — it would report a change, commit
+nothing, and be caught by the far end. The caller has already refused anything wrong about the
+*contents*; **this is the refusal about the *place*, and the filesystem is the only thing that can
+make it.** `AFileThatWasNotWritten` is that refusal, quoted whole, **because the path is the whole
+of it.**
+
+**`AFileOutsideTheProject`** — a path this system will not write to, **raised before the disk is
+touched** so that a path refused here is refused where a person can be told and not by a review of
+a diff three days later.
+
+**`AChangeCouldNotBeMade`** — four refusals, and each is a different fact. `AFileThePlanDidNotName`
+is a change nobody approved. **`AWriteThatChangesNothing` is refused at the writing, not at a push** —
+this repository's history records a run that wrote a file byte-identical to the one already
+there, committed nothing, and was caught only by a `nothing to commit` from GitHub forty-five
+minutes later. `TheChangeWasNotCommitted` carries git's own words, **because that sentence is the
+only thing that says so.**
+
+**A commit is read out of what `git` wrote and never composed by this system**, because a commit
+invented here would be a record of something that never happened.
 
 **`WhatAPlannerPlanned`** — the five lists the specification gives a plan, each reached as a list:
 `files_to_change`, `files_to_add`, `tests_to_add`, `dependencies`, `migrations`. **Five and not
