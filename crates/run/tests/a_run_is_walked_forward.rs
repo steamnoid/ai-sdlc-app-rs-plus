@@ -8,6 +8,7 @@
 //! repair budget bounds the *other* loop; **this one needs no budget because the router has seven
 //! destinations and nothing has an eighth.**
 
+use aisdlc_domain::approval::WhichArtifact;
 use aisdlc_domain::stage::Stage;
 use aisdlc_run::a_run_is_walked_forward::{
     AWalkThatWouldNotEnd, WhatAWalkReached, a_run_is_walked_forward, every_stage_somebody_ruled_on,
@@ -136,6 +137,68 @@ fn more_rulings_than_there_are_stages_is_a_loop_and_is_refused() {
         "**because the router has seven destinations and nothing has an eighth** — so a ninth \
          ruling is not a run, it is a loop, **and a refusal that named it as one would send whoever \
          reads it after the repeat budget instead of after the router.** It refused: {the_refusal:?}"
+    );
+}
+
+
+#[test]
+fn a_run_walked_through_every_gate_ends_with_the_delivery_agent_holding_the_work() {
+    let every_ruling = vec![true; 7];
+
+    let the_walk = a_run_is_walked_forward(&a_run_at_its_first_stage(), &every_ruling);
+
+    let how_far_it_got = the_walk.as_ref().map(WhatAWalkReached::how_far_it_got);
+    assert_eq!(
+        how_far_it_got,
+        Ok(7),
+        "**because seven gates is the whole pipeline and the delivery is the seventh** — a walk \
+         that stopped at six delivered nothing. It reached {how_far_it_got:?} places"
+    );
+
+    let who_holds_it = the_walk
+        .as_ref()
+        .map(|walk| walk.where_the_work_ended_up().who_holds_it());
+    assert_eq!(
+        who_holds_it,
+        Ok(Some(
+            aisdlc_domain::agent_identifier::AgentIdentifier::try_from("aisdlc-pr")
+                .expect("an agent name")
+        )),
+        "**because the last stage is the delivery and it has an agent** — a walk that refused to \
+         reach it leaves a run at the verification gate with nowhere to go, **which is a run that \
+         verified something and could not deliver it.** It is held by {who_holds_it:?}"
+    );
+}
+
+#[test]
+fn the_artifact_the_last_stage_is_on_is_the_one_it_verified() {
+    let every_ruling = vec![true; 7];
+
+    let the_walk = a_run_is_walked_forward(&a_run_at_its_first_stage(), &every_ruling);
+
+    let which_artifact = the_walk
+        .as_ref()
+        .map(|walk| walk.where_the_work_ended_up().which_artifact_it_is_on().cloned());
+    assert_eq!(
+        which_artifact,
+        Ok(Some(WhichArtifact::try_from("VerificationReport").expect("a name is not blank"))),
+        "**because the delivery presents what was verified** — it does not produce another \
+         artifact, **and a run standing on a name the delivery invented would be a pull request \
+         about a document nobody wrote.** It stands on {which_artifact:?}"
+    );
+}
+
+#[test]
+fn a_walk_that_has_reached_the_delivery_takes_no_further_ruling() {
+    let too_many = vec![true; 8];
+
+    let refused = a_run_is_walked_forward(&a_run_at_its_first_stage(), &too_many);
+
+    assert!(
+        matches!(refused, Err(AWalkThatWouldNotEnd::MoreRulingsThanStages { .. })),
+        "**because the delivery is the end and there is no eighth gate** — the same refusal as any \
+         other walk past the end, **and a different one here would mean the pipeline has two \
+         endings.** It refused: {refused:?}"
     );
 }
 
