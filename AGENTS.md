@@ -334,8 +334,10 @@ convention.
 
 # The gates
 
-**Every rule in this file has a gate, and not one of them exists yet. A rule with no gate is
-not a rule, it is a wish**, and a wish is worse than nothing because a reader stops checking.
+**Every rule in this file has a gate, and the table of them is in
+[`docs/domain-glossary.md`](docs/domain-glossary.md) with the module that holds each one.** A rule
+with no gate is not a rule, it is a wish**, and a wish is worse than nothing because a reader stops
+checking.
 
 So is a gate that was never seen to refuse anything. **Each column says what a gate arrives
 with, and the answer is always the code it judges** — a gate written before the code it
@@ -381,9 +383,10 @@ more than that would be a claim this repository is not built to make.
 
 # Layout
 
-**What this repository is going to be, and none of it exists yet.** A crate or a module
-appears when the first test that needs it is written, not before, and this is a target
-rather than an inventory.
+**Seven of the nine things below are here and two are not**, and which is which is a fact about
+the checkout rather than an intention. A crate or a module appears when the first test that needs
+it is written, not before, **so the two that are not are written as what they would be, and
+`a_document_does_not_deny_what_this_checkout_holds` is what holds the difference.**
 
 ```text
 crates/
@@ -392,10 +395,10 @@ crates/
               the root package and that package depends on nothing on purpose
   run/        the use cases, the ports as traits, the router, suspend and resume
   outside/    github, the project on disk, programs, the container, the model, sqlite
-  desk/       the composition root: the only place a concrete type is named
+  desk/       TARGET, not here: the composition root, the only place a concrete type is named
 src/          the gates' library: the scanner, and the helpers the gates share
-tests/        the gates. One file per rule, and the file name states the rule.
-real/         a real model, a real repository, a real container; ignored by default
+tests/        the gates. Two files, and the file states the concern rather than the rule
+real/         TARGET, not here: a real model, a real repository, a real container
 docs/         domain-glossary.md, the source of truth for naming
 ```
 
@@ -409,9 +412,11 @@ rule every other boundary rests on.
 
 # Commands
 
-**None of these run yet** — there is no `Cargo.toml` in this repository. They become the gate
-when the first crate exists, and until then a claim that a command is green would be a claim
-about a program that does not exist.
+**These five are the gate**, and their exit code is the verdict.
+`--no-fail-fast` is not optional politeness: `cargo test` stops after
+the first failing binary, so a count read out of its output is a count of the suites that
+happened to run first. **One of these five used to read that this repository has no
+`Cargo.toml`, and `./scripts/gate` is the command it was talking about.**
 
 ```bash
 cargo test --workspace --no-fail-fast   # the default suite: no network, no credentials
