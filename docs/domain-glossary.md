@@ -2112,6 +2112,30 @@ found **would be accepting a model that opens a gate and then explains itself af
 reason went on a second line rather than after a dash **because the verdict has to be a line of its
 own for a reason to exist at all.**
 
+**`WhoAnswersTheGate`** — `APersonNamed(WhoDecided)` and `ThisPolicyAnswering { which_policy }`,
+**and the two are told apart by the variant rather than by a string a caller matches on.**
+
+**`THE_NAMESPACE_A_POLICY_IS_RECORDED_IN` is `autopilot:` and it is a namespace on purpose.** It
+shares no prefix with an agent's `aisdlc-`, **because a policy answering in the agent namespace
+would be refused along with the agents it is defined in contrast to, and an autopilot that may
+approve every gate could then not rule at all.**
+
+**`the_name_the_decision_is_recorded_under` is the only place the namespace is applied, and that is
+the whole design.** The alternative was for the thing that reads the deployment's setting to prefix
+it, **and that would be a second place to forget** — a caller reaching a record directly would get a
+policy's decision under a bare name, **and a bare name is indistinguishable from a person's.** A
+deployment whose policy name already carries the prefix gets it twice, **which is loud and not
+subtle, and loud is the right outcome for a mistake in this direction.**
+
+**A person is recorded verbatim and nothing is added to them**, because a person's name in a record
+is the one thing that cannot be edited — **and adding a namespace would make them harder to find in
+the very table meant to name them, and it would be a lie about what they are.**
+
+**`the_policy_a_deployment_named` — naming nothing gives a person and not a policy**, because **the
+setting nobody wrote must not decide the gate.** **`APolicyNobodyCanQuote`** has one variant, `ThePolicySaysNothing`, and it is
+refused rather than defaulted, **because a truncated value is the shape this takes** and `autopilot:`
+with nothing behind it is a claim carrying no claim.
+
 **`TheModelRefused`** — one refusal naming the artifact and the field. A run asks eight
 agents for eight different artifacts, so *"the shape was wrong"* without saying which is a
 question rather than a diagnosis.
