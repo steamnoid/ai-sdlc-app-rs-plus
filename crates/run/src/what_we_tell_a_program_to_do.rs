@@ -57,6 +57,20 @@ pub enum WhatWeTellAProgramToDo {
         of_which_repository: Repository,
     },
 
+    /// Read the remote, and change nothing.
+    ReadTheRemote {
+        /// Which clone's remote, which is the only remote this system has.
+        the_clone_of: ARepositoryToClone,
+        /// Which branch the run is about to push, asked for by name.
+        which_branch: String,
+    },
+    /// Put one commit on a remote under a branch name, **and not under a local branch name.**
+    PushTheBranch {
+        /// Which clone the commit is in, which is the only place this system takes one from.
+        the_clone_of: ARepositoryToClone,
+        /// Which branch the run wants on the remote.
+        which_branch: String,
+    },
     /// Read one filing, as a person named it.
     ReadTheFiling {
         /// Which filing, and of which repository.
@@ -94,14 +108,27 @@ impl WhatWeTellAProgramToDo {
     }
 
     /// The address to fetch from, derived from the repository and not a formatted line.
+    ///
+    /// **A clone is its own arm and not the one below, because there are now six of them** —
+    /// and a `match` arm per clone request is a list of six places to change.
     pub fn fetch_from(&self) -> String {
         match self {
             WhatWeTellAProgramToDo::CloneTheRepository { the_clone_of }
             | WhatWeTellAProgramToDo::TheCommitItStandsOn { the_clone_of }
             | WhatWeTellAProgramToDo::TheRefItStandsOn { the_clone_of }
-            | WhatWeTellAProgramToDo::NameWhereTheCodeWasWrittenIn { the_clone_of } => {
+            | WhatWeTellAProgramToDo::NameWhereTheCodeWasWrittenIn { the_clone_of }
+            | WhatWeTellAProgramToDo::ReadTheRemote { the_clone_of, .. }
+            | WhatWeTellAProgramToDo::PushTheBranch { the_clone_of, .. } => {
                 the_clone_of.fetch_from()
             }
+            _ => self.the_address_or_the_whole_of_it(),
+        }
+    }
+
+    /// The address for a request that is not about a clone, **and a question to a model is
+    /// answered by its own body rather than by an address.**
+    fn the_address_or_the_whole_of_it(&self) -> String {
+        match self {
             WhatWeTellAProgramToDo::ListTheFilingsAlreadyOnFile {
                 of_which_repository,
             } => {
@@ -111,6 +138,40 @@ impl WhatWeTellAProgramToDo {
             WhatWeTellAProgramToDo::ReadTheFiling { which_filing } => {
                 which_filing.which_issue().to_string()
             }
+            _ => String::new(),
+        }
+    }
+
+    /// Read what the remote holds for one branch, **and change nothing.**
+    pub fn read_the_remote(of_which_clone: ARepositoryToClone, which_branch: &str) -> Self {
+        WhatWeTellAProgramToDo::ReadTheRemote {
+            the_clone_of: of_which_clone,
+            which_branch: which_branch.to_string(),
+        }
+    }
+
+    /// Put one commit on the remote under one branch name.
+    pub fn push_the_branch(of_which_clone: ARepositoryToClone, which_branch: &str) -> Self {
+        WhatWeTellAProgramToDo::PushTheBranch {
+            the_clone_of: of_which_clone,
+            which_branch: which_branch.to_string(),
+        }
+    }
+
+    /// Whether this request moves the remote, **and the reading is the one that does not.**
+    ///
+    /// **Asked as a property because that is the rule:** `ls-remote` is read before anything is
+    /// pushed, which is the only reason a refusal can happen before a push has landed.
+    pub fn does_this_change_the_remote(&self) -> bool {
+        matches!(self, WhatWeTellAProgramToDo::PushTheBranch { .. })
+    }
+
+    /// The branch this request is about, **for a request that is about one branch.**
+    pub fn the_branch_it_is_about(&self) -> Option<&String> {
+        match self {
+            WhatWeTellAProgramToDo::ReadTheRemote { which_branch, .. }
+            | WhatWeTellAProgramToDo::PushTheBranch { which_branch, .. } => Some(which_branch),
+            _ => None,
         }
     }
 
@@ -211,6 +272,8 @@ impl WhatWeTellAProgramToDo {
             | WhatWeTellAProgramToDo::NameWhereTheCodeWasWrittenIn { the_clone_of } => {
                 Some(the_clone_of)
             }
+            WhatWeTellAProgramToDo::ReadTheRemote { the_clone_of, .. }
+            | WhatWeTellAProgramToDo::PushTheBranch { the_clone_of, .. } => Some(the_clone_of),
             WhatWeTellAProgramToDo::ListTheFilingsAlreadyOnFile { .. } => None,
             WhatWeTellAProgramToDo::AskAModel { .. }
             | WhatWeTellAProgramToDo::ReadTheFiling { .. } => None,
@@ -258,6 +321,8 @@ impl WhatWeTellAProgramToDo {
             | WhatWeTellAProgramToDo::TheRefItStandsOn { .. }
             | WhatWeTellAProgramToDo::NameWhereTheCodeWasWrittenIn { .. }
             | WhatWeTellAProgramToDo::AskAModel { .. }
+            | WhatWeTellAProgramToDo::ReadTheRemote { .. }
+            | WhatWeTellAProgramToDo::PushTheBranch { .. }
             | WhatWeTellAProgramToDo::ReadTheFiling { .. }
             | WhatWeTellAProgramToDo::ListTheFilingsAlreadyOnFile { .. } => None,
         }

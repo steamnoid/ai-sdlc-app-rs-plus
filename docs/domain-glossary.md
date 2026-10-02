@@ -387,6 +387,12 @@ such repository*, and that telling is not this system's to make up.
 our own inputs. Its `working_directory` is a convenience, not a promise that anything may
 be run there.
 
+**`does_this_change_the_remote`** — whether a request moves the remote or only reads it, **and
+it is asked as a property and not as a variant test.** A test double has to answer one
+question about any request it is handed, and "is this the push or the reading" is a question
+about the mechanics; **"does this change the remote" is the property the rule is about**,
+because reading it first is the only reason a refusal can happen before a push has landed.
+
 ### What a port never carries
 
 A port's arguments are named types, never a `String` and never a tuple. A port never
@@ -1560,6 +1566,16 @@ branch it did not create.
 **`TheRemoteRefusedThePush`** — separate from the above, because the two need different
 answers from a person: a branch that already existed is this run's own doing, and a remote
 that is not there is not.
+
+**`WhyABranchDidNotGo`** — the one refusal holding both, **because one rule produces both
+cases and a name covering one of them is trusted for the other.** Two variants of one type
+satisfies both sentences here: one type, two answers, and the variant a caller holds says
+which half it is looking at.
+
+**`ANameABranchCannotTake`** — a name no branch can carry, **refused before any program
+runs.** A name git would refuse has to be refused where a person can be told, **and not as a
+program that said no**, because a caller reading a program failure cannot tell its own naming
+mistake from a remote that is not there.
 
 **`ls-remote`, asked before anything is pushed.** It reads the remote without changing it,
 which is what makes the refusal possible *before* rather than after — **and a push that has
