@@ -101,9 +101,11 @@ fn a_judgement_that_it_will_not_repair_and_a_budget_that_ran_out_are_two_refusal
         how_many_were_permitted: 2,
     };
 
+    let every_refusal = [the_judgement, the_budget];
+
     assert_ne!(
-        (the_judgement, the_budget),
-        (the_budget, the_judgement),
+        (every_refusal[0].clone(), every_refusal[1].clone()),
+        (every_refusal[1].clone(), every_refusal[0].clone()),
         "**because they are facts about different things** — one is the model having decided and the
          other is the setting having run out, **and a run that reported both as *the repair failed* \
          sends whoever reads the trace after the wrong one.** The two are distinct values and the
