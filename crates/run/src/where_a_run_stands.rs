@@ -10,6 +10,8 @@
 
 use aisdlc_domain::agent_identifier::AgentIdentifier;
 use aisdlc_domain::approval::{AnArtifactVersion, WhichArtifact};
+
+use crate::where_an_artifact_of_this_run_landed::WhereAnArtifactOfThisRunLanded;
 use aisdlc_domain::stage::Stage;
 use aisdlc_domain::state_machine::{StateMachineError, transition};
 use aisdlc_domain::work_item::WorkItem;
@@ -49,6 +51,7 @@ pub struct WhereARunStands {
     the_work_item: WorkItem,
     which_artifact_it_is_on: Option<WhichArtifact>,
     the_version_it_is_on: Option<AnArtifactVersion>,
+    everything_this_run_wrote: Vec<WhereAnArtifactOfThisRunLanded>,
 }
 
 impl WhereARunStands {
@@ -64,6 +67,7 @@ impl WhereARunStands {
                 WhichArtifact::try_from(which_artifact).expect("a name is not blank"),
             ),
             the_version_it_is_on: None,
+            everything_this_run_wrote: Vec::new(),
         }
     }
 
@@ -73,6 +77,7 @@ impl WhereARunStands {
             the_work_item,
             which_artifact_it_is_on: None,
             the_version_it_is_on: None,
+            everything_this_run_wrote: Vec::new(),
         }
     }
 
@@ -95,7 +100,28 @@ impl WhereARunStands {
             the_work_item: self.the_work_item.clone(),
             which_artifact_it_is_on: self.which_artifact_it_is_on.clone(),
             the_version_it_is_on: Some(the_version),
+            everything_this_run_wrote: self.everything_this_run_wrote.clone(),
         })
+    }
+
+    /// This run saying that one more of its artifacts was written, **and it is not a move.**
+    ///
+    /// **A file on disk does not move a work item**, so this is a fact the run comes to hold and not a
+    /// stage it arrives at — **and routing it through `transition()` would make a write look like a
+    /// change of stage**, which is the same reason the version is not routed either.
+    #[must_use]
+    pub fn with_what_it_wrote(self, one_more: WhereAnArtifactOfThisRunLanded) -> Self {
+        let mut everything_this_run_wrote = self.everything_this_run_wrote;
+        everything_this_run_wrote.push(one_more);
+        Self {
+            everything_this_run_wrote,
+            ..self
+        }
+    }
+
+    /// Everything this run has written, **in the order it wrote it and empty before the first write.**
+    pub fn everything_this_run_wrote(&self) -> &[WhereAnArtifactOfThisRunLanded] {
+        &self.everything_this_run_wrote
     }
 
     /// Which version of its artifact exists, **and `None` before the agent has produced one.**
@@ -144,6 +170,7 @@ impl WhereARunStands {
             the_work_item: moved,
             which_artifact_it_is_on: self.which_artifact_it_is_on,
             the_version_it_is_on: self.the_version_it_is_on,
+            everything_this_run_wrote: self.everything_this_run_wrote,
         })
     }
 
@@ -166,6 +193,7 @@ impl WhereARunStands {
             the_work_item: moved,
             which_artifact_it_is_on: Some(which_artifact_it_is_on),
             the_version_it_is_on: None,
+            everything_this_run_wrote: self.everything_this_run_wrote,
         })
     }
 }

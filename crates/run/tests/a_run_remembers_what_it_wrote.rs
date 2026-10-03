@@ -17,6 +17,7 @@ use std::cell::RefCell;
 
 use a_model_that_answers::AModelAnswering;
 use aisdlc_domain::agent_identifier::AgentIdentifier;
+use aisdlc_domain::approval::WhichArtifact;
 use aisdlc_domain::commissioned_request::CommissionedRequest;
 use aisdlc_domain::repository::Repository;
 use aisdlc_domain::role::Role;
@@ -29,6 +30,7 @@ use aisdlc_run::the_path_inside_the_project::ThePathInsideTheProject;
 use aisdlc_run::the_project_on_disk::{TheProjectOnDisk, TheProjectRefusedToWrite};
 use aisdlc_run::the_whole_of_a_run::the_whole_of_a_run;
 use aisdlc_run::where_a_run_stands::{WhereARunStands, the_work_is_handed_to_the_next_agent};
+use aisdlc_run::where_an_artifact_of_this_run_landed::WhereAnArtifactOfThisRunLanded;
 
 #[test]
 fn a_finished_run_remembers_every_artifact_it_wrote_in_order() {
@@ -37,13 +39,7 @@ fn a_finished_run_remembers_every_artifact_it_wrote_in_order() {
     let mut a_model = AModelAnswering::answering_everything();
     let mut whoever_answers = APersonWhoRules::approving_everything();
 
-    let finished = the_whole_of_a_run(
-        &a_run_at_its_first_stage(),
-        &mut the_project,
-        &mut a_model,
-        WhichOrganisationReasons::Openai,
-        &mut whoever_answers,
-    );
+    let finished = the_run_given(&mut the_project, &mut a_model, &mut whoever_answers);
 
     let what_it_wrote = finished
         .as_ref()
@@ -69,19 +65,13 @@ fn a_run_refused_at_the_third_gate_remembers_three_and_no_more() {
     let mut a_model = AModelAnswering::answering_everything();
     let mut whoever_answers = APersonWhoRules::refusing_at_the(3);
 
-    let stopped = the_whole_of_a_run(
-        &a_run_at_its_first_stage(),
-        &mut the_project,
-        &mut a_model,
-        WhichOrganisationReasons::Openai,
-        &mut whoever_answers,
-    );
+    let stopped = the_run_given(&mut the_project, &mut a_model, &mut whoever_answers);
 
     assert_eq!(
         stopped
             .as_ref()
             .map(WhereARunStands::everything_this_run_wrote)
-            .map(|written| written.len()),
+            .map(<[WhereAnArtifactOfThisRunLanded]>::len),
         Ok(3),
         "**because the fourth agent was never asked and so wrote nothing** — and a record claiming a \
          fourth artifact would be naming a document that does not exist. It wrote {:?}",
@@ -97,19 +87,12 @@ fn the_place_a_run_says_an_artifact_landed_is_the_file_that_is_on_disk() {
     let mut a_model = AModelAnswering::answering_everything();
     let mut whoever_answers = APersonWhoRules::approving_everything();
 
-    let finished = the_whole_of_a_run(
-        &a_run_at_its_first_stage(),
-        &mut the_project,
-        &mut a_model,
-        WhichOrganisationReasons::Openai,
-        &mut whoever_answers,
-    );
-
+    let finished = the_run_given(&mut the_project, &mut a_model, &mut whoever_answers);
     let the_run = finished.expect("a run every gate approves finishes");
     let every_one_is_on_disk = the_run
         .everything_this_run_wrote()
         .iter()
-        .all(|one| std::path::Path::new(&one.where_it_landed.0).is_file());
+        .all(|one| std::path::Path::new(one.where_it_landed.as_str()).is_file());
     assert!(
         every_one_is_on_disk,
         "**because a run that remembered where it meant to write rather than what is there would \
@@ -123,29 +106,38 @@ fn the_place_a_run_says_an_artifact_landed_is_the_file_that_is_on_disk() {
 fn handing_the_work_to_the_next_agent_carries_what_was_already_written() {
     let mut the_project = AProjectThatWrites::writing_everything("a-handover", "WELLBEINGT-42");
     let mut a_model = AModelAnswering::answering_everything();
-    let mut whoever_answers = APersonWhoRules::refusing_at_the(1);
+    let mut whoever_answers = APersonWhoRules::approving_everything();
 
-    let stopped = the_whole_of_a_run(
-        &a_run_at_its_first_stage(),
-        &mut the_project,
-        &mut a_model,
-        WhichOrganisationReasons::Openai,
-        &mut whoever_answers,
-    );
-    let the_run = stopped.expect("a run refused at the first gate still ends");
+    let finished = the_run_given(&mut the_project, &mut a_model, &mut whoever_answers);
+    let the_run = finished.expect("a run every gate approves finishes");
     let handed_on = the_work_is_handed_to_the_next_agent(
         &the_run,
         AgentIdentifier::try_from("aisdlc-po-analyze").expect("an agent name"),
-        aisdlc_domain::approval::WhichArtifact::try_from("Requirements").expect("a name"),
+        WhichArtifact::try_from("AChangeToDeliver").expect("a name"),
     );
 
     assert_eq!(
         handed_on.map(|run| run.everything_this_run_wrote().len()),
-        Ok(1),
+        Ok(7),
         "**because the next agent inherits a run and not a blank page** — and a hand-off that \
-         dropped the record would leave the summary naming one artifact where the run produced one \
-         and the hand-off produced another"
+         dropped the record would leave the summary naming nothing where the run wrote seven"
     );
+}
+
+/// A whole run given a project, a model and a person, **and it is one call so four tests are about
+/// their own arrangement and not about the order of five collaborators.**
+fn the_run_given(
+    the_project: &mut AProjectThatWrites,
+    a_model: &mut AModelAnswering,
+    whoever_answers: &mut APersonWhoRules,
+) -> Result<WhereARunStands, aisdlc_run::the_whole_of_a_run::AWholeRunThatCouldNotBeHad> {
+    the_whole_of_a_run(
+        &a_run_at_its_first_stage(),
+        the_project,
+        a_model,
+        WhichOrganisationReasons::Openai,
+        whoever_answers,
+    )
 }
 
 /// The seven artifacts of the pipeline, **in the order they are produced.**

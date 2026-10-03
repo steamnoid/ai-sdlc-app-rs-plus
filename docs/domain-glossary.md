@@ -2195,6 +2195,18 @@ there.** **A run is a state and a state is one value**: eight stages, seven gate
 twice, **and none of it is any use unless a reader can ask a run where it is and be told one
 thing.**
 
+**`WhereAnArtifactOfThisRunLanded`** — one artifact this run wrote, and where it landed. **It carries
+the version as well as the name**, because an approval names an exact artifact *and version* and an
+entry without the version could not be matched to the approval that ruled on it. **The place is a plain
+path and is never derived a second time**: it is what the writer was given and what the file then
+existed at, **and a second ordering nobody chose is a second ordering nobody can check.**
+
+**Recording a write is not a move and does not go through `transition()`.** A file appearing on disk
+does not move a work item, **so routing it through the table would make a write look like a change of
+stage** — the same reason `which_artifact_is_at` is not routed either. **Every hand-off carries the
+list**, because the next agent inherits a run and not a blank page: **a hand-off that dropped it would
+leave a summary naming nothing where the run wrote seven.**
+
 **`which_artifact_it_is_on` is `Option` and that is the whole of "before the first gate"** — a run
 that has not reached an artifact has not reached a gate, **and naming one anyway would put a name in
 a record for work nobody has presented.**
