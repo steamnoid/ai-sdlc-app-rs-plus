@@ -17,9 +17,10 @@ use aisdlc_domain::which_organisation_reasons::WhichOrganisationReasons;
 use crate::APersonToDecide;
 use crate::a_model_is_asked_for_an_artifact::AReasoningModel;
 use crate::a_run_is_walked_forward::{AWalkThatWouldNotEnd, a_run_is_walked_forward};
-use crate::a_stage_is_worked_and_ruled_on::{
-    AStageThatCouldNotBeWorked, WhatTheStageLeft, a_stage_is_worked_and_ruled_on,
-};
+use crate::a_stage_is_worked_and_ruled_on::WhatAnAgentSaid;
+use crate::a_stage_is_worked_and_ruled_on::{AStageThatCouldNotBeWorked, WhatTheStageLeft};
+use crate::the_project_on_disk::TheProjectOnDisk;
+use crate::what_a_stage_kept_is_written::{WhatCouldNotBeWritten, what_a_stage_kept_is_written};
 use crate::where_a_run_stands::WhereARunStands;
 use crate::where_an_approved_artifact_leads::WhereARunGoesNext;
 
@@ -53,6 +54,15 @@ pub enum AWholeRunThatCouldNotBeHad {
         /// What the walk said.
         why_not: AWalkThatWouldNotEnd,
     },
+    /// What an agent said could not be written, **and the writer's own refusal travels whole.**
+    ///
+    /// **It stops the run before the gate is asked**, because a gate asked about a document nobody
+    /// could open **would leave an approval naming an artifact no reader can reach** — which is the
+    /// failure the whole approval boundary exists to prevent.
+    NothingWasWritten {
+        /// What the writer said.
+        why_not: Box<WhatCouldNotBeWritten>,
+    },
 }
 
 impl fmt::Display for AWholeRunThatCouldNotBeHad {
@@ -65,8 +75,11 @@ impl fmt::Display for AWholeRunThatCouldNotBeHad {
                 which_stage,
                 why_not,
             } => format!("stage {which_stage} could not be worked: {why_not}"),
-            AWholeRunThatCouldNotBeHad::TheWalkRefused { why_not } => {
+            Self::TheWalkRefused { why_not } => {
                 format!("the walk refused to move the work on: {why_not}")
+            }
+            Self::NothingWasWritten { why_not } => {
+                format!("nothing was written, so there was nothing to rule on: {why_not}")
             }
         };
         write!(formatter, "{why_not}")
@@ -85,19 +98,21 @@ impl std::error::Error for AWholeRunThatCouldNotBeHad {}
 /// place it can honestly stop.
 pub fn the_whole_of_a_run(
     the_run: &WhereARunStands,
+    the_project: &mut impl TheProjectOnDisk,
     a_model: &mut impl AReasoningModel,
     who_reasoned: WhichOrganisationReasons,
-    whoever_answers_the_gate: &mut impl APersonToDecide,
+    whoever_answers_the_gates: &mut impl APersonToDecide,
 ) -> Result<WhereARunStands, AWholeRunThatCouldNotBeHad> {
     let mut walking_from = the_run.clone();
     let mut where_it_last_stopped = None;
     let mut which_stage = 1;
     while !the_run_has_ended(&walking_from, where_it_last_stopped) {
-        let what_the_stage_left = the_next_stage_is_worked(
+        let what_the_stage_left = the_next_stage_is_worked_and_asked_about(
             &walking_from,
+            the_project,
             a_model,
             who_reasoned,
-            whoever_answers_the_gate,
+            whoever_answers_the_gates,
             which_stage,
         )?;
         let one_step = the_work_is_walked_on_from(&walking_from, &what_the_stage_left)?;
@@ -123,18 +138,48 @@ fn the_run_has_ended(
     where_it_last_stopped == Some(WhereARunGoesNext::TheDelivery)
 }
 
-/// The next stage is worked and a person rules on it, **and a model that could not be reached is the
-/// run's own refusal rather than the stage's** — because the stage never began.
-fn the_next_stage_is_worked(
+/// The next stage is worked, **what it said is written, and a person rules on it** — and that order
+/// is the whole of this function: **the write comes before the ruling so the document the approval
+/// names is a document somebody can open.**
+fn the_next_stage_is_worked_and_asked_about(
     the_run: &WhereARunStands,
+    the_project: &mut impl TheProjectOnDisk,
     a_model: &mut impl AReasoningModel,
     who_reasoned: WhichOrganisationReasons,
-    whoever_answers_the_gate: &mut impl APersonToDecide,
+    whoever_answers_the_gates: &mut impl APersonToDecide,
     which_stage: usize,
-) -> Result<WhatTheStageLeft, AWholeRunThatCouldNotBeHad> {
-    let what_the_stage_left =
-        a_stage_is_worked_and_ruled_on(the_run, a_model, who_reasoned, whoever_answers_the_gate);
-    what_the_stage_left.map_err(|why_not| the_run_reports_its_own_failure(which_stage, &why_not))
+) -> Result<crate::a_stage_is_worked_and_ruled_on::WhatTheStageLeft, AWholeRunThatCouldNotBeHad> {
+    let what_an_agent_said =
+        crate::a_stage_is_worked_and_ruled_on::the_agent_is_asked(a_model, the_run, who_reasoned);
+    let refused = what_an_agent_said
+        .map_err(|why_not| the_run_reports_its_own_failure(which_stage, &why_not));
+    let what_an_agent_said = refused?;
+    what_an_agent_said_is_written(the_project, &what_an_agent_said)?;
+    what_an_agent_said
+        .is_ruled_on(whoever_answers_the_gates)
+        .map_err(|why_not| the_run_reports_its_own_failure(which_stage, &why_not))
+}
+
+/// What an agent said is written, **and a refused write stops the run before anybody is asked.**
+fn what_an_agent_said_is_written(
+    the_project: &mut impl TheProjectOnDisk,
+    what_an_agent_said: &WhatAnAgentSaid,
+) -> Result<(), AWholeRunThatCouldNotBeHad> {
+    let the_run = what_an_agent_said.the_run_standing_at_what_it_produced();
+    what_a_stage_kept_is_written(
+        the_project,
+        the_run,
+        &what_an_agent_said.what_the_agent_said(),
+    )
+    .map(|_where_it_landed| ())
+    .map_err(nothing_was_written)
+}
+
+/// Nothing was written, **and the writer's own refusal travels whole.**
+fn nothing_was_written(why_not: WhatCouldNotBeWritten) -> AWholeRunThatCouldNotBeHad {
+    AWholeRunThatCouldNotBeHad::NothingWasWritten {
+        why_not: Box::new(why_not),
+    }
 }
 
 /// The refusal a stage raised, **and the two kinds are the run's own and the stage's.**

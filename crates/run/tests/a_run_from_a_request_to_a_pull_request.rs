@@ -5,6 +5,14 @@
 //! delivery pushes a branch and opens a pull request, neither of which is a stage a person rules on.**
 //! `the_run_is_delivered` takes a run already standing there. **So this repository could walk seven
 //! gates and then stop, which is a run that did all the work and delivered none of it.**
+#[path = "doubles/a_model_that_answers.rs"]
+mod a_model_that_answers;
+#[path = "doubles/a_person_who_rules.rs"]
+mod a_person_who_rules;
+#[path = "doubles/a_program_answering.rs"]
+mod a_program_answering;
+#[path = "doubles/a_project_the_run_writes_to.rs"]
+mod a_project_the_run_writes_to;
 
 use aisdlc_domain::agent_identifier::AgentIdentifier;
 use aisdlc_domain::commissioned_request::CommissionedRequest;
@@ -13,7 +21,10 @@ use aisdlc_domain::role::Role;
 use aisdlc_domain::stage::Stage;
 use aisdlc_domain::which_organisation_reasons::WhichOrganisationReasons;
 
-mod the_doubles_a_run_is_run_with;
+use a_model_that_answers::AModelAnswering;
+use a_person_who_rules::APersonWhoRules;
+use a_program_answering::AProgramAnswering;
+use a_project_the_run_writes_to::AProjectThatWrites;
 use aisdlc_domain::who_commissioned::WhoCommissioned;
 use aisdlc_domain::work_item::WorkItem;
 use aisdlc_domain::work_item_id::WorkItemId;
@@ -28,12 +39,15 @@ use aisdlc_run::a_run_from_a_request_to_a_pull_request::{
 };
 use aisdlc_run::the_repository_to_clone_into::ARepositoryToClone;
 use aisdlc_run::where_a_run_stands::WhereARunStands;
-use the_doubles_a_run_is_run_with::{AModelAnswering, APersonWhoRules, AProgramAnswering};
 
 #[test]
 fn a_run_from_a_request_to_a_pull_request_leaves_the_work_item_finished() {
     let mut a_model = a_model();
-    let finished = a_run_that_every_gate_approves(&mut a_model, &a_program_answering(false));
+    let finished = a_run_that_every_gate_approves(
+        &mut a_model,
+        &a_program_answering(false),
+        "the-work-item-is-finished",
+    );
     let where_it_stands = the_stage_the_stopped_run_stands_at(&finished);
 
     assert_eq!(
@@ -46,43 +60,58 @@ fn a_run_from_a_request_to_a_pull_request_leaves_the_work_item_finished() {
 }
 
 #[test]
-fn the_delivery_is_the_eighth_gate_and_not_an_artifact_gate() {
-    let (asked_during_the_run, asked_at_the_delivery) = how_many_each_person_was_asked();
-
-    assert_eq!(asked_during_the_run, 7, "{SEVEN_GATES}");
-    assert_eq!(asked_at_the_delivery, 1, "{THE_DELIVERY_IS_A_GATE}");
-}
-
-/// A whole run every gate approves, **and it hands back how many questions each person was asked** —
-/// which is the whole of what this test is about, **so the run itself does not need a body here.**
-fn how_many_each_person_was_asked() -> (usize, usize) {
+fn one_person_is_asked_eight_times_and_the_eighth_gate_is_the_delivery() {
     let mut a_model = a_model();
-    let mut during_the_run = APersonWhoRules::approving_everything();
-    let mut at_the_delivery = APersonWhoRules::approving_everything();
+    let mut whoever_answers = APersonWhoRules::approving_everything();
+
     a_run_given(
         &a_run_at_its_first_stage(),
+        "the-delivery-is-the-eighth-gate",
         &mut a_model,
-        &mut during_the_run,
+        &mut whoever_answers,
         &a_program_answering(false),
-        &mut at_the_delivery,
     )
     .expect("a run every gate approves finishes");
-    (during_the_run.how_often(), at_the_delivery.how_often())
+
+    assert_eq!(
+        whoever_answers.how_often(),
+        8,
+        "**because seven artifacts and seven gates and the delivery's own gate is the eighth** — \
+         and seven would be a delivery that finished a run without asking, which would put a \
+         decision in the record that nobody made. They were asked {} times",
+        whoever_answers.how_often()
+    );
+    each_of_the_seven_gates_was_asked_about_a_different_artifact(&whoever_answers);
 }
 
-/// The sentences the two assertions read, **and they are constants because a four-line message inside
-/// a test is four lines of the test that are not the test.**
-const SEVEN_GATES: &str = "**because seven artifacts and seven gates is the whole of the pipeline** \
-    — and an eighth question during the run would be a gate nobody can name";
-const THE_DELIVERY_IS_A_GATE: &str = "**because the delivery is the eighth gate and it is a gate** \
-    — a delivery that finished a run without asking **would put a decision in the record that nobody \
-    made.**";
+/// The seven gates named the seven artifacts and no gate named one twice, **and a gate asked twice
+/// about one artifact is a gate that approved a document nobody changed** — which is what the
+/// version on an approval exists to prevent.
+fn each_of_the_seven_gates_was_asked_about_a_different_artifact(whoever_answers: &APersonWhoRules) {
+    let what_they_were_asked_about = whoever_answers.what_each_gate_was_asked_about();
+    let what_the_seven_were_asked_about = what_they_were_asked_about
+        .iter()
+        .map(|(artifact, _version)| artifact.clone())
+        .take(7)
+        .collect::<Vec<String>>();
+    assert_eq!(
+        what_the_seven_were_asked_about,
+        every_artifact_the_pipeline_produces(),
+        "**because seven artifacts and seven gates is the whole of the pipeline** — and the eighth \
+         question is the delivery's, which is not an eighth artifact. They were asked about \
+         {what_they_were_asked_about:?}"
+    );
+}
 
 #[test]
 fn what_a_run_left_names_the_pull_request_github_opened() {
     let mut a_model = a_model();
 
-    let finished = a_run_that_every_gate_approves(&mut a_model, &a_program_answering(false));
+    let finished = a_run_that_every_gate_approves(
+        &mut a_model,
+        &a_program_answering(false),
+        "what-a-run-left",
+    );
 
     let where_it_answers = finished.as_ref().map(WhatARunLeft::which_pull_request);
     let where_it_answers = where_it_answers.map(|opened| opened.where_it_answers.clone());
@@ -100,14 +129,14 @@ fn what_a_run_left_names_the_pull_request_github_opened() {
 #[test]
 fn a_run_somebody_refused_in_the_middle_delivers_nothing_and_is_not_finished() {
     let mut a_model = a_model();
-    let mut at_the_delivery = APersonWhoRules::approving_everything();
+    let mut whoever_answers = APersonWhoRules::refusing_at_the(3);
 
     let stopped = a_run_given(
         &a_run_at_its_first_stage(),
+        "a-refusal-in-the-middle",
         &mut a_model,
-        &mut APersonWhoRules::refusing_at_the(3),
+        &mut whoever_answers,
         &a_program_answering(false),
-        &mut at_the_delivery,
     );
 
     let where_it_stands = the_stage_the_stopped_run_stands_at(&stopped);
@@ -119,12 +148,12 @@ fn a_run_somebody_refused_in_the_middle_delivers_nothing_and_is_not_finished() {
          there is no pull request and the work item is closed. It stands at {where_it_stands:?}"
     );
     assert_eq!(
-        at_the_delivery.how_often(),
-        0,
+        whoever_answers.how_often(),
+        3,
         "**because nobody was asked about a delivery that never happened** — a gate asked after a \
          refusal is a gate asked to rule on work a person has already stopped. They were asked {} \
          times",
-        at_the_delivery.how_often()
+        whoever_answers.how_often()
     );
 }
 
@@ -132,7 +161,11 @@ fn a_run_somebody_refused_in_the_middle_delivers_nothing_and_is_not_finished() {
 fn a_delivery_github_refused_stops_the_run_and_leaves_the_work_item_at_the_gate() {
     let mut a_model = a_model();
 
-    let stopped = a_run_that_every_gate_approves(&mut a_model, &a_program_answering(true));
+    let stopped = a_run_that_every_gate_approves(
+        &mut a_model,
+        &a_program_answering(true),
+        "a-refused-delivery",
+    );
 
     assert!(
         matches!(stopped, Err(ARunThatDidNotFinish::TheDelivery { .. })),
@@ -146,6 +179,22 @@ fn a_delivery_github_refused_stops_the_run_and_leaves_the_work_item_at_the_gate(
 fn the_stage_the_stopped_run_stands_at(stopped: &WhatARunLeftOrNot) -> Option<Stage> {
     let the_run = stopped.as_ref().ok()?;
     Some(the_run.where_the_work_stands().the_stage_it_stands_at())
+}
+
+/// The seven artifacts of the pipeline, **in the order they are produced.**
+fn every_artifact_the_pipeline_produces() -> Vec<String> {
+    vec![
+        "DiscoveryReport",
+        "Requirements",
+        "QaPlan",
+        "ArchitectureReport",
+        "SecurityReport",
+        "ImplementationPlan",
+        "VerificationReport",
+    ]
+    .into_iter()
+    .map(String::from)
+    .collect()
 }
 
 /// A model that answers, **and it is a function because four tests build the same double and a
@@ -162,33 +211,35 @@ type WhatARunLeftOrNot = Result<WhatARunLeft, ARunThatDidNotFinish>;
 /// arrangement and not about the order of seven arguments.**
 fn a_run_given(
     the_run: &WhereARunStands,
+    in_a_directory_named: &str,
     a_model: &mut AModelAnswering,
-    during_the_run: &mut APersonWhoRules,
+    whoever_answers_the_gates: &mut APersonWhoRules,
     the_program: &AProgramAnswering,
-    at_the_delivery: &mut APersonWhoRules,
 ) -> WhatARunLeftOrNot {
+    let mut the_project =
+        AProjectThatWrites::writing_everything(in_a_directory_named, "WELLBEINGT-42");
     a_run_from_a_request_to_a_pull_request(
         the_run,
+        &mut the_project,
         a_model,
         WhichOrganisationReasons::Openai,
-        during_the_run,
+        whoever_answers_the_gates,
         &what_there_is_to_deliver(),
         the_program,
-        at_the_delivery,
     )
 }
 
-/// The ordinary run, **and it approves every gate and the delivery too.**
 fn a_run_that_every_gate_approves(
     a_model: &mut AModelAnswering,
     the_program: &AProgramAnswering,
+    in_a_directory_named: &str,
 ) -> WhatARunLeftOrNot {
     a_run_given(
         &a_run_at_its_first_stage(),
+        in_a_directory_named,
         a_model,
         &mut APersonWhoRules::approving_everything(),
         the_program,
-        &mut APersonWhoRules::approving_everything(),
     )
 }
 

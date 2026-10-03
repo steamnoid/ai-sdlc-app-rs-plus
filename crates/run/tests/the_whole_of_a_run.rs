@@ -8,7 +8,6 @@
 //! deciding, **and a run that keeps asking agents after a decision is a run that treats a decision
 //! as a delay** — which is the defect behind three delivered pull requests whose diff was two test
 //! files and no route.
-
 use std::cell::RefCell;
 
 use aisdlc_domain::approval::{ApprovalDecision, WhichArtifact, WhoDecided};
@@ -16,10 +15,73 @@ use aisdlc_domain::role::Role;
 use aisdlc_domain::stage::Stage;
 use aisdlc_domain::which_organisation_reasons::WhichOrganisationReasons;
 use aisdlc_run::a_model_is_asked_for_an_artifact::AReasoningModel;
+use aisdlc_run::the_path_inside_the_project::ThePathInsideTheProject;
+use aisdlc_run::the_project_on_disk::{TheProjectOnDisk, TheProjectRefusedToWrite};
 use aisdlc_run::the_whole_of_a_run::{AWholeRunThatCouldNotBeHad, the_whole_of_a_run};
 use aisdlc_run::the_words_inside_the_endpoints_envelope::AnAnswerNobodyCanRead;
 use aisdlc_run::where_a_run_stands::WhereARunStands;
+
 use aisdlc_run::{APersonToDecide, ApprovalQuestion};
+
+/// A project that writes a real file, **and it writes real files on purpose** — a double that kept
+/// its artifacts in memory would make a reading test pass while nothing a person could open existed.
+struct AProjectThatWrites {
+    where_it_lives: std::path::PathBuf,
+}
+
+impl AProjectThatWrites {
+    /// A project that writes everything, **in a directory of its own.**
+    ///
+    /// **It writes and nothing more here**, because this file's doubles are local already and **a
+    /// double asked for more than its own test uses is reported dead in every binary that has it.**
+    fn writing_everything(in_a_directory_named: &str, a_work_item_named: &str) -> Self {
+        let where_the_run_writes = where_this_process_keeps_its_projects(in_a_directory_named);
+        let _ = std::fs::remove_dir_all(&where_the_run_writes);
+        let the_work_items_directory = where_the_run_writes
+            .join("steamnoid/wellbeing-tracker-public")
+            .join(a_work_item_named);
+        std::fs::create_dir_all(&the_work_items_directory)
+            .expect("a directory this machine will hold");
+        Self {
+            where_it_lives: where_the_run_writes,
+        }
+    }
+}
+
+/// Where this process keeps its projects, **and it is named for one caller so two tests cannot
+/// collide.**
+fn where_this_process_keeps_its_projects(in_a_directory_named: &str) -> std::path::PathBuf {
+    let where_it_is = std::env::temp_dir().join(format!(
+        "aisdlc-{}-{in_a_directory_named}",
+        std::process::id()
+    ));
+    std::fs::create_dir_all(&where_it_is).expect("a directory this machine will hold");
+    where_it_is
+}
+
+impl TheProjectOnDisk for AProjectThatWrites {
+    fn where_it_lives(&self) -> &std::path::Path {
+        self.where_it_lives.as_path()
+    }
+
+    fn what_is_in_it(&mut self) -> Vec<String> {
+        Vec::new()
+    }
+
+    fn the_text_of(&mut self, _a_path: &ThePathInsideTheProject) -> Option<String> {
+        None
+    }
+
+    fn a_file_is_written(
+        &mut self,
+        a_path: &ThePathInsideTheProject,
+        what_it_says: &str,
+    ) -> Result<(), TheProjectRefusedToWrite> {
+        let the_path = std::path::PathBuf::from(a_path.as_str());
+        std::fs::write(&the_path, what_it_says).expect("a file this machine will hold");
+        Ok(())
+    }
+}
 
 /// A model that answers every question, **and records what it was asked for in order.**
 struct AModelThatAnswers {
@@ -132,6 +194,7 @@ fn every_agent_in_the_pipeline_is_asked_and_in_order() {
 
     let the_run = the_whole_of_a_run(
         &a_run_standing_at_the_stage_its_first_agent_is_working_on(),
+        &mut AProjectThatWrites::writing_everything("every-agent-in-order", "WELLBEINGT-5"),
         &mut a_model,
         WhichOrganisationReasons::Openai,
         &mut APersonWhoRules::who_approves_everything(),
@@ -159,6 +222,10 @@ fn every_gate_is_asked_about_a_different_artifact_and_seven_times() {
 
     the_whole_of_a_run(
         &a_run_standing_at_the_stage_its_first_agent_is_working_on(),
+        &mut AProjectThatWrites::writing_everything(
+            "every-gate-a-different-artifact",
+            "WELLBEINGT-5",
+        ),
         &mut a_model,
         WhichOrganisationReasons::Openai,
         &mut whoever_answers,
@@ -181,6 +248,7 @@ fn a_run_every_gate_approves_ends_with_the_delivery_agent_holding_the_work() {
 
     let the_run = the_whole_of_a_run(
         &a_run_standing_at_the_stage_its_first_agent_is_working_on(),
+        &mut AProjectThatWrites::writing_everything("the-delivery-holds-it", "WELLBEINGT-5"),
         &mut a_model,
         WhichOrganisationReasons::Openai,
         &mut APersonWhoRules::who_approves_everything(),
@@ -203,7 +271,7 @@ fn a_person_who_refuses_ends_the_run_and_no_later_agent_is_asked() {
     let mut a_model = AModelThatAnswers::answering_everything();
 
     let mut whoever_answers = APersonWhoRules::who_refuses_at_the(3);
-    let the_run = the_run_given(&mut a_model, &mut whoever_answers);
+    let the_run = the_run_given("a-refusal-ends-the-run", &mut a_model, &mut whoever_answers);
     let where_it_stands = the_run
         .as_ref()
         .map(WhereARunStands::the_stage_it_stands_at);
@@ -231,6 +299,7 @@ fn a_model_that_could_not_be_reached_ends_the_run_and_names_the_artifact() {
 
     let refused = the_whole_of_a_run(
         &a_run_standing_at_the_stage_its_first_agent_is_working_on(),
+        &mut AProjectThatWrites::writing_everything("a-model-that-cannot-answer", "WELLBEINGT-5"),
         &mut a_model,
         WhichOrganisationReasons::Openai,
         &mut APersonWhoRules::who_approves_everything(),
@@ -250,11 +319,13 @@ fn a_model_that_could_not_be_reached_ends_the_run_and_names_the_artifact() {
 /// A whole run given a model and a person, **and it is one line so four of the five tests are about
 /// their own arrangement rather than about this call.**
 fn the_run_given(
+    in_a_directory_named: &str,
     a_model: &mut AModelThatAnswers,
     whoever_answers: &mut APersonWhoRules,
 ) -> Result<WhereARunStands, AWholeRunThatCouldNotBeHad> {
     the_whole_of_a_run(
         &a_run_standing_at_the_stage_its_first_agent_is_working_on(),
+        &mut AProjectThatWrites::writing_everything(in_a_directory_named, "WELLBEINGT-5"),
         a_model,
         WhichOrganisationReasons::Openai,
         whoever_answers,
