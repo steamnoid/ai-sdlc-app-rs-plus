@@ -2225,6 +2225,42 @@ on purpose: **a run that named the stage and left the caller to guess the agent 
 orderings, and the second one would be the one the caller got right by accident.** `TheRunIsOver`
 names no agent, **because a run that is over is not held by anybody.**
 
+**`a_run_from_a_request_to_a_pull_request` is the composition that finishes a run, and the delivery is
+its eighth gate.** `the_whole_of_a_run` ends standing at the delivery and `the_run_is_delivered` takes
+a run already standing there, **so without this the repository could walk seven gates and stop** — a
+run that did all the work and delivered none of it.
+
+**The delivery happens only if the run reached it, and the test is the run's own stage** — a run
+refused at the third gate is at `DONE` and never hands its work to the delivery agent. **That is the
+one thing that separates a run that was stopped from a run that delivered nothing**, and both end at
+`DONE`, **so the two are told apart by the pull request being present and not by the stage.**
+
+**`the_doubles_a_run_is_run_with`** — the model, the person and the program three test files were
+each carrying a copy of. **A double copied into three files is three places to change when it grows a
+field**, and one copy had already drifted: it answered a refusal with `did_it_work: true`, **which is a
+delivery green on a branch `git` had already refused.** The file is named for what it holds **and not
+`common`** — the naming guard refused `common` and it was right, **because a reader sent to a file
+called `common` is sent nowhere in particular.**
+
+**`WhatARunLeft` and `ARunThatDidNotFinish`** — what a finished run leaves (the run, and the pull
+request that is the whole of its record) and the two ways it did not finish. `TheRun` holds
+`AWholeRunThatCouldNotBeHad` and `TheDelivery` holds `ADeliveryThatDidNotHappen`, **boxed, because a
+run that failed in the pipeline and a run that failed at the delivery send a reader to two different
+files and must not read as one refusal.**
+
+**`WhatThereIsToDeliver` groups the clone, the branch, the request and the key into one value**,
+because the four are one fact about one delivery **and a caller holding them separately could push a
+branch and open a pull request about a different one.**
+
+**`WhatThereIsToDeliver::for_this_run` cannot fail, and that is deliberate.** The four are
+already-validated types — **so a constructor that could be refused would be a `Result` whose error
+nobody could ever produce**, and a refusal nobody can produce is a place a reader would look for a
+fault.
+
+**`WhatARunLeft::which_pull_request` is `&AnOpenedPullRequest` and not an `Option`** because a run
+that was refused has no pull request and a reader asking this of it is asking the wrong question;
+**the presence is read from the run's stage**, and the `expect` says so in words.
+
 **`WhatTheStageLeft` carries what the agent said, and never a summary of it.** A summary is prose
 nobody approved: **the gate rules on a document, and a document that is not the one the agent wrote is
 a document nobody has read** — so the words travel whole and whoever writes them to disk writes what
