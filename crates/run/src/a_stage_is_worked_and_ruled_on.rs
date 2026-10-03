@@ -103,6 +103,82 @@ impl fmt::Display for AStageThatCouldNotBeWorked {
 
 impl std::error::Error for AStageThatCouldNotBeWorked {}
 
+/// What one agent said, **and the run standing on what it produced — the two are one fact, because
+/// the version the artifact was produced at is the version a gate is asked about.**
+///
+/// **The words are kept and not summarised**, because whoever writes them to disk writes what the
+/// agent wrote — **and a summary is prose nobody approved.**
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct WhatAnAgentSaid {
+    what_the_agent_said: String,
+    which_version_was_produced: AnArtifactVersion,
+    the_run_standing_at_what_it_produced: WhereARunStands,
+}
+
+impl WhatAnAgentSaid {
+    /// Exactly what the agent said.
+    pub fn what_the_agent_said(&self) -> String {
+        self.what_the_agent_said.clone()
+    }
+
+    /// Which version of the artifact this production is, **and it is what the gate will be asked
+    /// about and what the file will be named.**
+    pub fn which_version_was_produced(&self) -> AnArtifactVersion {
+        self.which_version_was_produced
+    }
+
+    /// The run, standing on what was just produced and presented for a ruling.
+    pub fn the_run_standing_at_what_it_produced(&self) -> &WhereARunStands {
+        &self.the_run_standing_at_what_it_produced
+    }
+
+    /// Somebody rules on it, **and it is a method and not a free function because the gate can only be
+    /// asked about what was asked for** — a caller holding a `WhatAnAgentSaid` from one artifact and a
+    /// question about another would be approving a document nobody produced.
+    pub fn is_ruled_on(
+        &self,
+        whoever_answers_the_gate: &mut impl APersonToDecide,
+    ) -> Result<WhatTheStageLeft, AStageThatCouldNotBeWorked> {
+        let which_artifact = self
+            .the_run_standing_at_what_it_produced
+            .which_artifact_it_is_on()
+            .ok_or(this_run_is_on_no_artifact())?;
+        the_question_is_asked_and_answered(
+            &self.the_run_standing_at_what_it_produced,
+            which_artifact,
+            self.which_version_was_produced,
+            self.what_the_agent_said.clone(),
+            whoever_answers_the_gate,
+        )
+    }
+}
+
+/// The agent holding the work is asked, **and the run is left standing on what it produced and
+/// presented for a ruling — so whoever holds the words can put them on the disk before anybody is
+/// asked about them.**
+///
+/// **This is the first of three steps and the other two are the writer and the gate.** A person who
+/// approves an artifact must be able to open it, **and an approval naming an artifact no reader can
+/// reach is an approval of a claim.**
+pub fn the_agent_is_asked(
+    a_model: &mut impl AReasoningModel,
+    the_run: &WhereARunStands,
+    who_reasoned: WhichOrganisationReasons,
+) -> Result<WhatAnAgentSaid, AStageThatCouldNotBeWorked> {
+    let which_artifact = the_artifact_this_run_is_on(the_run)?;
+    let what_the_agent_said =
+        the_agent_asked_the_model(a_model, the_run, &which_artifact, who_reasoned)?;
+    let which_version = the_version_this_production_is(the_run);
+    let produced = the_run_stands_on_what_was_just_produced(the_run, which_version);
+    let presented = the_work_is_presented_for_a_ruling(&produced)
+        .map_err(|_refused| a_run_not_standing_where_a_gate_may_be_held())?;
+    Ok(WhatAnAgentSaid {
+        what_the_agent_said,
+        which_version_was_produced: which_version,
+        the_run_standing_at_what_it_produced: presented,
+    })
+}
+
 /// Work one stage and put it to somebody, **and answer only whether it was approved.**
 ///
 /// **The artifact comes from the run and is not an argument**, because a caller naming it could ask
@@ -119,20 +195,8 @@ pub fn a_stage_is_worked_and_ruled_on(
     who_reasoned: WhichOrganisationReasons,
     whoever_answers_the_gate: &mut impl APersonToDecide,
 ) -> Result<WhatTheStageLeft, AStageThatCouldNotBeWorked> {
-    let which_artifact = the_artifact_this_run_is_on(the_run)?;
-    let what_the_agent_said =
-        the_agent_asked_the_model(a_model, the_run, &which_artifact, who_reasoned)?;
-    let which_version = the_version_this_production_is(the_run);
-    let produced = the_run_stands_on_what_was_just_produced(the_run, which_version);
-    let presented = the_work_is_presented_for_a_ruling(&produced)
-        .map_err(|_refused| a_run_not_standing_where_a_gate_may_be_held())?;
-    the_question_is_asked_and_answered(
-        &presented,
-        &which_artifact,
-        which_version,
-        what_the_agent_said,
-        whoever_answers_the_gate,
-    )
+    let what_an_agent_said = the_agent_is_asked(a_model, the_run, who_reasoned)?;
+    what_an_agent_said.is_ruled_on(whoever_answers_the_gate)
 }
 
 /// The artifact this run is on, **and a run on none is refused by name rather than guessed at** —

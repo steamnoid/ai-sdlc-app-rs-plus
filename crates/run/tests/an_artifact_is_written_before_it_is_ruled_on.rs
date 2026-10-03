@@ -23,7 +23,7 @@ use aisdlc_domain::work_item::WorkItem;
 use aisdlc_domain::work_item_id::WorkItemId;
 use aisdlc_run::a_model_is_asked_for_an_artifact::AReasoningModel;
 use aisdlc_run::a_stage_is_worked_and_ruled_on::{
-    AStageThatCouldNotBeWorked, WhatAnAgentSaid, the_agent_is_asked,
+    AStageThatCouldNotBeWorked, WhatAnAgentSaid, WhatTheStageLeft, the_agent_is_asked,
 };
 use aisdlc_run::the_path_inside_the_project::ThePathInsideTheProject;
 use aisdlc_run::the_project_on_disk::{TheProjectOnDisk, TheProjectRefusedToWrite};
@@ -33,7 +33,8 @@ use aisdlc_run::what_a_stage_kept_is_written::{
 use aisdlc_run::where_a_run_stands::WhereARunStands;
 use aisdlc_run::{APersonToDecide, ApprovalQuestion};
 
-/// A project that holds whatever it is told to, **and it remembers every path.**
+/// A project that holds whatever it is told to, **and it writes a real file as well as remembering
+/// it — and that is the whole point of this double.**
 struct AProjectRemembering {
     where_it_lives: PathBuf,
     what_it_holds: RefCell<Vec<(PathBuf, String)>>,
@@ -51,12 +52,26 @@ impl AProjectRemembering {
     fn what_it_says_at(&self, where_to_look: &ThePathInsideTheProject) -> Option<String> {
         let asked_for = where_to_look.as_str();
         let held = self.what_it_holds.borrow();
-        let found = held.iter().find(|(one_path, _)| one_path.to_str() == Some(asked_for));
+        let found = held
+            .iter()
+            .find(|(one_path, _)| one_path.to_str() == Some(asked_for));
         found.map(|(_one_path, what_it_says)| what_it_says.clone())
     }
 
     fn how_many_files_it_holds(&self) -> usize {
         self.what_it_holds.borrow().len()
+    }
+
+    /// The file is written to the real disk, **because the person at the gate opens files and not
+    /// this double's memory.** A double that kept its files in a `RefCell` would make every reading
+    /// test pass while nothing a person could open existed — **and that is the very failure this
+    /// file exists to make impossible.**
+    fn the_real_file_is_written(a_path: &ThePathInsideTheProject, what_it_says: &str) {
+        let where_to_write = PathBuf::from(a_path.as_str());
+        if let Some(the_directory) = where_to_write.parent() {
+            std::fs::create_dir_all(the_directory).expect("a directory this machine will hold");
+        }
+        std::fs::write(&where_to_write, what_it_says).expect("a file this machine will hold");
     }
 }
 
@@ -83,6 +98,7 @@ impl TheProjectOnDisk for AProjectRemembering {
                 a_path,
             ));
         }
+        AProjectRemembering::the_real_file_is_written(a_path, what_it_says);
         self.what_it_holds
             .borrow_mut()
             .push((PathBuf::from(a_path.as_str()), what_it_says.to_string()));
@@ -130,8 +146,10 @@ impl APersonWhoReadsThenRules {
 
 impl APersonToDecide for APersonWhoReadsThenRules {
     fn how_they_rule_on(&mut self, a_question: &ApprovalQuestion) -> ApprovalDecision {
-        let what_it_read =
-            self.it_read(&a_question.about_which_artifact().0, a_question.about_which_version().0);
+        let what_it_read = self.it_read(
+            &a_question.about_which_artifact().0,
+            a_question.about_which_version().0,
+        );
         self.what_it_read.borrow_mut().push(what_it_read);
         ApprovalDecision::the_ruling_about(
             a_question.about_which_work_item(),
@@ -154,15 +172,18 @@ impl AReasoningModel for AModelAnswering {
         _which_artifact: &WhichArtifact,
         _who_reasoned: WhichOrganisationReasons,
         _the_question: &str,
-    ) -> Result<String, aisdlc_run::the_words_inside_the_endpoints_envelope::AnAnswerNobodyCanRead> {
+    ) -> Result<String, aisdlc_run::the_words_inside_the_endpoints_envelope::AnAnswerNobodyCanRead>
+    {
         Ok(String::from("the repository is a self-hosted Plane"))
     }
 }
 
 /// Where this deployment keeps projects, **and it really exists.**
 fn the_projects_root() -> PathBuf {
-    let where_it_is =
-        std::env::temp_dir().join(format!("aisdlc-ruled-on-what-was-read-{}", std::process::id()));
+    let where_it_is = std::env::temp_dir().join(format!(
+        "aisdlc-ruled-on-what-was-read-{}",
+        std::process::id()
+    ));
     std::fs::create_dir_all(&where_it_is).expect("a directory this machine will hold");
     where_it_is
 }
@@ -176,7 +197,7 @@ fn the_work_items_directory() {
 
 #[test]
 fn a_person_is_asked_about_an_artifact_that_is_on_disk_before_they_rule() {
-    let _the_directory_is_there = the_work_items_directory();
+    the_work_items_directory();
     let mut the_project = AProjectRemembering::empty();
     let mut whoever_answers = APersonWhoReadsThenRules::who_approves(&the_project);
 
@@ -194,15 +215,15 @@ fn a_person_is_asked_about_an_artifact_that_is_on_disk_before_they_rule() {
 
 #[test]
 fn the_file_a_person_read_is_the_file_at_the_version_the_approval_names() {
-    let _the_directory_is_there = the_work_items_directory();
+    the_work_items_directory();
     let mut the_project = AProjectRemembering::empty();
     let mut whoever_answers = APersonWhoReadsThenRules::who_approves(&the_project);
 
     let ruled = the_gate_is_asked_with(&mut the_project, &mut whoever_answers);
 
     assert_eq!(
-        ruled.as_ref().map(WhatAnAgentSaid::which_version_was_produced).map(|the_version| the_version.0),
-        Ok(1),
+        which_version_was_produced(&ruled),
+        Some(1),
         "**because cycle 122 put the version in the file's name and cycle 120 put it on the run** — and \
          the two have to be the same number, **or the approval names a version of the document and a \
          reader opens another.** It produced version {:?}",
@@ -219,7 +240,7 @@ fn the_file_a_person_read_is_the_file_at_the_version_the_approval_names() {
 
 #[test]
 fn a_refused_gate_still_leaves_the_artifact_on_disk() {
-    let _the_directory_is_there = the_work_items_directory();
+    the_work_items_directory();
     let mut the_project = AProjectRemembering::empty();
     let mut whoever_answers = APersonWhoReadsThenRules::who_refuses(&the_project);
 
@@ -240,39 +261,35 @@ fn a_refused_gate_still_leaves_the_artifact_on_disk() {
     );
 }
 
+/// What one gate left, **and the alias is here because four assertions say the same long type.**
+type WhatTheGateLeft = Result<WhatTheStageLeft, AStageThatCouldNotBeWorked>;
+
 /// The gate is asked, **with the artifact already on disk — which is the whole of this file.**
 fn the_gate_is_asked_with(
     the_project: &mut AProjectRemembering,
     whoever_answers_the_gate: &mut APersonWhoReadsThenRules,
-) -> Result<aisdlc_run::a_stage_is_worked_and_ruled_on::WhatTheStageLeft, AStageThatCouldNotBeWorked> {
+) -> Result<aisdlc_run::a_stage_is_worked_and_ruled_on::WhatTheStageLeft, AStageThatCouldNotBeWorked>
+{
     let mut a_model = AModelAnswering;
     let the_run = a_run_at_its_first_stage();
-    let said = the_agent_is_asked(
-        &mut a_model,
-        &the_run,
-        WhichOrganisationReasons::Openai,
-    )
-    .expect("an agent that answers can be asked");
+    let said = the_agent_is_asked(&mut a_model, &the_run, WhichOrganisationReasons::Openai)
+        .expect("an agent that answers can be asked");
     what_the_run_said_is_written(the_project, &said)
         .expect("the first write of an artifact is permitted");
     said.is_ruled_on(whoever_answers_the_gate)
 }
 
 /// Whether the gate said yes, **and it is one function so the assertion does not move the answer.**
-fn was_the_gate_approved(
-    ruled: &Result<aisdlc_run::a_stage_is_worked_and_ruled_on::WhatTheStageLeft, AStageThatCouldNotBeWorked>,
-) -> Option<bool> {
+fn was_the_gate_approved(ruled: &WhatTheGateLeft) -> Option<bool> {
     let what_the_gate_left = ruled.as_ref().ok()?;
     Some(what_the_gate_left.was_the_artifact_approved())
 }
 
 /// Which version was produced, **and it is one function so the two assertions that read it do not
 /// each spell out the same two hops.**
-fn which_version_was_produced(
-    ruled: &Result<aisdlc_run::a_stage_is_worked_and_ruled_on::WhatTheStageLeft, AStageThatCouldNotBeWorked>,
-) -> Option<u32> {
-    let what_the_agent_said = ruled.as_ref().ok()?;
-    Some(what_the_agent_said.which_version_was_produced().0)
+fn which_version_was_produced(ruled: &WhatTheGateLeft) -> Option<u32> {
+    let what_the_gate_left = ruled.as_ref().ok()?;
+    Some(what_the_gate_left.which_version_was_produced().0)
 }
 
 /// What the run said is written, **and the gate is asked after.**
@@ -298,6 +315,30 @@ fn a_run_at_its_first_stage() -> WhereARunStands {
     let the_discipline = aisdlc_domain::role::Role::try_from("PO").expect("a discipline");
     let the_agent = aisdlc_domain::agent_identifier::AgentIdentifier::try_from("aisdlc-discover")
         .expect("an agent name");
+    let held = a_work_item_the_discovering_agent_is_holding(
+        the_id,
+        who_asked,
+        the_repository,
+        the_discipline,
+        the_agent,
+    );
+    WhereARunStands::at_the_first_stage(held, "DiscoveryReport")
+}
+
+/// The work item, answering a request, **and the request is built here because a fixture holding both
+/// is a fixture a reader has to read all the way through before reaching the stage.**
+fn a_work_item_the_discovering_agent_is_holding(
+    the_id: WorkItemId,
+    who_asked: aisdlc_domain::who_commissioned::WhoCommissioned,
+    the_repository: Repository,
+    the_discipline: aisdlc_domain::role::Role,
+    the_agent: aisdlc_domain::agent_identifier::AgentIdentifier,
+) -> WorkItem {
+    let the_request = aisdlc_domain::commissioned_request::CommissionedRequest {
+        title: String::from("untrack the sqlite sidecar files"),
+        body: String::from("e2e.db-wal and e2e.db-shm are 4.1 MB and are committed"),
+        filed_as: None,
+    };
     let held = WorkItem::held_by(
         the_id,
         who_asked,
@@ -307,5 +348,6 @@ fn a_run_at_its_first_stage() -> WhereARunStands {
         the_agent,
     );
     let held = held.expect("a work item may be held at a stage that requires one");
-    WhereARunStands::at_the_first_stage(held, "DiscoveryReport")
+    let answering = held.answering(the_request);
+    answering.expect("a work item answering a request may stand where it was put")
 }

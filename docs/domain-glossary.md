@@ -2305,6 +2305,27 @@ fault.
 that was refused has no pull request and a reader asking this of it is asking the wrong question;
 **the presence is read from the run's stage**, and the `expect` says so in words.
 
+**`the_agent_is_asked` is the first of three steps and the other two are the writer and the gate.**
+A person who approves an artifact must be able to open it, **and an approval naming an artifact no
+reader can reach is an approval of a claim.**
+
+**`WhatAnAgentSaid` carries the run standing on what it produced, because the version the artifact was
+produced at is the version the gate is asked about and the version the file is named** — **and the
+three have to be one number, or the approval names a version of the document and a reader opens
+another.**
+
+**`is_ruled_on` is a method and not a free function because the gate can only be asked about what was
+asked for.** A caller holding a `WhatAnAgentSaid` from one artifact and a question about another would
+be approving a document nobody produced.
+
+**A refused gate still leaves the artifact on disk, because the person read it in order to refuse
+it.** Deleting the document of a refused gate would destroy the evidence of what was refused, **and a
+refusal nobody can check is a decision the reader has to take on trust.**
+
+**A double that keeps its files in a `RefCell` would make every reading test pass while nothing a
+person could open existed** — and that is the very failure the test exists to make impossible, **so
+the project's double writes a real file and the person at the gate opens it.**
+
 **`WhatTheStageLeft` carries what the agent said, and never a summary of it.** A summary is prose
 nobody approved: **the gate rules on a document, and a document that is not the one the agent wrote is
 a document nobody has read** — so the words travel whole and whoever writes them to disk writes what
