@@ -21,6 +21,7 @@ use crate::a_credential::ACredential;
 use crate::a_model_is_asked_for_an_artifact::AReasoningModel;
 use crate::a_program_we_run::AProgramWeRun;
 use crate::a_pull_request_is_opened::{APullRequestToOpen, AnOpenedPullRequest};
+use crate::the_project_on_disk::TheProjectOnDisk;
 use crate::the_repository_to_clone_into::ARepositoryToClone;
 use crate::the_run_is_delivered::{
     ADeliveryThatDidNotHappen, WhatADeliveryLeft, the_run_is_delivered,
@@ -133,20 +134,30 @@ impl std::error::Error for ARunThatDidNotFinish {}
 
 /// Run a whole pipeline and deliver what it produced, **and stop the moment a person says no.**
 ///
+/// **One person answers every gate, including the eighth**, because a gate is a protocol run on
+/// somebody's behalf and **the delivery's gate is a gate like the other seven** — two answerers
+/// would be a distinction the domain does not make, and it is the sort that reads as a fact and
+/// turns out to be a test fixture's convenience.
+///
 /// **The delivery happens only if the run reached it**, and the test is the run's own stage — **a run
 /// refused at the third gate is at `DONE` and never hands its work to the delivery agent**, which is
 /// the one thing that separates a run that was stopped from a run that delivered nothing.
 pub fn a_run_from_a_request_to_a_pull_request(
     the_run: &WhereARunStands,
+    the_project: &mut impl TheProjectOnDisk,
     a_model: &mut impl AReasoningModel,
     who_reasoned: WhichOrganisationReasons,
     whoever_answers_the_gates: &mut impl APersonToDecide,
     what_there_is: &WhatThereIsToDeliver,
     the_program: &impl AProgramWeRun,
-    whoever_answers_the_delivery: &mut impl APersonToDecide,
 ) -> Result<WhatARunLeft, ARunThatDidNotFinish> {
-    let the_run =
-        the_whole_pipeline_is_run(the_run, a_model, who_reasoned, whoever_answers_the_gates)?;
+    let the_run = the_whole_pipeline_is_run(
+        the_run,
+        the_project,
+        a_model,
+        who_reasoned,
+        whoever_answers_the_gates,
+    )?;
     if the_run.the_stage_it_stands_at() == Stage::Done {
         return Ok(a_run_stopped_with_nothing_delivered(the_run));
     }
@@ -154,18 +165,25 @@ pub fn a_run_from_a_request_to_a_pull_request(
         &the_run,
         what_there_is,
         the_program,
-        whoever_answers_the_delivery,
+        whoever_answers_the_gates,
     )
 }
 
 /// The whole pipeline is run, **and its own refusal is boxed rather than copied.**
 fn the_whole_pipeline_is_run(
     the_run: &WhereARunStands,
+    the_project: &mut impl TheProjectOnDisk,
     a_model: &mut impl AReasoningModel,
     who_reasoned: WhichOrganisationReasons,
     whoever_answers_the_gates: &mut impl APersonToDecide,
 ) -> Result<WhereARunStands, ARunThatDidNotFinish> {
-    let the_whole = the_whole_of_a_run(the_run, a_model, who_reasoned, whoever_answers_the_gates);
+    let the_whole = the_whole_of_a_run(
+        the_run,
+        the_project,
+        a_model,
+        who_reasoned,
+        whoever_answers_the_gates,
+    );
     the_whole.map_err(|why_not| ARunThatDidNotFinish::TheRun {
         why_not: Box::new(why_not),
     })
