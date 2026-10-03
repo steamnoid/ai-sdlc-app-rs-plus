@@ -23,11 +23,13 @@ use aisdlc_domain::work_item::WorkItem;
 use aisdlc_domain::work_item_id::WorkItemId;
 use aisdlc_run::a_path_in_the_project::a_path_in_the_project;
 use aisdlc_run::the_path_inside_the_project::{
-    ThePathInsideTheProject, the_path_inside_the_project,
+    ThePathInsideTheProject, the_path_a_file_will_be_written_at,
 };
 use aisdlc_run::the_project_on_disk::{TheProjectOnDisk, TheProjectRefusedToWrite};
 use aisdlc_run::the_summary_of_a_run_is_written::the_summary_of_a_run_is_written;
-use aisdlc_run::where_a_run_stands::WhereARunStands;
+use aisdlc_run::where_a_run_stands::{
+    WhereARunStands, the_run_ends_on_a_refusal, the_work_is_presented_for_a_ruling,
+};
 use aisdlc_run::where_an_artifact_of_this_run_landed::WhereAnArtifactOfThisRunLanded;
 
 #[test]
@@ -115,7 +117,7 @@ fn the_page_written(the_project: &mut AProjectOnDisk, the_run: &WhereARunStands)
     let where_the_page_landed = the_summary_of_a_run_is_written(the_project, the_run)
         .expect("a run's own directory is there to hold its page");
     the_project
-        .the_text_of(&where_the_page_landed)
+        .the_text_of(where_the_page_landed.where_the_page_landed())
         .expect("the page was just written and is there to be read")
 }
 
@@ -149,13 +151,23 @@ fn a_run_that_produced_seven_artifacts(the_project: &AProjectOnDisk) -> WhereARu
 /// point of the page.**
 fn a_run_refused_at_its_third_gate(the_project: &AProjectOnDisk) -> WhereARunStands {
     let mut the_run = a_run_at_its_first_stage();
-    let every_artifact = every_artifact_the_pipeline_produces();
-    for (which_gate, which_artifact) in every_artifact.iter().enumerate() {
-        let was_it_approved = which_gate != 3;
-        the_run = the_run.with_what_it_wrote(the_artifact_landed_at(which_artifact, the_project));
-        the_run = the_run.with_the_ruling(a_ruling_about(which_artifact, was_it_approved));
+    for which_artifact in every_artifact_before_the_third_gate() {
+        the_run = the_run.with_what_it_wrote(the_artifact_landed_at(&which_artifact, the_project));
+        let was_it_approved = which_artifact != "QaPlan";
+        the_run = the_run.with_the_ruling(a_ruling_about(&which_artifact, was_it_approved));
     }
-    the_run
+    let standing_at_the_gate =
+        the_work_is_presented_for_a_ruling(&the_run).expect("the run stands at a gate here");
+    the_run_ends_on_a_refusal(&standing_at_the_gate).expect("a refusal ends the run")
+}
+
+/// The artifacts before the gate a person said no at, **and the run stops there — so the fourth
+/// agent was never asked and a page naming four would be naming a decision nobody made.**
+fn every_artifact_before_the_third_gate() -> Vec<String> {
+    every_artifact_the_pipeline_produces()
+        .into_iter()
+        .take(3)
+        .collect()
 }
 
 /// One artifact landing beside the clone, **and the place is resolved the way the writer resolves
@@ -168,7 +180,7 @@ fn the_artifact_landed_at(
     let as_written =
         format!("steamnoid/wellbeing-tracker-public/WELLBEINGT-42/{which_artifact}.v1.json");
     let inside = a_path_in_the_project(&as_written).expect("a path inside the project is a path");
-    let where_it_landed = the_path_inside_the_project(the_project.where_it_lives(), &inside)
+    let where_it_landed = the_path_a_file_will_be_written_at(the_project.where_it_lives(), &inside)
         .expect("the work item's own directory is there to hold it");
     std::fs::write(
         std::path::PathBuf::from(where_it_landed.as_str()),

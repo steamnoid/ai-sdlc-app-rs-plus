@@ -2208,6 +2208,25 @@ there.** **A run is a state and a state is one value**: eight stages, seven gate
 twice, **and none of it is any use unless a reader can ask a run where it is and be told one
 thing.**
 
+**`ThePageOfARun`** — one run in one page: **where the page landed and what it says, together.** The
+two come back as one value **because a caller that got one without the other has either a page
+nobody can read or a place nobody can find.**
+
+**The page is written from the run's own state and not from a model, and that is the whole of the
+design.** A summary written by a model **can flatter the run that produced it**, and the one artefact
+a person reads after a run is the one that must not. **Every line in it comes out of the run's
+state, and a line that could not would be a line nobody could check.**
+
+**A refused run's page is written too, and it is the one anybody reads.** A refusal leaves no
+`Approval` anywhere else in this system, **so this page is the last place a reader can find out who
+stopped the run and why** — **and a refusal is written as a refusal rather than listed among the
+approvals, because a list of three rulings that says nothing about them reads as three approvals.**
+
+**The page is not an artifact and is not named like one.** It lands in the work item's own directory
+**as `summary.md`, beside the artifacts rather than in the artifact table**, because naming it an
+artifact would put it in the version table **where there is no version to give it — a run has one
+page, and rewriting it over the last is exactly what a version exists to prevent.**
+
 **`WhereAnArtifactOfThisRunLanded`** — one artifact this run wrote, and where it landed. **It carries
 the version as well as the name**, because an approval names an exact artifact *and version* and an
 entry without the version could not be matched to the approval that ruled on it. **The place is a plain
