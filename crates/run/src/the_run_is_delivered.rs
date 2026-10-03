@@ -21,12 +21,14 @@ use crate::a_program_we_run::AProgramWeRun;
 use crate::a_pull_request_is_opened::{
     APullRequestToOpen, APullRequestWasNotOpened, AnOpenedPullRequest, a_pull_request_is_opened,
 };
+use aisdlc_domain::approval::ApprovalDecision;
+
 use crate::the_repository_to_clone_into::ARepositoryToClone;
 use crate::where_a_run_stands::{
     WhereARunStands, the_work_is_delivered_so_it_is_done, the_work_is_presented_for_a_ruling,
 };
 use crate::{
-    APersonToDecide, NotStandingAtTheGate, the_gate_records_what_the_human_decided,
+    APersonToDecide, NotStandingAtTheGate, the_gate_asks_and_records_what_was_decided,
     the_question_put_to_somebody,
 };
 
@@ -191,32 +193,36 @@ fn the_delivery_is_put_to_a_person(
         the_version_the_delivery_is_on(),
     )
     .map_err(the_question_could_not_be_asked)?;
-    let what_the_person_left_behind =
-        the_gate_records_what_the_human_decided(whoever_answers_the_gate, &a_question);
-    the_delivery_is_finished_because_of(&presented, what_the_person_left_behind.is_ok())
+    let what_the_gate_left =
+        the_gate_asks_and_records_what_was_decided(whoever_answers_the_gate, &a_question);
+    let the_ruling = what_the_gate_left.the_ruling;
+    the_delivery_is_finished_because_of(&presented, &the_ruling)
 }
 
 /// The delivery is finished when a person approved it, **and left standing at the gate when they
 /// did not.**
 ///
-/// **A refusal and an absent gate both come back as `Err` from the gate, and telling them apart is
-/// the whole of this function.** `the_gate_records_what_the_human_decided` answers `Err` when no
-/// `Approval` was left behind, **and a refusal leaves no `Approval` because refusing is a decision
-/// and not a record** — so `Err` here means *the person said no*, not *the gate was not there*. A
-/// gate that could not be asked at all is refused earlier, by `the_question_put_to_somebody`, **so
-/// the two never reach the same line.**
+/// **The decision is asked for rather than the record, because a refusal leaves no record and the
+/// eighth gate is the one a reader of a stopped run most wants to read.** The decision says yes or
+/// no for both answers, **so there is nothing here to tell apart** — a gate that could not be asked
+/// at all was refused earlier, by `the_question_put_to_somebody`, **so no `Decision` reaches this
+/// function without somebody having made it.**
 ///
 /// **A refused delivery happened and was not accepted, and `DONE` says delivered** — so the work
 /// item stays at the gate, **which is the one place a reader will find it and read the refusal off
 /// the record beside it.**
 fn the_delivery_is_finished_because_of(
     the_presented: &WhereARunStands,
-    was_it_approved: bool,
+    what_the_person_ruled: &ApprovalDecision,
 ) -> Result<(WhereARunStands, bool), ADeliveryThatDidNotHappen> {
+    let was_it_approved = what_the_person_ruled.approved;
+    let the_presented = the_presented
+        .clone()
+        .with_the_ruling(what_the_person_ruled.clone());
     if !was_it_approved {
-        return Ok((the_presented.clone(), false));
+        return Ok((the_presented, false));
     }
-    let finished = the_work_is_delivered_so_it_is_done(the_presented)
+    let finished = the_work_is_delivered_so_it_is_done(&the_presented)
         .map_err(the_work_could_not_be_presented)?;
     Ok((finished, true))
 }

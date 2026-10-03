@@ -265,14 +265,42 @@ pub fn the_question_put_to_somebody(
     })
 }
 
-/// The gate records what the human decided.
+/// What one gate left, **and it is two facts because the answer was two.**
+///
+/// **The decision and the record are not the same thing**, and the difference is the whole of a
+/// refusal: **a refusal is a decision and leaves no record at all.** A type carrying only the record
+/// has therefore already lost half of what happened by the time any caller sees it, **and a run
+/// built on it would have nothing to say about the gate somebody said no at.**
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct WhatTheGateLeft {
+    /// What the person decided, **whether they said yes or no.**
+    pub the_ruling: ApprovalDecision,
+    /// What was recorded, **and nothing at all when the answer was no.**
+    pub what_was_recorded: Result<Approval, NotStandingAtTheGate>,
+}
+
+/// The gate asks once and keeps both, **because a person asked twice may answer twice** — and two
+/// answers to one question is a gate that ruled twice.
+pub fn the_gate_asks_and_records_what_was_decided(
+    the_person: &mut impl APersonToDecide,
+    a_question: &ApprovalQuestion,
+) -> WhatTheGateLeft {
+    let the_ruling = the_person.how_they_rule_on(a_question);
+    let what_was_recorded = Approval::what_the_ruling_left_behind(&the_ruling)
+        .ok_or(NotStandingAtTheGate::because(Stage::AwaitingHumanApproval));
+    WhatTheGateLeft {
+        the_ruling,
+        what_was_recorded,
+    }
+}
+
+/// The gate records what the human decided, **and it is the record alone because most callers want
+/// nothing else** — the decision is one call away for the callers that have to say who said no.
 pub fn the_gate_records_what_the_human_decided(
     the_person: &mut impl APersonToDecide,
     a_question: &ApprovalQuestion,
 ) -> Result<Approval, NotStandingAtTheGate> {
-    let a_ruling = the_person.how_they_rule_on(a_question);
-    Approval::what_the_ruling_left_behind(&a_ruling)
-        .ok_or(NotStandingAtTheGate::because(Stage::AwaitingHumanApproval))
+    the_gate_asks_and_records_what_was_decided(the_person, a_question).what_was_recorded
 }
 
 /// The gate records what the human decided, refusing a work item not standing at it.
@@ -286,9 +314,7 @@ pub fn the_gate_records_what_the_human_decided_at(
             the_work_item.the_stage_it_stands_at(),
         ));
     }
-    let a_ruling = the_person.how_they_rule_on(a_question);
-    Approval::what_the_ruling_left_behind(&a_ruling)
-        .ok_or(NotStandingAtTheGate::because(Stage::AwaitingHumanApproval))
+    the_gate_records_what_the_human_decided(the_person, a_question)
 }
 
 /// A run closes a work item, holding the record of somebody's ruling.

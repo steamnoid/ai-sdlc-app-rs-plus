@@ -84,6 +84,37 @@ fn one_person_is_asked_eight_times_and_the_eighth_gate_is_the_delivery() {
     each_of_the_seven_gates_was_asked_about_a_different_artifact(&whoever_answers);
 }
 
+/// A finished run remembers the delivery's ruling as well, **because the delivery's gate is a gate
+/// and not a footnote** — and a run that remembered seven of its eight rulings would leave a summary
+/// with nothing at all to say about the decision that let the branch go.
+#[test]
+fn a_finished_run_remembers_the_deliveries_ruling_as_its_eighth() {
+    let mut a_model = a_model();
+    let mut whoever_answers = APersonWhoRules::approving_everything();
+
+    let finished = a_run_given(
+        &a_run_at_its_first_stage(),
+        "the-delivery-ruling-is-eighth",
+        &mut a_model,
+        &mut whoever_answers,
+        &a_program_answering(false),
+    );
+
+    assert_eq!(
+        finished.as_ref().map(|left| left
+            .where_the_work_stands()
+            .every_ruling_this_run_received()
+            .len()),
+        Ok(8),
+        "**because the delivery's gate is a gate and not a footnote** — and a run that remembered \
+         seven of its eight rulings would leave a summary with nothing to say about the decision \
+         that let the branch go. It remembered {:?}",
+        finished.as_ref().map(|left| left
+            .where_the_work_stands()
+            .every_ruling_this_run_received())
+    );
+}
+
 /// The seven gates named the seven artifacts and no gate named one twice, **and a gate asked twice
 /// about one artifact is a gate that approved a document nobody changed** — which is what the
 /// version on an approval exists to prevent.

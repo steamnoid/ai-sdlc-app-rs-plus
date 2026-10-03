@@ -9,7 +9,7 @@
 //! opened a pull request.
 
 use aisdlc_domain::agent_identifier::AgentIdentifier;
-use aisdlc_domain::approval::{AnArtifactVersion, WhichArtifact};
+use aisdlc_domain::approval::{AnArtifactVersion, ApprovalDecision, WhichArtifact};
 
 use crate::where_an_artifact_of_this_run_landed::WhereAnArtifactOfThisRunLanded;
 use aisdlc_domain::stage::Stage;
@@ -52,6 +52,7 @@ pub struct WhereARunStands {
     which_artifact_it_is_on: Option<WhichArtifact>,
     the_version_it_is_on: Option<AnArtifactVersion>,
     everything_this_run_wrote: Vec<WhereAnArtifactOfThisRunLanded>,
+    every_ruling_this_run_received: Vec<ApprovalDecision>,
 }
 
 impl WhereARunStands {
@@ -68,6 +69,7 @@ impl WhereARunStands {
             ),
             the_version_it_is_on: None,
             everything_this_run_wrote: Vec::new(),
+            every_ruling_this_run_received: Vec::new(),
         }
     }
 
@@ -78,6 +80,7 @@ impl WhereARunStands {
             which_artifact_it_is_on: None,
             the_version_it_is_on: None,
             everything_this_run_wrote: Vec::new(),
+            every_ruling_this_run_received: Vec::new(),
         }
     }
 
@@ -101,6 +104,7 @@ impl WhereARunStands {
             which_artifact_it_is_on: self.which_artifact_it_is_on.clone(),
             the_version_it_is_on: Some(the_version),
             everything_this_run_wrote: self.everything_this_run_wrote.clone(),
+            every_ruling_this_run_received: self.every_ruling_this_run_received.clone(),
         })
     }
 
@@ -117,6 +121,28 @@ impl WhereARunStands {
             everything_this_run_wrote,
             ..self
         }
+    }
+
+    /// This run saying that somebody ruled on it, **and it is not a move.**
+    ///
+    /// **A ruling does not move a work item either** — it is what the gate decided while the work
+    /// stood still — **so the run holds it beside the artifacts it wrote, and the two travel together
+    /// through every hand-off.**
+    #[must_use]
+    pub fn with_the_ruling(self, one_more: ApprovalDecision) -> Self {
+        let mut every_ruling_this_run_received = self.every_ruling_this_run_received;
+        every_ruling_this_run_received.push(one_more);
+        Self {
+            every_ruling_this_run_received,
+            ..self
+        }
+    }
+
+    /// Every ruling this run received, **in the order the gates were reached and empty before the
+    /// first one — and it holds refusals, because a refusal is a decision and leaves no `Approval`
+    /// anywhere else in this system.**
+    pub fn every_ruling_this_run_received(&self) -> &[ApprovalDecision] {
+        &self.every_ruling_this_run_received
     }
 
     /// Everything this run has written, **in the order it wrote it and empty before the first write.**
@@ -171,6 +197,7 @@ impl WhereARunStands {
             which_artifact_it_is_on: self.which_artifact_it_is_on,
             the_version_it_is_on: self.the_version_it_is_on,
             everything_this_run_wrote: self.everything_this_run_wrote,
+            every_ruling_this_run_received: self.every_ruling_this_run_received,
         })
     }
 
@@ -193,6 +220,7 @@ impl WhereARunStands {
             the_work_item: moved,
             which_artifact_it_is_on: Some(which_artifact_it_is_on),
             the_version_it_is_on: None,
+            every_ruling_this_run_received: self.every_ruling_this_run_received,
             everything_this_run_wrote: self.everything_this_run_wrote,
         })
     }

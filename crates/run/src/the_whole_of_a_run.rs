@@ -11,6 +11,7 @@
 
 use std::fmt;
 
+use aisdlc_domain::approval::ApprovalDecision;
 use aisdlc_domain::stage::Stage;
 use aisdlc_domain::which_organisation_reasons::WhichOrganisationReasons;
 
@@ -109,19 +110,14 @@ pub fn the_whole_of_a_run(
     let mut where_it_last_stopped = None;
     let mut which_stage = 1;
     while !the_run_has_ended(&walking_from, where_it_last_stopped) {
-        let (what_the_stage_left, what_this_stage_wrote) =
-            the_next_stage_is_worked_and_asked_about(
-                &walking_from,
-                the_project,
-                a_model,
-                who_reasoned,
-                whoever_answers_the_gates,
-                which_stage,
-            )?;
-        let one_step = the_work_is_walked_on_from(&walking_from, &what_the_stage_left)?;
-        where_it_last_stopped = one_step.every_place_it_stopped_at().last().copied();
-        walking_from =
-            the_walk_is_taken_and_told_what_was_written(&one_step, what_this_stage_wrote);
+        where_it_last_stopped = the_next_stage_is_worked_written_ruled_and_walked(
+            &mut walking_from,
+            the_project,
+            a_model,
+            who_reasoned,
+            whoever_answers_the_gates,
+            which_stage,
+        )?;
         which_stage += 1;
     }
     Ok(walking_from)
@@ -132,11 +128,13 @@ pub fn the_whole_of_a_run(
 fn the_walk_is_taken_and_told_what_was_written(
     one_step: &crate::a_run_is_walked_forward::WhatAWalkReached,
     what_this_stage_wrote: WhereAnArtifactOfThisRunLanded,
+    what_the_gate_ruled: ApprovalDecision,
 ) -> WhereARunStands {
     one_step
         .where_the_work_ended_up()
         .clone()
         .with_what_it_wrote(what_this_stage_wrote)
+        .with_the_ruling(what_the_gate_ruled)
 }
 
 /// What this stage wrote, **named by the artifact and version the gate is about to be asked** — and
@@ -218,6 +216,34 @@ fn nothing_was_written(why_not: WhatCouldNotBeWritten) -> AWholeRunThatCouldNotB
     AWholeRunThatCouldNotBeHad::NothingWasWritten {
         why_not: Box::new(why_not),
     }
+}
+
+/// One stage is worked, what it said is written, a person rules on it and the run walks on — **and
+/// the four are one moment in a run, which is why this function is the loop's body rather than four
+/// calls in it.**
+fn the_next_stage_is_worked_written_ruled_and_walked(
+    walking_from: &mut WhereARunStands,
+    the_project: &mut impl TheProjectOnDisk,
+    a_model: &mut impl AReasoningModel,
+    who_reasoned: WhichOrganisationReasons,
+    whoever_answers_the_gates: &mut impl APersonToDecide,
+    which_stage: usize,
+) -> Result<Option<WhereARunGoesNext>, AWholeRunThatCouldNotBeHad> {
+    let (what_the_stage_left, where_it_landed) = the_next_stage_is_worked_and_asked_about(
+        walking_from,
+        the_project,
+        a_model,
+        who_reasoned,
+        whoever_answers_the_gates,
+        which_stage,
+    )?;
+    let one_step = the_work_is_walked_on_from(walking_from, &what_the_stage_left)?;
+    *walking_from = the_walk_is_taken_and_told_what_was_written(
+        &one_step,
+        where_it_landed,
+        what_the_stage_left.the_ruling().clone(),
+    );
+    Ok(one_step.every_place_it_stopped_at().last().copied())
 }
 
 /// The refusal a stage raised, **and the two kinds are the run's own and the stage's.**
