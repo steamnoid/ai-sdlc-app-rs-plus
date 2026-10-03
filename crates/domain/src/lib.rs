@@ -27,6 +27,7 @@ pub mod role;
 pub mod stage;
 pub mod state_machine;
 pub mod the_addresses;
+pub mod where_an_artifact_lands;
 pub mod where_the_clone_of_a_work_item_lands;
 pub mod which_organisation_reasons;
 pub mod who_commissioned;
