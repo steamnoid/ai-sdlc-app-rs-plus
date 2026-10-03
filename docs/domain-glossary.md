@@ -1643,6 +1643,19 @@ That was possible because that domain had a `chrono` dependency, and it is the s
 dependency the rewrite exists to remove — so the field is not lost, it is moved to the only
 layer entitled to it.
 
+**`WhatTheGateLeft`** — one gate's two facts: **the decision and the record of it.** They are not
+the same thing, **and the difference is the whole of a refusal** — a refusal is a decision and leaves
+no record at all. **A type carrying only the record has already lost half of what happened by the
+time any caller sees it**, and a run built on it would have nothing to say about the gate somebody
+said no at.
+
+**The gate asks once and keeps both**, because a person asked twice may answer twice, **and two
+answers to one question is a gate that ruled twice.** `the_gate_records_what_the_human_decided` is
+that one gate seen from the record side, **because most callers want nothing else.**
+
+**`WhereARunStands` holds the decisions and not the `Approval`s**, **for the same reason.** The run
+must be able to say who stopped it and why, **and only a decision says that about a refusal.**
+
 **`WhoDecided`** — the party that ruled, recorded verbatim and never replaced. A person's
 name and a policy's name are both valid and the record keeps the difference.
 

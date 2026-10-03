@@ -20,7 +20,7 @@ use crate::a_model_is_asked_for_an_artifact::{
 };
 use crate::where_a_run_stands::{WhereARunStands, the_work_is_presented_for_a_ruling};
 use crate::{
-    APersonToDecide, the_gate_records_what_the_human_decided, the_question_put_to_somebody,
+    APersonToDecide, the_gate_asks_and_records_what_was_decided, the_question_put_to_somebody,
 };
 
 /// What a stage left behind, **and the approval is part of it rather than a second return value.**
@@ -31,6 +31,9 @@ use crate::{
 /// approval from a refusal.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct WhatTheStageLeft {
+    /// What the person decided, **and it is here whether they said yes or no** — a run that kept
+    /// only the record would have nothing to say about a gate somebody refused.
+    the_ruling: aisdlc_domain::approval::ApprovalDecision,
     the_ruling_that_was_recorded: Option<aisdlc_domain::approval::Approval>,
     what_the_agent_said: String,
     which_version_was_produced: AnArtifactVersion,
@@ -41,6 +44,12 @@ impl WhatTheStageLeft {
     /// decision and not a failure, **and the walk needs the answer and not the reason.**
     pub fn was_the_artifact_approved(&self) -> bool {
         self.the_ruling_that_was_recorded.is_some()
+    }
+
+    /// What the person decided, **and this is the answer whether or not a record was left** — the
+    /// two differ for exactly one answer, **which is the one anybody reads a stopped run for.**
+    pub fn the_ruling(&self) -> &aisdlc_domain::approval::ApprovalDecision {
+        &self.the_ruling
     }
 
     /// What was recorded at the gate, **and nothing when a person refused.**
@@ -273,10 +282,11 @@ fn the_question_is_asked_and_answered(
     );
     let the_question =
         the_question.map_err(|_refused| a_run_not_standing_where_a_gate_may_be_held())?;
-    let what_was_recorded =
-        the_gate_records_what_the_human_decided(whoever_answers_the_gate, &the_question);
+    let what_the_gate_left =
+        the_gate_asks_and_records_what_was_decided(whoever_answers_the_gate, &the_question);
     Ok(WhatTheStageLeft {
-        the_ruling_that_was_recorded: what_was_recorded.ok(),
+        the_ruling: what_the_gate_left.the_ruling,
+        the_ruling_that_was_recorded: what_the_gate_left.what_was_recorded.ok(),
         what_the_agent_said,
         which_version_was_produced: which_version,
     })

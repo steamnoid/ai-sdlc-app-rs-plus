@@ -65,10 +65,7 @@ fn a_refusal_is_remembered_and_so_is_who_refused_it() {
 
     let stopped = the_run_given(&mut the_project, &mut a_model, &mut whoever_answers);
 
-    let the_rulings = stopped
-        .as_ref()
-        .map(WhereARunStands::every_ruling_this_run_received)
-        .unwrap_or_default();
+    let the_rulings = the_rulings_of(&stopped);
     assert_eq!(
         the_rulings.len(),
         3,
@@ -91,25 +88,14 @@ fn the_third_ruling_says_no_and_the_first_two_say_yes() {
     let mut whoever_answers = APersonWhoRules::refusing_at_the(3);
 
     let stopped = the_run_given(&mut the_project, &mut a_model, &mut whoever_answers);
-
-    let which_gate_said_no = stopped
-        .as_ref()
-        .map(WhereARunStands::every_ruling_this_run_received)
-        .map(|rulings| {
-            rulings
-                .iter()
-                .map(|one| !one.approved)
-                .collect::<Vec<bool>>()
-        });
+    let the_rulings = the_rulings_of(&stopped);
+    let which_gate_said_no = which_gate_said_no(&the_rulings);
     assert_eq!(
         which_gate_said_no,
-        Ok(vec![false, false, true]),
-        "**because a run that recorded only approvals would hold no ruling at all here** — and a \\
-         refusal that leaves no record is exactly what makes a reader unable to say who stopped the \\
-         run and why. It remembered {:?}",
-        stopped
-            .as_ref()
-            .map(WhereARunStands::every_ruling_this_run_received)
+        vec![false, false, true],
+        "**because a run that recorded only approvals would hold no ruling at all here** — and a \
+         refusal that leaves no record is exactly what makes a reader unable to say who stopped the \
+         run and why. It remembered {the_rulings:?}"
     );
 }
 
@@ -121,23 +107,30 @@ fn every_ruling_carries_a_reason_a_reader_can_read() {
 
     let finished = the_run_given(&mut the_project, &mut a_model, &mut whoever_answers);
 
-    let the_reasons = finished
-        .as_ref()
-        .map(WhereARunStands::every_ruling_this_run_received)
-        .map(|rulings| {
-            rulings
-                .iter()
-                .map(|one| one.reason.clone())
-                .collect::<Vec<String>>()
-        });
+    let the_rulings = the_rulings_of(&finished);
+    let every_reason_can_be_read = the_rulings.iter().all(|one| !one.reason.trim().is_empty());
     assert!(
-        the_reasons
-            .as_ref()
-            .map(|reasons| reasons.iter().all(|one| !one.trim().is_empty()))
-            .unwrap_or(false),
-        "**because a decision somebody else could have made carries no grounds** — and the trace \\
-         after a run is exactly where somebody needs to know why. The reasons were {the_reasons:?}"
+        every_reason_can_be_read,
+        "**because a decision somebody else could have made carries no grounds** — and the trace \
+         after a run is exactly where somebody needs to know why. The rulings were {the_rulings:?}"
     );
+}
+
+/// Which gate of each ruling said no, **and the question is asked of the rulings rather than of the
+/// run so a test can read it without holding two things.**
+fn which_gate_said_no(the_rulings: &[ApprovalDecision]) -> Vec<bool> {
+    the_rulings.iter().map(|one| !one.approved).collect()
+}
+
+/// The rulings a run received, **and an empty list is a run that received none** — which is a fact a
+/// test can assert on rather than a stopped test.
+fn the_rulings_of(
+    stopped: &Result<WhereARunStands, aisdlc_run::the_whole_of_a_run::AWholeRunThatCouldNotBeHad>,
+) -> Vec<ApprovalDecision> {
+    let the_run = stopped
+        .as_ref()
+        .expect("a run that reaches every gate reaches it");
+    the_run.every_ruling_this_run_received().to_vec()
 }
 
 /// What every ruling was about, **and the artifact alone is the question** — the version is one for
