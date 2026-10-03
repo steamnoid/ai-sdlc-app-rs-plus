@@ -26,9 +26,46 @@ use aisdlc_run::what_a_stage_kept_is_written::{
 };
 use aisdlc_run::where_a_run_stands::WhereARunStands;
 
-/// Where this deployment keeps projects, **and it is an argument because a deployment chooses it.**
+/// Where this deployment keeps projects, **and it really exists.**
+///
+/// **The confinement rule resolves both sides before comparing them**, so a project that is not there
+/// is refused for naming nowhere — **and a test pointing at a fictional root would be testing the
+/// refusal rather than the write.** The name carries the process id because two runs of the suite at
+/// once would otherwise share one directory, **which is the collision the branch fixtures already
+/// hit.**
 fn the_projects_root() -> PathBuf {
-    PathBuf::from("/var/aisdlc/projects")
+    let where_it_is =
+        std::env::temp_dir().join(format!("aisdlc-what-a-stage-kept-{}", std::process::id()));
+    std::fs::create_dir_all(&where_it_is).expect("a directory this machine will hold");
+    where_it_is
+}
+
+/// Where the run says `DiscoveryReport` at version one lands, **and it is the domain's own answer**
+/// so the test compares the writer against the derivation rather than against a string.
+fn where_discovery_report_version_one_lands() -> PathBuf {
+    let the_name = WhichArtifact::try_from("DiscoveryReport").expect("a name is not blank");
+    let the_version = AnArtifactVersion::try_from(1).expect("a version");
+    let a_work_item = WorkItemId::try_from("WELLBEINGT-42").expect("a name is a name");
+    where_an_artifact_lands(
+        &the_projects_root(),
+        &what_this_work_is_about(),
+        &a_work_item,
+        &the_name,
+        &the_version,
+    )
+    .expect("an ordinary artifact may be held")
+}
+
+/// The work item's own directory, **and it exists because a run that made a clone created it.**
+///
+/// **The door a file is written through resolves the directory rather than the file**, so the
+/// directory has to be there — **and a fixture that left it out would be testing the refusal rather
+/// than the write.** The clone inside it is never made, because nothing here runs `git`.
+fn the_work_items_directory() -> PathBuf {
+    let the_project_directory =
+        the_projects_root().join("steamnoid/wellbeing-tracker-public/WELLBEINGT-42");
+    std::fs::create_dir_all(&the_project_directory).expect("a directory this machine will hold");
+    the_project_directory
 }
 
 /// The repository this work item is about, **named for what it is for rather than for the type it
@@ -49,6 +86,7 @@ impl AProjectRemembering {
     /// back a reference, **so a double that built its path on the spot would be returning a borrow
     /// of something already gone.**
     fn empty() -> Self {
+        let _the_directory_is_there = the_work_items_directory();
         Self {
             where_it_lives: the_projects_root(),
             what_it_holds: RefCell::new(Vec::new()),
@@ -74,7 +112,9 @@ impl TheProjectOnDisk for AProjectRemembering {
     fn the_text_of(&mut self, a_path: &ThePathInsideTheProject) -> Option<String> {
         let asked_for = a_path.as_str();
         let what_it_holds = self.what_it_holds.borrow();
-        let found = what_it_holds.iter().find(|(one_path, _)| one_path.to_str() == Some(asked_for));
+        let found = what_it_holds
+            .iter()
+            .find(|(one_path, _)| one_path.to_str() == Some(asked_for));
         found.map(|(_one_path, what_it_says)| what_it_says.clone())
     }
 
@@ -86,7 +126,7 @@ impl TheProjectOnDisk for AProjectRemembering {
         let already_holds = self.the_text_of(a_path).is_some();
         if already_holds {
             return Err(TheProjectRefusedToWrite::there_is_already_such_a_file(
-                a_path.as_str(),
+                a_path,
             ));
         }
         self.what_it_holds
@@ -134,22 +174,34 @@ fn a_run_on_this_artifact(the_version: u32) -> WhereARunStands {
 #[test]
 fn what_a_stage_kept_is_written_at_the_path_the_run_derives() {
     let mut the_project = AProjectRemembering::empty();
-    let where_the_run_says_it_goes = where_an_artifact_lands(
-        &the_projects_root(),
-        &what_this_work_is_about(),
-        &WorkItemId::try_from("WELLBEINGT-42").expect("a name"),
-        &WhichArtifact::try_from("DiscoveryReport").expect("a name is not blank"),
-        &AnArtifactVersion::try_from(1).expect("a version"),
-    )
-    .expect("an ordinary artifact may be held");
 
     let written = what_this_stage_kept_is_written(&mut the_project, "the repository is a Plane", 1);
 
+    let where_the_run_says_it_goes = where_discovery_report_version_one_lands();
+
+    let the_same_file_name = written
+        .as_ref()
+        .map(|landed| landed.file_name() == where_the_run_says_it_goes.file_name());
     assert_eq!(
-        written,
-        Ok(where_the_run_says_it_goes),
-        "**because the path is derived and not composed by the writer** — a writer that built the path \
-         itself would be a second derivation nobody has to keep in step. It landed at {written:?}"
+        the_same_file_name,
+        Ok(true),
+        "**because the path is derived and not composed by the writer** — a writer that built the \
+         path itself would be a second derivation nobody has to keep in step. It landed at {written:?} \
+         and the run says {where_the_run_says_it_goes:?}"
+    );
+
+    let the_resolved_project = the_project.where_it_lives().canonicalize();
+    let is_it_beside_the_clone = written
+        .as_ref()
+        .map(|landed| landed.starts_with(the_resolved_project.expect("the project is there")));
+    assert_eq!(
+        is_it_beside_the_clone,
+        Ok(true),
+        "**because the file lands inside the project and not merely at a path with the right name** — \
+         a file named right and placed elsewhere is a file nobody will find. It landed at {written:?}, \
+         **and the project root is resolved here because the confinement rule resolves, so on a \
+         machine where `/var` is a symlink the two spellings differ and only the resolved ones \
+         compare.**"
     );
 }
 
@@ -178,7 +230,10 @@ fn writing_the_same_artifact_at_the_same_version_twice_is_refused() {
     let refused = what_this_stage_kept_is_written(&mut the_project, "a different account of it", 1);
 
     assert!(
-        matches!(refused, Err(WhatCouldNotBeWritten::ThereIsAlreadySuchAFile { .. })),
+        matches!(
+            refused,
+            Err(WhatCouldNotBeWritten::ThereIsAlreadySuchAFile { .. })
+        ),
         "**because an approval names the exact artifact and version it ruled on** — and a second write \
          at that version would replace the document under an approval that still names it, **so the \
          file a person read and the file on disk would be different documents with one name.** It \
@@ -192,10 +247,15 @@ fn the_same_artifact_at_a_later_version_is_a_second_file_and_is_permitted() {
     what_this_stage_kept_is_written(&mut the_project, "the repository is a Plane", 1)
         .expect("the first write of an artifact is permitted");
 
-    let the_second = what_this_stage_kept_is_written(&mut the_project, "a different account of it", 2);
+    let the_second =
+        what_this_stage_kept_is_written(&mut the_project, "a different account of it", 2);
+
+    let is_it_the_second_version = the_second
+        .as_ref()
+        .map(|one_path| one_path.to_string_lossy().contains(".v2.json"));
 
     assert_eq!(
-        the_second.map(|one_path| one_path.to_string_lossy().contains(".v2.json")),
+        is_it_the_second_version,
         Ok(true),
         "**because a second production is a second document and it has to be a second file** — the \
          version is in the name for exactly this. It landed at {the_second:?}"
@@ -215,7 +275,8 @@ fn a_refused_write_leaves_the_file_saying_what_it_said_before() {
     what_this_stage_kept_is_written(&mut the_project, "the repository is a Plane", 1)
         .expect("the first write of an artifact is permitted");
 
-    let _refused = what_this_stage_kept_is_written(&mut the_project, "a different account of it", 1);
+    let _refused =
+        what_this_stage_kept_is_written(&mut the_project, "a different account of it", 1);
 
     assert_eq!(
         the_project.what_it_now_holds()[0].1,

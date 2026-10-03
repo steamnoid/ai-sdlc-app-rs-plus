@@ -12,7 +12,7 @@
 use aisdlc_run::a_path_in_the_project::a_path_in_the_project;
 use aisdlc_run::the_path_inside_the_project::ThePathInsideTheProject;
 use aisdlc_run::the_path_inside_the_project::the_path_inside_the_project;
-use aisdlc_run::the_project_on_disk::TheProjectOnDisk;
+use aisdlc_run::the_project_on_disk::{TheProjectOnDisk, TheProjectRefusedToWrite};
 use aisdlc_run::the_project_this_run_is_in;
 
 /// A project holding two named files, and a record of what it was asked.
@@ -54,6 +54,19 @@ impl TheProjectOnDisk for AProjectWithTwoFilesInIt {
             .iter()
             .find(|(a_name, _)| the_name.ends_with(a_name.as_str()))
             .map(|(_, its_text)| its_text.clone())
+    }
+    /// Nothing is ever written here, **and the method refuses rather than pretending** — a double
+    /// that answered `Ok(())` would let a test pass on a write nothing did, **and these two files
+    /// are about reading.**
+    fn a_file_is_written(
+        &mut self,
+        a_path: &ThePathInsideTheProject,
+        _what_it_says: &str,
+    ) -> Result<(), TheProjectRefusedToWrite> {
+        Err(TheProjectRefusedToWrite::there_was_no_room_for_it(
+            a_path,
+            "this project is a double that only ever reads",
+        ))
     }
 }
 
