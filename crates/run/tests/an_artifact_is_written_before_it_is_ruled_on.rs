@@ -41,9 +41,23 @@ struct AProjectRemembering {
 }
 
 impl AProjectRemembering {
-    fn empty() -> Self {
+    /// A project of its own, **and the name is an argument because three tests share one process.**
+    ///
+    /// **They shared one directory and raced on one file**: each writes `DiscoveryReport.v1.json`,
+    /// and a reader in another test could see the file between a truncation and its write — **which
+    /// is a person at a gate reading an empty document**, the exact thing this file exists to make
+    /// impossible. It passed for months and then failed under load, **which is what a race looks
+    /// like.**
+    ///
+    /// **Everything the run needs on disk is made here, and the directory is cleared first**, so the
+    /// test cannot depend on which of its two calls happened first — **and a fixture whose order
+    /// matters is a fixture whose failure looks like the code's.**
+    fn empty(in_a_directory_named: &str) -> Self {
+        let where_the_run_writes = the_projects_root(in_a_directory_named);
+        let _ = std::fs::remove_dir_all(&where_the_run_writes);
+        the_work_items_directory(in_a_directory_named);
         Self {
-            where_it_lives: the_projects_root(),
+            where_it_lives: where_the_run_writes,
             what_it_holds: RefCell::new(Vec::new()),
         }
     }
@@ -179,9 +193,9 @@ impl AReasoningModel for AModelAnswering {
 }
 
 /// Where this deployment keeps projects, **and it really exists.**
-fn the_projects_root() -> PathBuf {
+fn the_projects_root(in_a_directory_named: &str) -> PathBuf {
     let where_it_is = std::env::temp_dir().join(format!(
-        "aisdlc-ruled-on-what-was-read-{}",
+        "aisdlc-ruled-on-what-was-read-{}-{in_a_directory_named}",
         std::process::id()
     ));
     std::fs::create_dir_all(&where_it_is).expect("a directory this machine will hold");
@@ -189,16 +203,17 @@ fn the_projects_root() -> PathBuf {
 }
 
 /// The work item's own directory, **and it exists because a run that made a clone created it.**
-fn the_work_items_directory() {
-    let the_project_directory =
-        the_projects_root().join("steamnoid/wellbeing-tracker-public/WELLBEINGT-42");
+fn the_work_items_directory(in_a_directory_named: &str) {
+    let the_project_directory = the_projects_root(in_a_directory_named)
+        .join("steamnoid/wellbeing-tracker-public")
+        .join("WELLBEINGT-42");
     std::fs::create_dir_all(&the_project_directory).expect("a directory this machine will hold");
 }
 
 #[test]
 fn a_person_is_asked_about_an_artifact_that_is_on_disk_before_they_rule() {
-    the_work_items_directory();
-    let mut the_project = AProjectRemembering::empty();
+    the_work_items_directory("a-person-is-asked");
+    let mut the_project = AProjectRemembering::empty("a-person-is-asked");
     let mut whoever_answers = APersonWhoReadsThenRules::who_approves(&the_project);
 
     let _ruled = the_gate_is_asked_with(&mut the_project, &mut whoever_answers);
@@ -215,8 +230,8 @@ fn a_person_is_asked_about_an_artifact_that_is_on_disk_before_they_rule() {
 
 #[test]
 fn the_file_a_person_read_is_the_file_at_the_version_the_approval_names() {
-    the_work_items_directory();
-    let mut the_project = AProjectRemembering::empty();
+    the_work_items_directory("the-file-is-the-version");
+    let mut the_project = AProjectRemembering::empty("the-file-is-the-version");
     let mut whoever_answers = APersonWhoReadsThenRules::who_approves(&the_project);
 
     let ruled = the_gate_is_asked_with(&mut the_project, &mut whoever_answers);
@@ -240,8 +255,8 @@ fn the_file_a_person_read_is_the_file_at_the_version_the_approval_names() {
 
 #[test]
 fn a_refused_gate_still_leaves_the_artifact_on_disk() {
-    the_work_items_directory();
-    let mut the_project = AProjectRemembering::empty();
+    the_work_items_directory("a-refused-gate");
+    let mut the_project = AProjectRemembering::empty("a-refused-gate");
     let mut whoever_answers = APersonWhoReadsThenRules::who_refuses(&the_project);
 
     let ruled = the_gate_is_asked_with(&mut the_project, &mut whoever_answers);

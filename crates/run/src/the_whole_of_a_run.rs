@@ -19,10 +19,12 @@ use crate::a_model_is_asked_for_an_artifact::AReasoningModel;
 use crate::a_run_is_walked_forward::{AWalkThatWouldNotEnd, a_run_is_walked_forward};
 use crate::a_stage_is_worked_and_ruled_on::WhatAnAgentSaid;
 use crate::a_stage_is_worked_and_ruled_on::{AStageThatCouldNotBeWorked, WhatTheStageLeft};
+use crate::the_path_inside_the_project::ThePathInsideTheProject;
 use crate::the_project_on_disk::TheProjectOnDisk;
 use crate::what_a_stage_kept_is_written::{WhatCouldNotBeWritten, what_a_stage_kept_is_written};
 use crate::where_a_run_stands::WhereARunStands;
 use crate::where_an_approved_artifact_leads::WhereARunGoesNext;
+use crate::where_an_artifact_of_this_run_landed::WhereAnArtifactOfThisRunLanded;
 
 /// Why a whole run could not be had, **and each is a fact about a different thing.**
 ///
@@ -107,20 +109,52 @@ pub fn the_whole_of_a_run(
     let mut where_it_last_stopped = None;
     let mut which_stage = 1;
     while !the_run_has_ended(&walking_from, where_it_last_stopped) {
-        let what_the_stage_left = the_next_stage_is_worked_and_asked_about(
-            &walking_from,
-            the_project,
-            a_model,
-            who_reasoned,
-            whoever_answers_the_gates,
-            which_stage,
-        )?;
+        let (what_the_stage_left, what_this_stage_wrote) =
+            the_next_stage_is_worked_and_asked_about(
+                &walking_from,
+                the_project,
+                a_model,
+                who_reasoned,
+                whoever_answers_the_gates,
+                which_stage,
+            )?;
         let one_step = the_work_is_walked_on_from(&walking_from, &what_the_stage_left)?;
         where_it_last_stopped = one_step.every_place_it_stopped_at().last().copied();
-        walking_from = one_step.where_the_work_ended_up().clone();
+        walking_from =
+            the_walk_is_taken_and_told_what_was_written(&one_step, what_this_stage_wrote);
         which_stage += 1;
     }
     Ok(walking_from)
+}
+
+/// The walked run, **told what this stage wrote** — and the two are one line because a run that
+/// walked and a run that wrote are one run.
+fn the_walk_is_taken_and_told_what_was_written(
+    one_step: &crate::a_run_is_walked_forward::WhatAWalkReached,
+    what_this_stage_wrote: WhereAnArtifactOfThisRunLanded,
+) -> WhereARunStands {
+    one_step
+        .where_the_work_ended_up()
+        .clone()
+        .with_what_it_wrote(what_this_stage_wrote)
+}
+
+/// What this stage wrote, **named by the artifact and version the gate is about to be asked** — and
+/// that is the run standing at the gate rather than the one before or after it, **because that is the
+/// run whose artifact the person ruled on and the run that the walk has already handed on.**
+fn what_this_stage_wrote_of(
+    what_an_agent_said: &WhatAnAgentSaid,
+    where_it_landed: ThePathInsideTheProject,
+) -> WhereAnArtifactOfThisRunLanded {
+    let the_run = what_an_agent_said.the_run_standing_at_what_it_produced();
+    let which_artifact = the_run
+        .which_artifact_it_is_on()
+        .expect("a run standing at a gate is standing at an artifact")
+        .clone();
+    let the_version = the_run
+        .which_version_of_its_artifact_exists()
+        .expect("a run standing at a gate is standing at a version");
+    WhereAnArtifactOfThisRunLanded::an_artifact_landed(which_artifact, the_version, where_it_landed)
 }
 
 /// Whether this run has anywhere left to go, **and it is asked of the run's stage and of the last
@@ -148,30 +182,34 @@ fn the_next_stage_is_worked_and_asked_about(
     who_reasoned: WhichOrganisationReasons,
     whoever_answers_the_gates: &mut impl APersonToDecide,
     which_stage: usize,
-) -> Result<crate::a_stage_is_worked_and_ruled_on::WhatTheStageLeft, AWholeRunThatCouldNotBeHad> {
+) -> Result<(WhatTheStageLeft, WhereAnArtifactOfThisRunLanded), AWholeRunThatCouldNotBeHad> {
     let what_an_agent_said =
         crate::a_stage_is_worked_and_ruled_on::the_agent_is_asked(a_model, the_run, who_reasoned);
     let refused = what_an_agent_said
         .map_err(|why_not| the_run_reports_its_own_failure(which_stage, &why_not));
     let what_an_agent_said = refused?;
-    what_an_agent_said_is_written(the_project, &what_an_agent_said)?;
-    what_an_agent_said
+    let where_it_landed = what_an_agent_said_is_written(the_project, &what_an_agent_said)?;
+    let what_the_stage_left = what_an_agent_said
         .is_ruled_on(whoever_answers_the_gates)
-        .map_err(|why_not| the_run_reports_its_own_failure(which_stage, &why_not))
+        .map_err(|why_not| the_run_reports_its_own_failure(which_stage, &why_not))?;
+    let what_this_stage_wrote = what_this_stage_wrote_of(&what_an_agent_said, where_it_landed);
+    Ok((what_the_stage_left, what_this_stage_wrote))
 }
 
 /// What an agent said is written, **and a refused write stops the run before anybody is asked.**
+///
+/// **The place it landed comes back whole**, because the run is about to be told about it and **a
+/// write whose answer was thrown away left seven files on disk that nothing could name.**
 fn what_an_agent_said_is_written(
     the_project: &mut impl TheProjectOnDisk,
     what_an_agent_said: &WhatAnAgentSaid,
-) -> Result<(), AWholeRunThatCouldNotBeHad> {
+) -> Result<ThePathInsideTheProject, AWholeRunThatCouldNotBeHad> {
     let the_run = what_an_agent_said.the_run_standing_at_what_it_produced();
     what_a_stage_kept_is_written(
         the_project,
         the_run,
         &what_an_agent_said.what_the_agent_said(),
     )
-    .map(|_where_it_landed| ())
     .map_err(nothing_was_written)
 }
 
