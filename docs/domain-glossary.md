@@ -2235,6 +2235,22 @@ refused at the third gate is at `DONE` and never hands its work to the delivery 
 one thing that separates a run that was stopped from a run that delivered nothing**, and both end at
 `DONE`, **so the two are told apart by the pull request being present and not by the stage.**
 
+**`where_an_artifact_lands` sits beside `where_the_clone_of_a_work_item_lands` because they are one
+directory.** The clone lands at `<projects root>/<owner>/<name>/<work item id>/repository` and an
+artifact lands at `<projects root>/<owner>/<name>/<work item id>/<artifact>.v<version>.json` — **so
+both derive from the same three facts**, and an artifact in a directory beside the project is an
+artifact nobody will look for.
+
+**The version is in the file's name.** An approval names the exact artifact *and version* it ruled on,
+**and a second production written over the first would leave that approval naming a document the person
+never read** — so the same artifact at two versions is two files.
+
+**`AnArtifactThisProjectCannotHold` has two refusals and they are different rules.** Landing inside the
+clone is a change to somebody else's repository, **and the change would be pushed with the branch.**
+Leaving the project directory is a file written where this system owns nothing — **and the clone is a
+directory this system put there while the parent of the project is not**, so a reader told only "that
+path is refused" would not know which rule was broken.
+
 **`the_doubles_a_run_is_run_with`** — the model, the person and the program three test files were
 each carrying a copy of. **A double copied into three files is three places to change when it grows a
 field**, and one copy had already drifted: it answered a refusal with `did_it_work: true`, **which is a
