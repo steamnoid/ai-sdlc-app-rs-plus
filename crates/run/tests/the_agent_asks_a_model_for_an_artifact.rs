@@ -242,6 +242,20 @@ impl aisdlc_run::TheProjectOnDisk for AProjectHoldingOneReadme {
     fn the_text_of(&mut self, _a_path: &aisdlc_run::ThePathInsideTheProject) -> Option<String> {
         Some("# a readme".to_string())
     }
+    /// Nothing is ever written here, **and these two doubles are about reading** — a double that
+    /// answered `Ok(())` would let a test pass on a write nothing did.
+    fn a_file_is_written(
+        &mut self,
+        a_path: &aisdlc_run::ThePathInsideTheProject,
+        _what_it_says: &str,
+    ) -> Result<(), aisdlc_run::the_project_on_disk::TheProjectRefusedToWrite> {
+        Err(
+            aisdlc_run::the_project_on_disk::TheProjectRefusedToWrite::there_was_no_room_for_it(
+                a_path,
+                "this project is a double that only ever reads",
+            ),
+        )
+    }
 }
 
 impl aisdlc_run::TheProjectOnDisk for AProjectHoldingNothing {
@@ -255,6 +269,20 @@ impl aisdlc_run::TheProjectOnDisk for AProjectHoldingNothing {
 
     fn the_text_of(&mut self, _a_path: &aisdlc_run::ThePathInsideTheProject) -> Option<String> {
         None
+    }
+    /// Nothing is ever written here, **and these two doubles are about reading** — a double that
+    /// answered `Ok(())` would let a test pass on a write nothing did.
+    fn a_file_is_written(
+        &mut self,
+        a_path: &aisdlc_run::ThePathInsideTheProject,
+        _what_it_says: &str,
+    ) -> Result<(), aisdlc_run::the_project_on_disk::TheProjectRefusedToWrite> {
+        Err(
+            aisdlc_run::the_project_on_disk::TheProjectRefusedToWrite::there_was_no_room_for_it(
+                a_path,
+                "this project is a double that only ever reads",
+            ),
+        )
     }
 }
 

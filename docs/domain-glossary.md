@@ -2235,6 +2235,34 @@ refused at the third gate is at `DONE` and never hands its work to the delivery 
 one thing that separates a run that was stopped from a run that delivered nothing**, and both end at
 `DONE`, **so the two are told apart by the pull request being present and not by the stage.**
 
+**`the_path_a_file_will_be_written_at` is a second door and not the first one loosened.**
+`the_path_inside_the_project` resolves the whole path, **so it refuses anything that is not already
+there** — right for a read, impossible for a write, **because a write is a file that does not exist
+yet.** This one resolves the *directory* instead, **and the directory has to be there because a run
+that made a clone created it.**
+
+**The writer's first fix broke three of the rule's own tests, and all three were right.** It resolved
+the longest existing prefix, and that stopped the rule refusing a path that does not exist, stopped
+it refusing `..`, and changed what a refusal quotes. **One rule loosened to serve one new caller is
+worse than a second door**, and the three tests are what said so.
+
+**`TheProjectOnDisk` has three questions and no others: what is in it, what does one file say, and may
+one file be written.** A project on disk is writable, **so the port was under-named by being read-only
+rather than mis-named** — a second port for the same directory would be two ports for one thing.
+
+**`TheProjectRefusedToWrite` has two refusals because a file that is already there and a file there
+is no room for are different facts.** A run answers them differently: **the first is refused forever
+and the second is worth trying again**, and one refusal naming both would send a reader after a
+permission problem when the cause was a full disk.
+
+**The real filesystem uses `create_new` and not `write`,** because `create_new` is the only one of the
+two that fails when the file exists — **and a run writes an artifact once per version, so a second
+write at that version would replace the document an approval still names.**
+
+**`WhatCouldNotBeWritten` names the world fact and not the layer**, so a caller can tell which of the
+two happened without opening the refusal inside — **and the refusal travels anyway, because the
+project's own words are the evidence.**
+
 **`where_an_artifact_lands` sits beside `where_the_clone_of_a_work_item_lands` because they are one
 directory.** The clone lands at `<projects root>/<owner>/<name>/<work item id>/repository` and an
 artifact lands at `<projects root>/<owner>/<name>/<work item id>/<artifact>.v<version>.json` — **so

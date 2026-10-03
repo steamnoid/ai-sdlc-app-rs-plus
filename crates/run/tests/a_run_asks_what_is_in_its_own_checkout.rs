@@ -14,7 +14,7 @@ use std::path::{Path, PathBuf};
 use aisdlc_domain::a_clone::ACloneOnDisk;
 use aisdlc_run::ThePathInsideTheProject;
 use aisdlc_run::a_run_asks_what_is_in_its_own_checkout::the_run_asks_what_is_in_its_own_checkout;
-use aisdlc_run::the_project_on_disk::TheProjectOnDisk;
+use aisdlc_run::the_project_on_disk::{TheProjectOnDisk, TheProjectRefusedToWrite};
 
 /// A checkout at one directory, which is what a run that cloned something holds.
 fn a_checkout_at(where_it_lands: &str) -> ACloneOnDisk {
@@ -45,6 +45,20 @@ impl TheProjectOnDisk for AProjectAt {
     /// The text of a file, and nothing when it holds none.
     fn the_text_of(&mut self, _a_path: &ThePathInsideTheProject) -> Option<String> {
         None
+    }
+
+    /// Nothing is ever written here, **and the method refuses rather than pretending** — a double
+    /// that answered `Ok(())` would let a test pass on a write nothing did, **and these two files
+    /// are about reading.**
+    fn a_file_is_written(
+        &mut self,
+        a_path: &ThePathInsideTheProject,
+        _what_it_says: &str,
+    ) -> Result<(), TheProjectRefusedToWrite> {
+        Err(TheProjectRefusedToWrite::there_was_no_room_for_it(
+            a_path,
+            "this project is a double that only ever reads",
+        ))
     }
 }
 
