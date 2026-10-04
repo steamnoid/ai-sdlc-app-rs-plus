@@ -1,0 +1,16 @@
+[package]
+name = "aisdlc-desk"
+description = "The front door: what a person is asked for, and where the run is started"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license-file.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+aisdlc-domain = { path = "../domain" }
+aisdlc-run = { path = "../run" }
+aisdlc-outside = { path = "../outside" }
