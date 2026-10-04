@@ -23,6 +23,7 @@ use crate::where_a_run_stands::WhereARunStands;
 
 /// Where the page lands and what it says, **and the two come back together because a caller that got
 /// one without the other has either a page nobody can read or a place nobody can find.**
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ThePageOfARun {
     where_the_page_landed: crate::the_path_inside_the_project::ThePathInsideTheProject,
     what_the_page_says: String,
@@ -88,6 +89,21 @@ fn the_run_is_named(the_page: &mut String, the_run: &WhereARunStands) {
         the_work_item.the_repository().name
     );
     let _ = writeln!(the_page, "- stage: {}", the_run.the_stage_it_stands_at());
+    let _ = writeln!(
+        the_page,
+        "- pull request: {}",
+        what_was_opened_against_the_run(the_run)
+    );
+}
+
+/// What was opened against this run, **and the address the run carries rather than one handed to
+/// the page** — a page handed an address could be handed one that was never opened, **and a page
+/// that flatters a run is the one artefact a person reads.**
+fn what_was_opened_against_the_run(the_run: &WhereARunStands) -> &str {
+    match the_run.the_pull_request_it_opened() {
+        Some(opened) => opened.where_it_answers.as_str(),
+        None => "nothing \u{2014} this run delivered nothing",
+    }
 }
 
 /// The request in the words somebody typed, **and neither field is paraphrased — a summary of a

@@ -168,6 +168,8 @@ pub fn the_run_is_delivered(
             .map_err(the_pull_request_did_not_open)?;
     let (where_the_work_stands, was_the_delivery_approved) =
         the_delivery_is_put_to_a_person(the_run, whoever_answers_the_gate)?;
+    let where_the_work_stands = where_the_work_stands
+        .with_the_pull_request_it_opened(which_pull_request_was_opened.clone());
     Ok(WhatADeliveryLeft {
         which_branch_went,
         which_pull_request_was_opened,

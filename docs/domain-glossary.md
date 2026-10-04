@@ -2227,6 +2227,21 @@ approvals, because a list of three rulings that says nothing about them reads as
 artifact would put it in the version table **where there is no version to give it — a run has one
 page, and rewriting it over the last is exactly what a version exists to prevent.**
 
+**Every run that returned from the pipeline left a page**, and **both endings get one**. A delivered
+run's page is a convenience; **a refused run's page is the only place in this system that says who
+stopped the run and why**, because a refusal leaves no `Approval` anywhere else. **The page is
+written after whichever ending happened, so there is one step rather than two.**
+
+**The run carries the pull request that was opened against it, and the page is not handed the
+address.** A page handed an address could be handed one that was never opened, **and a page that
+flatters a run is the one artefact a person reads.** **It is on the run and not in the page's
+arguments for that reason alone**, and `WhereARunLeft` is built from the run so the two cannot
+disagree.
+
+**A page the disk refused is a refusal and not a page.** A run that reported a page nobody wrote is
+a record that does not agree with the disk, **which is the same defect as the eighth gate being the
+seventh decision again, and it costs the same.**
+
 **A run makes its own checkout before anybody is asked about anything**, **and the order is the
 whole of it.** A run that asked a model about a repository before copying it was reasoning about a
 description — **which is the defect this system was built to avoid**, and it is why the composition

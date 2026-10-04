@@ -13,6 +13,8 @@ use aisdlc_domain::approval::{AnArtifactVersion, ApprovalDecision, WhichArtifact
 
 use crate::where_an_artifact_of_this_run_landed::WhereAnArtifactOfThisRunLanded;
 use aisdlc_domain::stage::Stage;
+
+use crate::a_pull_request_is_opened::AnOpenedPullRequest;
 use aisdlc_domain::state_machine::{StateMachineError, transition};
 use aisdlc_domain::work_item::WorkItem;
 
@@ -53,6 +55,7 @@ pub struct WhereARunStands {
     the_version_it_is_on: Option<AnArtifactVersion>,
     everything_this_run_wrote: Vec<WhereAnArtifactOfThisRunLanded>,
     every_ruling_this_run_received: Vec<ApprovalDecision>,
+    the_pull_request_it_opened: Option<AnOpenedPullRequest>,
 }
 
 impl WhereARunStands {
@@ -70,6 +73,7 @@ impl WhereARunStands {
             the_version_it_is_on: None,
             everything_this_run_wrote: Vec::new(),
             every_ruling_this_run_received: Vec::new(),
+            the_pull_request_it_opened: None,
         }
     }
 
@@ -81,6 +85,7 @@ impl WhereARunStands {
             the_version_it_is_on: None,
             everything_this_run_wrote: Vec::new(),
             every_ruling_this_run_received: Vec::new(),
+            the_pull_request_it_opened: None,
         }
     }
 
@@ -105,6 +110,7 @@ impl WhereARunStands {
             the_version_it_is_on: Some(the_version),
             everything_this_run_wrote: self.everything_this_run_wrote.clone(),
             every_ruling_this_run_received: self.every_ruling_this_run_received.clone(),
+            the_pull_request_it_opened: self.the_pull_request_it_opened.clone(),
         })
     }
 
@@ -136,6 +142,27 @@ impl WhereARunStands {
             every_ruling_this_run_received,
             ..self
         }
+    }
+
+    /// This run saying that a pull request was opened against it, **and it is not a move** — the
+    /// table has no edge for opening a page on GitHub, and the address is a fact the run came to
+    /// hold rather than a stage it arrived at.
+    ///
+    /// **It belongs on the run and not on the page's arguments**, because a page handed an address
+    /// could be handed one that was never opened, **and a page that flatters a run is the one
+    /// artefact a person reads.**
+    #[must_use]
+    pub fn with_the_pull_request_it_opened(self, opened: AnOpenedPullRequest) -> Self {
+        Self {
+            the_pull_request_it_opened: Some(opened),
+            ..self
+        }
+    }
+
+    /// The pull request opened against this run, **and nothing when the run was refused or the
+    /// delivery never happened.**
+    pub fn the_pull_request_it_opened(&self) -> Option<&AnOpenedPullRequest> {
+        self.the_pull_request_it_opened.as_ref()
     }
 
     /// Every ruling this run received, **in the order the gates were reached and empty before the
@@ -198,6 +225,7 @@ impl WhereARunStands {
             the_version_it_is_on: self.the_version_it_is_on,
             everything_this_run_wrote: self.everything_this_run_wrote,
             every_ruling_this_run_received: self.every_ruling_this_run_received,
+            the_pull_request_it_opened: self.the_pull_request_it_opened,
         })
     }
 
@@ -222,6 +250,7 @@ impl WhereARunStands {
             the_version_it_is_on: None,
             every_ruling_this_run_received: self.every_ruling_this_run_received,
             everything_this_run_wrote: self.everything_this_run_wrote,
+            the_pull_request_it_opened: self.the_pull_request_it_opened,
         })
     }
 }
