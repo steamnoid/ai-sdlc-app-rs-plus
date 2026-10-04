@@ -29,14 +29,18 @@ fn a_repository_a_place_to_write_and_a_thing_to_do_is_asked_for() {
     ]);
 
     assert_eq!(
-        asked_for.as_ref().map(|asked| asked.which_repository().owner.clone()),
+        asked_for
+            .as_ref()
+            .map(|asked| asked.which_repository().owner.clone()),
         Ok(String::from("steamnoid")),
         "**because this is the only place that decides what a person has to type** — and a run that \\
          read its repository anywhere else would be a second answer to that question. It asked for \\
          {asked_for:?}"
     );
     assert_eq!(
-        asked_for.as_ref().map(|asked| asked.where_it_may_write().to_path_buf()),
+        asked_for
+            .as_ref()
+            .map(|asked| asked.where_it_may_write().to_path_buf()),
         Ok(std::path::PathBuf::from("/tmp/projects")),
         "**because a run that was not told where it may write is a run that writes wherever it \\
          happened to be started** — and that is somebody's home directory. It asked for {asked_for:?}"
@@ -54,11 +58,16 @@ fn what_the_person_typed_reaches_the_run_in_their_own_words() {
         String::from("untrack the sqlite sidecar files"),
     ]);
 
-    let what_they_typed = asked_for.as_ref().map(|asked| asked.what_it_should_do().clone());
-    let what_they_typed = what_they_typed.map(|request| request.what_was_said_besides().to_string());
+    let what_they_typed = asked_for
+        .as_ref()
+        .map(|asked| asked.what_it_should_do().clone());
+    let what_they_typed =
+        what_they_typed.map(|request| request.what_was_said_besides().to_string());
     assert_eq!(
         what_they_typed,
-        Ok(String::from("change what is described in untrack the sqlite sidecar files")),
+        Ok(String::from(
+            "change what is described in untrack the sqlite sidecar files"
+        )),
         "**because the request is what somebody asked for in the words they used** — and a run that \\
          paraphrased it was answering a different question than the one that was put. It asked for \\
          {what_they_typed:?}"
@@ -99,7 +108,10 @@ fn nothing_at_all_names_every_argument_a_run_needs() {
          about it and still not know what else to type** — so the refusal carries all three. It \\
          refused: {refused:?}"
     );
-    let why_not = refused.err().expect("nothing at all cannot mean anything").to_string();
+    let why_not = match refused {
+        Err(why_not) => why_not.to_string(),
+        Ok(asked_for) => format!("a run asked for nothing was started: {asked_for:?}"),
+    };
     for one_flag in ["--repository", "--projects-root", "--do"] {
         assert!(
             why_not.contains(one_flag),

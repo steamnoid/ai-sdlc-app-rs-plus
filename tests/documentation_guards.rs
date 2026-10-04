@@ -1249,7 +1249,7 @@ mod a_document_does_not_deny_what_this_checkout_holds {
 
     #[test]
     fn a_claim_naming_a_path_nothing_holds_is_accepted() {
-        let a_claim = "**`ARepositoryToWriteTo`** — there is no `crates/desk/` and this file names it as the place one would be.";
+        let a_claim = "**`ARepositoryToWriteTo`** — there is no `crates/the_desk/` and this file names it as the place one would be.";
 
         assert_eq!(
             what_is_wrong_with(a_claim, &the_paths_the_checkout_holds()),
