@@ -9,6 +9,7 @@
 //! that is the whole reason the writer takes a path rather than a directory and a name.
 
 use crate::the_path_inside_the_project::ThePathInsideTheProject;
+use crate::whether_anything_stands_there::WhetherAnythingStandsThere;
 
 /// A project a run reads from **and writes to.**
 pub trait TheProjectOnDisk {
@@ -38,6 +39,11 @@ pub trait TheProjectOnDisk {
         a_path: &ThePathInsideTheProject,
         what_it_says: &str,
     ) -> Result<(), TheProjectRefusedToWrite>;
+
+    /// Whether anything at all stands at a path, **and the question belongs here because the project
+    /// is this system's one door onto the disk** — a separate seam answering it is a second answer,
+    /// and two answers to one question are two that can disagree.
+    fn does_anything_stand_at(&self, a_path: &std::path::Path) -> bool;
 }
 
 /// Why a project would not write a file, **and the two are different facts about the world.**
@@ -124,5 +130,14 @@ impl AFileTheProjectDoesNotHave {
         Self {
             what_was_asked_for: a_path.as_str().to_string(),
         }
+    }
+}
+
+/// Every project answers the question about what stands there, **and the blanket is what makes it one
+/// answer rather than one per project** — a trait the run asks for is satisfied by the project's own
+/// method and never by a second implementation of its own.
+impl<T: TheProjectOnDisk> WhetherAnythingStandsThere for T {
+    fn does_anything_stand_at(&self, a_directory: &std::path::Path) -> bool {
+        <T as TheProjectOnDisk>::does_anything_stand_at(self, a_directory)
     }
 }

@@ -9,6 +9,8 @@
 //! an earlier run is a value about the wrong commit, and a run that resumed believing it knows
 //! which commit it has would report its changes against one it stopped at days ago.
 
+use std::fmt;
+
 use aisdlc_domain::a_clone::{ACloneOnDisk, TheCommit, TheRef};
 use aisdlc_domain::why_cloning_the_repository_failed::{
     WhichWayItFailed, WhyCloningTheRepositoryFailed, why_cloning_the_repository_failed,
@@ -25,6 +27,17 @@ pub struct HowCloningWent {
     the_clone: Option<ACloneOnDisk>,
     why_it_failed: Option<WhyCloningTheRepositoryFailed>,
 }
+
+impl fmt::Display for HowCloningWent {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match &self.why_it_failed {
+            Some(why_not) => write!(formatter, "{why_not}"),
+            None => write!(formatter, "the repository was copied"),
+        }
+    }
+}
+
+impl std::error::Error for HowCloningWent {}
 
 impl HowCloningWent {
     /// The clone, and nothing when it failed.

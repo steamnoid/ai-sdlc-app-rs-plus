@@ -73,6 +73,13 @@ impl AProjectThatWrites {
 }
 
 impl TheProjectOnDisk for AProjectThatWrites {
+    /// Whether anything stands at a path, **and this double answers about the real disk** — it
+    /// exists so a test reads real files, **and a double that answered about its own memory would be
+    /// a double that could not be wrong about the disk.**
+    fn does_anything_stand_at(&self, a_path: &std::path::Path) -> bool {
+        a_path.exists()
+    }
+
     fn where_it_lives(&self) -> &std::path::Path {
         self.where_it_lives.as_path()
     }

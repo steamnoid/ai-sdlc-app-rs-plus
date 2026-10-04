@@ -146,13 +146,17 @@ fn where_the_page_lands_in(
     the_run: &WhereARunStands,
 ) -> Result<APathInTheProject, WhatCouldNotBeWritten> {
     let the_work_item = the_run.the_work_item_it_is();
-    let as_written = format!(
-        "{}/{}/{}/{}.md",
-        the_work_item.the_repository().owner,
-        the_work_item.the_repository().name,
-        the_work_item.the_work_item_id().0.as_str(),
-        THE_NAME_OF_THE_PAGE
-    );
+    let where_the_project_is =
+        aisdlc_domain::where_an_artifact_lands::where_the_project_of_a_work_item_is(
+            std::path::Path::new(""),
+            &the_work_item.the_repository(),
+            &the_work_item.the_work_item_id(),
+        );
+    let as_written = where_the_project_is
+        .join(format!("{THE_NAME_OF_THE_PAGE}.md"))
+        .to_str()
+        .unwrap_or_default()
+        .to_string();
     crate::a_path_in_the_project::a_path_in_the_project(&as_written).map_err(the_name_is_not_a_path)
 }
 
