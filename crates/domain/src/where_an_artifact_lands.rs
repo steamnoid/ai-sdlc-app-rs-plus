@@ -57,8 +57,13 @@ impl fmt::Display for AnArtifactThisProjectCannotHold {
 
 impl std::error::Error for AnArtifactThisProjectCannotHold {}
 
-/// The directory one work item's artifacts land in, **and it is the clone's directory's parent.**
-fn where_the_project_of_a_work_item_is(
+/// The directory one work item's project is in, **and it is public because a clone lands inside it
+/// and so does everything else this run puts on disk.**
+///
+/// **Two callers were composing this path themselves** — the artifact derivation here and a page
+/// written beside the clone — **and a path a rule owns composed twice is two rules that can
+/// disagree.**
+pub fn where_the_project_of_a_work_item_is(
     the_projects_root: &std::path::Path,
     what_is_addressed: &Repository,
     a_work_item: &WorkItemId,

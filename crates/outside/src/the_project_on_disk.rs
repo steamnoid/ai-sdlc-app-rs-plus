@@ -43,6 +43,12 @@ impl TheProjectOnDisk for TheProjectAsItIsOnDisk {
         found
     }
 
+    /// Whether anything at all stands at the path, **and it is the disk answering — which is the
+    /// only answer worth having, because this is the one project that is a real directory.**
+    fn does_anything_stand_at(&self, a_path: &Path) -> bool {
+        a_path.exists()
+    }
+
     /// What one file says, read from where the path resolved to.
     fn the_text_of(&mut self, a_path: &ThePathInsideTheProject) -> Option<String> {
         std::fs::read_to_string(a_path.as_str()).ok()

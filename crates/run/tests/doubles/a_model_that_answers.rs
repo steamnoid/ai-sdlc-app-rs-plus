@@ -1,19 +1,14 @@
-//! A model that answers whatever it is asked for.
-//!
-//! **One double per file, and not one file of doubles**, because `mod` compiles a copy into every
-//! test binary that names it — **so a file holding four doubles is compiled four times and the three
-//! a given binary does not use are reported dead**, and the only ways to stop that are an
-//! `#[allow(dead_code)]`, which a gate in this repository refuses, or a copy.
-
-use std::cell::RefCell;
-
 use aisdlc_domain::approval::WhichArtifact;
 use aisdlc_domain::which_organisation_reasons::WhichOrganisationReasons;
 use aisdlc_run::a_model_is_asked_for_an_artifact::AReasoningModel;
 use aisdlc_run::the_words_inside_the_endpoints_envelope::AnAnswerNobodyCanRead;
+
 /// A model that answers everything, **and counts how often it was asked.**
+///
+/// **It records nothing else, and that is because the four tests that use it do not need it** — a
+/// double asked for more than its own test uses is reported dead in every binary that has it.
 pub struct AModelAnswering {
-    how_often: RefCell<usize>,
+    how_often: std::cell::RefCell<usize>,
 }
 
 impl AModelAnswering {
@@ -21,7 +16,7 @@ impl AModelAnswering {
     /// and a struct literal in each of them is four places to change when it grows a field.**
     pub fn answering_everything() -> Self {
         Self {
-            how_often: RefCell::new(0),
+            how_often: std::cell::RefCell::new(0),
         }
     }
 }

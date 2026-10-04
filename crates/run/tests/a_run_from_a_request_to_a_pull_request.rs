@@ -37,7 +37,6 @@ use aisdlc_run::a_run_from_a_request_to_a_pull_request::{
     ARunThatDidNotFinish, WhatARunLeft, WhatThereIsToDeliver,
     a_run_from_a_request_to_a_pull_request,
 };
-use aisdlc_run::the_repository_to_clone_into::ARepositoryToClone;
 use aisdlc_run::where_a_run_stands::WhereARunStands;
 
 #[test]
@@ -45,7 +44,7 @@ fn a_run_from_a_request_to_a_pull_request_leaves_the_work_item_finished() {
     let mut a_model = a_model();
     let finished = a_run_that_every_gate_approves(
         &mut a_model,
-        &a_program_answering(false),
+        &mut a_program_answering(false),
         "the-work-item-is-finished",
     );
     let where_it_stands = the_stage_the_stopped_run_stands_at(&finished);
@@ -69,7 +68,7 @@ fn one_person_is_asked_eight_times_and_the_eighth_gate_is_the_delivery() {
         "the-delivery-is-the-eighth-gate",
         &mut a_model,
         &mut whoever_answers,
-        &a_program_answering(false),
+        &mut a_program_answering(false),
     )
     .expect("a run every gate approves finishes");
 
@@ -97,7 +96,7 @@ fn a_finished_run_remembers_the_deliveries_ruling_as_its_eighth() {
         "the-delivery-ruling-is-eighth",
         &mut a_model,
         &mut whoever_answers,
-        &a_program_answering(false),
+        &mut a_program_answering(false),
     );
 
     assert_eq!(
@@ -140,7 +139,7 @@ fn what_a_run_left_names_the_pull_request_github_opened() {
 
     let finished = a_run_that_every_gate_approves(
         &mut a_model,
-        &a_program_answering(false),
+        &mut a_program_answering(false),
         "what-a-run-left",
     );
 
@@ -167,7 +166,7 @@ fn a_run_somebody_refused_in_the_middle_delivers_nothing_and_is_not_finished() {
         "a-refusal-in-the-middle",
         &mut a_model,
         &mut whoever_answers,
-        &a_program_answering(false),
+        &mut a_program_answering(false),
     );
 
     let where_it_stands = the_stage_the_stopped_run_stands_at(&stopped);
@@ -194,7 +193,7 @@ fn a_delivery_github_refused_stops_the_run_and_leaves_the_work_item_at_the_gate(
 
     let stopped = a_run_that_every_gate_approves(
         &mut a_model,
-        &a_program_answering(true),
+        &mut a_program_answering(true),
         "a-refused-delivery",
     );
 
@@ -245,7 +244,7 @@ fn a_run_given(
     in_a_directory_named: &str,
     a_model: &mut AModelAnswering,
     whoever_answers_the_gates: &mut APersonWhoRules,
-    the_program: &AProgramAnswering,
+    the_program: &mut AProgramAnswering,
 ) -> WhatARunLeftOrNot {
     let mut the_project =
         AProjectThatWrites::writing_everything(in_a_directory_named, "WELLBEINGT-42");
@@ -262,7 +261,7 @@ fn a_run_given(
 
 fn a_run_that_every_gate_approves(
     a_model: &mut AModelAnswering,
-    the_program: &AProgramAnswering,
+    the_program: &mut AProgramAnswering,
     in_a_directory_named: &str,
 ) -> WhatARunLeftOrNot {
     a_run_given(
@@ -284,23 +283,12 @@ fn a_program_answering(refuses_the_pull_request: bool) -> AProgramAnswering {
 fn what_there_is_to_deliver() -> WhatThereIsToDeliver {
     let the_repository =
         Repository::try_from("steamnoid/wellbeing-tracker-public").expect("two halves");
-    let the_clone = the_clone_the_change_was_made_in(&the_repository);
     let the_branch =
         ABranchToPush::a_branch_named("aisdlc/WELLBEINGT-42").expect("a branch may take that name");
     let what_to_open = the_request_this_run_makes(the_repository);
     let the_credential =
         ACredential::the_key_a_deployment_supplied("a-key-not-a-real-one").expect("a key");
-    WhatThereIsToDeliver::for_this_run(the_clone, the_branch, what_to_open, the_credential)
-}
-
-/// The clone the change was made in, **and it is a path nobody reads because nothing here runs
-/// `git` — a double that cloned would be a test of the machine rather than of the delivery.**
-fn the_clone_the_change_was_made_in(where_it_is_offered_to: &Repository) -> ARepositoryToClone {
-    ARepositoryToClone::of(
-        where_it_is_offered_to.clone(),
-        WorkItemId::try_from("WELLBEINGT-42").expect("a name"),
-        std::path::PathBuf::from("/tmp/a-clone-this-test-never-reads"),
-    )
+    WhatThereIsToDeliver::for_this_run(the_branch, what_to_open, the_credential)
 }
 
 /// The request this run makes, **and no model reaches the title or the body.**

@@ -231,6 +231,13 @@ struct AProjectHoldingOneReadme;
 struct AProjectHoldingNothing;
 
 impl aisdlc_run::TheProjectOnDisk for AProjectHoldingOneReadme {
+    /// Whether anything stands at a path, **and this double answers about the real disk** — it
+    /// exists so a test reads real files, **and a double that answered about its own memory would be
+    /// a double that could not be wrong about the disk.**
+    fn does_anything_stand_at(&self, a_path: &std::path::Path) -> bool {
+        a_path.exists()
+    }
+
     fn where_it_lives(&self) -> &std::path::Path {
         std::path::Path::new("a-project-holding-one-readme")
     }
@@ -259,6 +266,13 @@ impl aisdlc_run::TheProjectOnDisk for AProjectHoldingOneReadme {
 }
 
 impl aisdlc_run::TheProjectOnDisk for AProjectHoldingNothing {
+    /// Whether anything stands at a path, **and this double answers about the real disk** — it
+    /// exists so a test reads real files, **and a double that answered about its own memory would be
+    /// a double that could not be wrong about the disk.**
+    fn does_anything_stand_at(&self, a_path: &std::path::Path) -> bool {
+        a_path.exists()
+    }
+
     fn where_it_lives(&self) -> &std::path::Path {
         std::path::Path::new("a-project-holding-nothing")
     }

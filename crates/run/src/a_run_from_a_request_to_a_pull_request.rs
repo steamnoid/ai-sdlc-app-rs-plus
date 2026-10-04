@@ -12,7 +12,9 @@
 
 use std::fmt;
 
+use aisdlc_domain::a_clone::ACloneOnDisk;
 use aisdlc_domain::stage::Stage;
+use aisdlc_domain::where_an_artifact_lands::where_the_project_of_a_work_item_is;
 use aisdlc_domain::which_organisation_reasons::WhichOrganisationReasons;
 
 use crate::APersonToDecide;
@@ -26,7 +28,9 @@ use crate::the_repository_to_clone_into::ARepositoryToClone;
 use crate::the_run_is_delivered::{
     ADeliveryThatDidNotHappen, WhatADeliveryLeft, the_run_is_delivered,
 };
+use crate::the_run_makes_a_checkout::{HowCloningWent, the_run_makes_a_checkout};
 use crate::the_whole_of_a_run::{AWholeRunThatCouldNotBeHad, the_whole_of_a_run};
+use crate::what_we_tell_a_program_to_do::WhatWeTellAProgramToDo;
 use crate::where_a_run_stands::WhereARunStands;
 
 /// Everything one delivery needs, **and it is one value rather than four arguments.**
@@ -36,35 +40,32 @@ use crate::where_a_run_stands::WhereARunStands;
 /// stated.**
 #[derive(Clone, PartialEq, Eq)]
 pub struct WhatThereIsToDeliver {
-    of_which_clone: ARepositoryToClone,
     which_branch: ABranchToPush,
     what_to_open: APullRequestToOpen,
     the_credential: ACredential,
 }
 
 impl WhatThereIsToDeliver {
-    /// What this run will push and open.
+    /// What this run will push and open, **and there is no clone among them any more.**
     ///
-    /// **It cannot fail and that is deliberate.** The four are already-validated types — a branch name
+    /// **The clone is derived from the run's own work item and the project it writes into**, because a
+    /// caller naming it was a second answer to a question the work item already carries — **and a
+    /// delivery that pushed a clone the run never read would be a delivery of something else.**
+    ///
+    /// **It cannot fail and that is deliberate.** The three are already-validated types — a branch name
     /// `git` refused, a request with a title and a body, a key a deployment supplied — **so a
     /// constructor here that could be refused would be a `Result` whose error nobody could ever
     /// produce**, and a refusal nobody can produce is a place a reader would look for a fault.
     pub fn for_this_run(
-        of_which_clone: ARepositoryToClone,
         which_branch: ABranchToPush,
         what_to_open: APullRequestToOpen,
         the_credential: ACredential,
     ) -> Self {
         Self {
-            of_which_clone,
             which_branch,
             what_to_open,
             the_credential,
         }
-    }
-
-    fn the_clone(&self) -> &ARepositoryToClone {
-        &self.of_which_clone
     }
 
     fn the_branch(&self) -> &ABranchToPush {
@@ -114,6 +115,15 @@ pub enum ARunThatDidNotFinish {
         /// What stopped it.
         why_not: Box<ADeliveryThatDidNotHappen>,
     },
+    /// The repository was never copied, **and the checkout's own refusal travels whole.**
+    ///
+    /// **It is a refusal and not a stage that failed**, because nothing began: a run whose checkout
+    /// failed asked nobody, ruled on nothing and delivered nothing, **and every one of its seven
+    /// agents would have been reasoning about a description of a repository.**
+    TheCheckout {
+        /// What stopped it.
+        why_not: Box<HowCloningWent>,
+    },
 }
 
 impl fmt::Display for ARunThatDidNotFinish {
@@ -124,6 +134,9 @@ impl fmt::Display for ARunThatDidNotFinish {
             }
             ARunThatDidNotFinish::TheDelivery { why_not } => {
                 format!("the delivery did not happen: {why_not}")
+            }
+            ARunThatDidNotFinish::TheCheckout { why_not } => {
+                format!("the repository was never copied, so there was nothing to read: {why_not}")
             }
         };
         write!(formatter, "{why_not}")
@@ -149,8 +162,10 @@ pub fn a_run_from_a_request_to_a_pull_request(
     who_reasoned: WhichOrganisationReasons,
     whoever_answers_the_gates: &mut impl APersonToDecide,
     what_there_is: &WhatThereIsToDeliver,
-    the_program: &impl AProgramWeRun,
+    the_program: &mut impl AProgramWeRun,
 ) -> Result<WhatARunLeft, ARunThatDidNotFinish> {
+    let of_which_clone = the_clone_the_run_is_pointed_at(the_run, the_project);
+    the_repository_is_copied(&of_which_clone, the_project, the_program)?;
     let the_run = the_whole_pipeline_is_run(
         the_run,
         the_project,
@@ -164,9 +179,64 @@ pub fn a_run_from_a_request_to_a_pull_request(
     what_the_run_produced_is_delivered(
         &the_run,
         what_there_is,
+        &of_which_clone,
         the_program,
         whoever_answers_the_gates,
     )
+}
+
+/// The repository is copied before anything is asked about it, **and the order is the whole of this
+/// function** — a run that asked a model about a repository before copying it was reasoning about a
+/// description, **which is the defect this system was built to avoid.**
+fn the_repository_is_copied(
+    of_which_clone: &ARepositoryToClone,
+    the_project: &impl TheProjectOnDisk,
+    the_program: &mut impl AProgramWeRun,
+) -> Result<ACloneOnDisk, ARunThatDidNotFinish> {
+    let how_it_went = the_run_makes_a_checkout(
+        the_program,
+        the_project,
+        &WhatWeTellAProgramToDo::clone_the_repository(of_which_clone.clone()),
+    );
+    let copied = how_it_went
+        .the_clone()
+        .cloned()
+        .ok_or(the_checkout_refused(how_it_went))?;
+    Ok(copied)
+}
+
+/// The repository the run is pointed at, **and it is derived from the run's own work item and the
+/// project the run writes into** — a caller naming the destination was a second answer to a question
+/// the work item already carries, **and a delivery that pushed a clone the run never read would be a
+/// delivery of something else.**
+fn the_clone_the_run_is_pointed_at(
+    the_run: &WhereARunStands,
+    the_project: &impl TheProjectOnDisk,
+) -> ARepositoryToClone {
+    let the_work_item = the_run.the_work_item_it_is();
+    let where_the_project_is = where_the_project_of_a_work_item_is(
+        the_project.where_it_lives(),
+        &the_work_item.the_repository(),
+        &the_work_item.the_work_item_id(),
+    );
+    ARepositoryToClone::of(
+        the_work_item.the_repository(),
+        the_work_item.the_work_item_id(),
+        where_the_project_is.join(WHERE_A_CLONE_IS_KEPT),
+    )
+}
+
+/// Where a run's clone is kept, **and it is inside the work item's own project beside its artifacts**
+/// — never inside anybody else's working tree, and **derived so a resumed run looks in the same
+/// place.**
+const WHERE_A_CLONE_IS_KEPT: &str = "repository";
+
+/// The repository was not copied, **and the checkout's own account travels whole** — a reader wants
+/// to know which of the four ways it failed and what `git` wrote.
+fn the_checkout_refused(how_it_went: HowCloningWent) -> ARunThatDidNotFinish {
+    ARunThatDidNotFinish::TheCheckout {
+        why_not: Box::new(how_it_went),
+    }
 }
 
 /// The whole pipeline is run, **and its own refusal is boxed rather than copied.**
@@ -193,13 +263,14 @@ fn the_whole_pipeline_is_run(
 fn what_the_run_produced_is_delivered(
     the_run: &WhereARunStands,
     what_there_is: &WhatThereIsToDeliver,
+    of_which_clone: &ARepositoryToClone,
     the_program: &impl AProgramWeRun,
     whoever_answers_the_delivery: &mut impl APersonToDecide,
 ) -> Result<WhatARunLeft, ARunThatDidNotFinish> {
     let delivered = the_run_is_delivered(
         the_run,
         the_program,
-        what_there_is.the_clone(),
+        of_which_clone,
         what_there_is.the_branch(),
         what_there_is.the_request(),
         Some(what_there_is.the_key()),

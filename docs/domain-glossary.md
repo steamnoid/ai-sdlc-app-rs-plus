@@ -2227,6 +2227,28 @@ approvals, because a list of three rulings that says nothing about them reads as
 artifact would put it in the version table **where there is no version to give it — a run has one
 page, and rewriting it over the last is exactly what a version exists to prevent.**
 
+**A run makes its own checkout before anybody is asked about anything**, **and the order is the
+whole of it.** A run that asked a model about a repository before copying it was reasoning about a
+description — **which is the defect this system was built to avoid**, and it is why the composition
+root's first act is `the_run_makes_a_checkout` rather than `the_whole_of_a_run`.
+
+**A failed checkout is its own refusal and not a stage that failed**, because nothing began:
+**no agent was asked, no gate was ruled at and nothing was delivered.** Naming it a stage would put
+a reader looking for which of the seven it was, **and there is no seventh answer.**
+
+**The clone is derived from the run's own work item and the project it writes into**, and
+`WhatThereIsToDeliver` no longer carries one. **A caller naming the destination was a second answer
+to a question the work item already carries**, and **a delivery that pushed a clone the run never
+read would be a delivery of something else.**
+
+**`TheProjectOnDisk` answers whether anything stands at a path**, and it is the same answer for every
+project through a blanket implementation. **A separate seam over that question is a second answer,
+and two answers to one question are two that can disagree.**
+
+**`where_the_project_of_a_work_item_is` is public**, because a clone lands inside a work item's
+project and so does everything else this run puts on disk — **and two callers were composing that
+path themselves, which is a path a rule owns composed twice.**
+
 **`WhereAnArtifactOfThisRunLanded`** — one artifact this run wrote, and where it landed. **It carries
 the version as well as the name**, because an approval names an exact artifact *and version* and an
 entry without the version could not be matched to the approval that ruled on it. **The place is a plain
