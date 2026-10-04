@@ -29,7 +29,9 @@ use crate::the_run_is_delivered::{
     ADeliveryThatDidNotHappen, WhatADeliveryLeft, the_run_is_delivered,
 };
 use crate::the_run_makes_a_checkout::{HowCloningWent, the_run_makes_a_checkout};
+use crate::the_summary_of_a_run_is_written::{ThePageOfARun, the_summary_of_a_run_is_written};
 use crate::the_whole_of_a_run::{AWholeRunThatCouldNotBeHad, the_whole_of_a_run};
+use crate::what_a_stage_kept_is_written::WhatCouldNotBeWritten;
 use crate::what_we_tell_a_program_to_do::WhatWeTellAProgramToDo;
 use crate::where_a_run_stands::WhereARunStands;
 
@@ -86,12 +88,47 @@ impl WhatThereIsToDeliver {
 pub struct WhatARunLeft {
     where_the_work_stands: WhereARunStands,
     which_pull_request_was_opened: Option<AnOpenedPullRequest>,
+    the_page_it_wrote: Option<ThePageOfARun>,
 }
 
 impl WhatARunLeft {
+    /// A run standing somewhere with what it delivered, **and no page yet** — the page is written
+    /// after whichever ending happened and **added to what the run left**, so a run that has not
+    /// written one says so rather than naming a path that is not there.
+    fn the_run_stands_at(
+        where_the_work_stands: &WhereARunStands,
+        which_pull_request_was_opened: Option<AnOpenedPullRequest>,
+    ) -> Self {
+        Self {
+            where_the_work_stands: where_the_work_stands.clone(),
+            which_pull_request_was_opened,
+            the_page_it_wrote: None,
+        }
+    }
+
+    /// The page this run left, **and it is a move rather than a field because the page is written
+    /// last** — after the delivery or after the refusal, and **both are the same one step.**
+    #[must_use]
+    pub fn with_the_page_it_wrote(self, the_page_it_wrote: ThePageOfARun) -> Self {
+        Self {
+            the_page_it_wrote: Some(the_page_it_wrote),
+            ..self
+        }
+    }
+
     /// The run as it stands, **and a run that was refused is at `DONE` with no pull request.**
     pub fn where_the_work_stands(&self) -> &WhereARunStands {
         &self.where_the_work_stands
+    }
+
+    /// The page this run left beside its clone, **and a run that returned from the pipeline always
+    /// has one** — a delivered run's page is a convenience and **a refused run's page is the only
+    /// place in this system that says who stopped the run and why**, because a refusal leaves no
+    /// `Approval` anywhere else.
+    pub fn the_page_it_wrote(&self) -> &ThePageOfARun {
+        self.the_page_it_wrote
+            .as_ref()
+            .expect("a caller asks this only of a run that left a page")
     }
 
     /// The pull request GitHub opened, **and nothing when the run was refused or the delivery failed.**
@@ -115,6 +152,15 @@ pub enum ARunThatDidNotFinish {
         /// What stopped it.
         why_not: Box<ADeliveryThatDidNotHappen>,
     },
+    /// The page could not be written, **and the writer's own refusal travels whole.**
+    ///
+    /// **It is a refusal and not a page**, because a run that reported a page the disk refused is a
+    /// record that does not agree with the disk — **which is the same defect as the eighth gate
+    /// being the seventh decision again, and it costs the same.**
+    ThePage {
+        /// What stopped it.
+        why_not: Box<WhatCouldNotBeWritten>,
+    },
     /// The repository was never copied, **and the checkout's own refusal travels whole.**
     ///
     /// **It is a refusal and not a stage that failed**, because nothing began: a run whose checkout
@@ -134,6 +180,9 @@ impl fmt::Display for ARunThatDidNotFinish {
             }
             ARunThatDidNotFinish::TheDelivery { why_not } => {
                 format!("the delivery did not happen: {why_not}")
+            }
+            ARunThatDidNotFinish::ThePage { why_not } => {
+                format!("the run left no page, so there is nothing to read: {why_not}")
             }
             ARunThatDidNotFinish::TheCheckout { why_not } => {
                 format!("the repository was never copied, so there was nothing to read: {why_not}")
@@ -173,16 +222,56 @@ pub fn a_run_from_a_request_to_a_pull_request(
         who_reasoned,
         whoever_answers_the_gates,
     )?;
-    if the_run.the_stage_it_stands_at() == Stage::Done {
-        return Ok(a_run_stopped_with_nothing_delivered(the_run));
-    }
-    what_the_run_produced_is_delivered(
+    let what_the_run_left = what_the_run_became(
         &the_run,
         what_there_is,
         &of_which_clone,
         the_program,
         whoever_answers_the_gates,
+    )?;
+    the_page_is_written_beside_it(the_project, what_the_run_left)
+}
+
+/// What the run became, **and a run that was refused is finished with nothing delivered** — which is
+/// the same stage as a delivered run, **and the only thing telling the two apart is the pull
+/// request.** The page is written after whichever of the two happened.
+fn what_the_run_became(
+    the_run: &WhereARunStands,
+    what_there_is: &WhatThereIsToDeliver,
+    of_which_clone: &ARepositoryToClone,
+    the_program: &impl AProgramWeRun,
+    whoever_answers_the_gates: &mut impl APersonToDecide,
+) -> Result<WhatARunLeft, ARunThatDidNotFinish> {
+    if the_run.the_stage_it_stands_at() == Stage::Done {
+        return Ok(a_run_stopped_with_nothing_delivered(the_run));
+    }
+    what_the_run_produced_is_delivered(
+        the_run,
+        what_there_is,
+        of_which_clone,
+        the_program,
+        whoever_answers_the_gates,
     )
+}
+
+/// The page is written beside the run's artifacts, **and both endings get one** — a delivered run's
+/// page is a convenience, **and a refused run's page is the only place in this system that says who
+/// stopped the run and why.**
+fn the_page_is_written_beside_it(
+    the_project: &mut impl TheProjectOnDisk,
+    what_the_run_left: WhatARunLeft,
+) -> Result<WhatARunLeft, ARunThatDidNotFinish> {
+    let the_run = what_the_run_left.where_the_work_stands().clone();
+    let the_page = the_summary_of_a_run_is_written(the_project, &the_run).map_err(the_page_refused);
+    let the_page = the_page?;
+    Ok(what_the_run_left.with_the_page_it_wrote(the_page))
+}
+
+/// The page was not written, **and the writer's own refusal travels whole.**
+fn the_page_refused(why_not: WhatCouldNotBeWritten) -> ARunThatDidNotFinish {
+    ARunThatDidNotFinish::ThePage {
+        why_not: Box::new(why_not),
+    }
 }
 
 /// The repository is copied before anything is asked about it, **and the order is the whole of this
@@ -284,19 +373,12 @@ fn what_the_run_produced_is_delivered(
 
 /// A run refused in the middle, **and it is finished with nothing delivered** — which is the same
 /// stage as a delivered run and **the only thing telling the two apart is the pull request.**
-fn a_run_stopped_with_nothing_delivered(the_run: WhereARunStands) -> WhatARunLeft {
-    WhatARunLeft {
-        where_the_work_stands: the_run,
-        which_pull_request_was_opened: None,
-    }
+fn a_run_stopped_with_nothing_delivered(the_run: &WhereARunStands) -> WhatARunLeft {
+    WhatARunLeft::the_run_stands_at(the_run, None)
 }
 
 /// A run that delivered, **and what it left names GitHub's own pull request.**
 fn a_run_finished_with(delivered: &WhatADeliveryLeft) -> WhatARunLeft {
-    let where_the_work_stands = delivered.where_the_work_stands().clone();
-    let which_pull_request_was_opened = Some(delivered.which_pull_request().clone());
-    WhatARunLeft {
-        where_the_work_stands,
-        which_pull_request_was_opened,
-    }
+    let opened = Some(delivered.which_pull_request().clone());
+    WhatARunLeft::the_run_stands_at(delivered.where_the_work_stands(), opened)
 }

@@ -13,10 +13,11 @@
 //! page when the disk refused it is the same defect as the eighth gate being the seventh decision
 //! again — **a record that does not agree with the disk.**
 
-#[path = "doubles/a_person_who_rules.rs"]
-mod a_person_who_rules;
+#[path = "doubles/a_program_answering.rs"]
+mod a_program_answering;
 
 use aisdlc_domain::agent_identifier::AgentIdentifier;
+use aisdlc_domain::approval::{ApprovalDecision, WhoDecided};
 use aisdlc_domain::commissioned_request::CommissionedRequest;
 use aisdlc_domain::repository::Repository;
 use aisdlc_domain::role::Role;
@@ -25,10 +26,10 @@ use aisdlc_domain::which_organisation_reasons::WhichOrganisationReasons;
 use aisdlc_domain::who_commissioned::WhoCommissioned;
 use aisdlc_domain::work_item::WorkItem;
 use aisdlc_domain::work_item_id::WorkItemId;
+use aisdlc_run::ApprovalQuestion;
 use aisdlc_run::a_branch_goes_to_a_remote::ABranchToPush;
 use aisdlc_run::a_credential::ACredential;
 use aisdlc_run::a_model_is_asked_for_an_artifact::AReasoningModel;
-use aisdlc_run::a_program_we_run::{AProgramWeRun, WhatTheProgramSaid};
 use aisdlc_run::a_pull_request_is_opened::{
     APullRequestToOpen, the_request_a_run_makes_of_its_own_change,
 };
@@ -39,10 +40,9 @@ use aisdlc_run::a_run_from_a_request_to_a_pull_request::{
 use aisdlc_run::the_path_inside_the_project::ThePathInsideTheProject;
 use aisdlc_run::the_project_on_disk::{TheProjectOnDisk, TheProjectRefusedToWrite};
 use aisdlc_run::the_words_inside_the_endpoints_envelope::AnAnswerNobodyCanRead;
-use aisdlc_run::what_we_tell_a_program_to_do::WhatWeTellAProgramToDo;
 use aisdlc_run::where_a_run_stands::WhereARunStands;
 
-use a_person_who_rules::APersonWhoRules;
+use a_program_answering::AProgramAnswering;
 
 #[test]
 fn a_run_that_delivered_leaves_a_page_naming_the_pull_request_github_opened() {
@@ -116,7 +116,7 @@ fn a_run_given(
         WhichOrganisationReasons::Openai,
         &mut whoever_answers,
         &what_there_is_to_deliver(),
-        &mut AProgramAnswering::answering_everything(),
+        &mut AProgramAnswering::refusing_the_pull_request(false),
     )
 }
 
@@ -204,21 +204,6 @@ impl AReasoningModel for AModelAnswering {
     }
 }
 
-/// A program that answers `git` and `gh`, **and every question it is asked works.**
-struct AProgramAnswering;
-
-impl AProgramAnswering {
-    fn answering_everything() -> Self {
-        Self
-    }
-}
-
-impl AProgramWeRun for AProgramAnswering {
-    fn run(&self, _what_it_is_asked_to_do: &WhatWeTellAProgramToDo) -> WhatTheProgramSaid {
-        WhatTheProgramSaid::of(true, "")
-    }
-}
-
 /// A project a run writes real files into, **and it can be told to refuse the page.**
 struct AProjectOnDisk {
     where_it_lives: std::path::PathBuf,
@@ -284,5 +269,46 @@ impl TheProjectOnDisk for AProjectOnDisk {
         std::fs::write(std::path::PathBuf::from(a_path.as_str()), what_it_says)
             .expect("a file this machine will hold");
         Ok(())
+    }
+}
+
+/// A person who approves everything up to one gate, **and refuses at that one and nowhere else** —
+/// it is local rather than the shared one because that one also counts and records what each gate was
+/// asked about, **and this test is about the page and neither of those is in it.**
+struct APersonWhoRules {
+    refuses_at_the: Option<usize>,
+    how_often: std::cell::RefCell<usize>,
+}
+
+impl APersonWhoRules {
+    fn approving_everything() -> Self {
+        Self {
+            refuses_at_the: None,
+            how_often: std::cell::RefCell::new(0),
+        }
+    }
+
+    fn refusing_at_the(nth: usize) -> Self {
+        Self {
+            refuses_at_the: Some(nth),
+            how_often: std::cell::RefCell::new(0),
+        }
+    }
+}
+
+impl aisdlc_run::APersonToDecide for APersonWhoRules {
+    fn how_they_rule_on(&mut self, a_question: &ApprovalQuestion) -> ApprovalDecision {
+        let which_gate = self.how_often.borrow().saturating_add(1);
+        *self.how_often.borrow_mut() = which_gate;
+        let approved = self.refuses_at_the != Some(which_gate);
+        ApprovalDecision::the_ruling_about(
+            a_question.about_which_work_item(),
+            a_question.about_which_artifact(),
+            a_question.about_which_version(),
+            approved,
+            WhoDecided::try_from("paligakrzychu").expect("a name is not blank"),
+            "the artifact answers the request",
+        )
+        .expect("a person may rule")
     }
 }
