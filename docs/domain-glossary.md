@@ -2227,6 +2227,24 @@ approvals, because a list of three rulings that says nothing about them reads as
 artifact would put it in the version table **where there is no version to give it — a run has one
 page, and rewriting it over the last is exactly what a version exists to prevent.**
 
+**`WhatARunWasAskedFor`** — what a person typed, **as already-validated types**, because everything a
+person types is something the domain has an opinion about. **It is the only place in this system that
+decides what a person has to type**, and the sibling's front door says the same about its own —
+**so the claim is a fact about the system and not about a file, and it has to be tested rather than
+copied.**
+
+**`WhatWasAskedForThatCannotMeanAnything`** — a refusal that **names the argument**. A person who
+typed `owner/name` where `owner` was wanted cannot find the mistake by reading four sentences about a
+run, **and a front door that explains itself at length is a front door nobody reads.** Nothing at
+all is refused **by naming every argument at once**, because a person who typed one argument and was
+told that one was missing would be right about it and still not know what else to type.
+
+**The place a run may write is an argument and not a default**, because a run that was not told is a
+run that writes wherever it happened to be started — **and that is somebody's home directory.**
+**What the run should do is an argument too**, because a run that does not know what to do has
+nothing to ask an agent about, **and seven agents asked about nothing would produce seven documents
+nobody commissioned.**
+
 **Every run that returned from the pipeline left a page**, and **both endings get one**. A delivered
 run's page is a convenience; **a refused run's page is the only place in this system that says who
 stopped the run and why**, because a refusal leaves no `Approval` anywhere else. **The page is
