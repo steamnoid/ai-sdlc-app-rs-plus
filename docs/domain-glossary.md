@@ -609,6 +609,17 @@ clone a checkout in `ACloneOnDisk`, so the name that was refused is not the one 
 it. **Three questions in order, and each can stop the next**: whether anything stands at the
 destination, whether git copied the repository, what the copy stands on.
 
+**`what_a_creative_run_reads_from_its_own_checkout`** — the copy a creative run made and what was
+in it, read together before any model is asked. **A run that asked a model about a repository
+before copying it reasons about a description**, which is the defect the checkout exists to
+prevent — so the copy comes first and the listing is read off the copy, never off a directory
+somebody else filled.
+
+**`WhatACreativeRunRead`** — the checkout and what it saw, kept together because a listing without
+its copy is a directory nobody can point at. **`ACheckoutThatCouldNotBeRead`** — why it could not
+be read, carrying the refusal whole: the repository was never copied, or the project lives
+somewhere else.
+
 **`WhetherAModelRulesHere`** — whether a model may rule at the gate on this deployment, as a
 value and **not as a setting read inside a use case**. A use case that reads its own configuration
 has moved a decision out of a type and into a line of code, and the line is somewhere a reader has
