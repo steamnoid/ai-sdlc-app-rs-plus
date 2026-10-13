@@ -177,7 +177,116 @@ fn the_environment_where_no_decider_is_named() -> TheEnvironment {
     ])
 }
 
+/// The environment where everything but the organisation is set, **so the run has nobody to ask.**
+fn the_environment_where_everything_but_the_organisation_is_set() -> TheEnvironment {
+    TheEnvironment::of(vec![
+        (
+            String::from("LLM_ENDPOINT"),
+            String::from("https://a-model.example/v1/chat/completions"),
+        ),
+        (
+            String::from("LLM_MODEL"),
+            String::from("a-model-a-deployment-deployed"),
+        ),
+        (
+            String::from("OPENAI_API_KEY"),
+            String::from("a-key-not-a-real-one"),
+        ),
+        (
+            String::from("AISDLC_WHO_DECIDES"),
+            String::from("paligakrzychu"),
+        ),
+    ])
+}
+
 /// The environment where nothing is set, **and nothing configured travels as nothing.**
 fn the_environment_where_nothing_is_set() -> TheEnvironment {
     TheEnvironment::of(vec![])
+}
+
+#[test]
+fn the_organisation_a_deployment_named_reaches_the_desk() {
+    let told = the_desk_as_it_was_told(&the_environment_where_an_organisation_reasons());
+
+    assert_eq!(
+        told.which_organisation,
+        Some(aisdlc_domain::which_organisation_reasons::WhichOrganisationReasons::Ollama),
+        "**because a run that does not know who reasons about it cannot ask anybody**"
+    );
+}
+
+#[test]
+fn an_organisation_nobody_wrote_down_is_refused_where_it_is_read() {
+    let refused = what_the_process_told_this_desk(
+        &what_a_person_typed(),
+        &the_environment_where_no_organisation_reasons(),
+    );
+
+    assert!(
+        matches!(
+            refused,
+            Err(aisdlc_desk::what_a_run_was_asked_for::WhatWasAskedForThatCannotMeanAnything::NoOrganisationThatReasons { .. })
+        ),
+        "**because a run reasoning with the wrong organisation spends money and answers in the \
+         wrong shape** — and the refusal names the variable and the four there are."
+    );
+}
+
+#[test]
+fn no_organisation_named_is_refused_before_anything_is_copied() {
+    let mut told = what_the_process_told_this_desk(
+        &what_a_person_typed(),
+        &the_environment_where_everything_but_the_organisation_is_set(),
+    )
+    .expect("three arguments were typed, and nothing configured travels as nothing");
+    let refused = aisdlc_desk::the_run_is_started::the_run_is_started_with(&mut told);
+
+    let why_not = match refused {
+        Err(why_not) => why_not.to_string(),
+        Ok(said) => format!("a desk that reasoned with nobody said it left a page: {said}"),
+    };
+    assert!(
+        why_not.contains("organisation"),
+        "**because a run that does not know who reasons about it has nobody to ask** — and a \
+         refusal that names something else sends a reader to configure the wrong thing. It said: \
+         {why_not}"
+    );
+}
+
+/// The environment where an organisation reasons, **in the specification's own spelling.**
+fn the_environment_where_an_organisation_reasons() -> TheEnvironment {
+    TheEnvironment::of(vec![
+        (
+            String::from("LLM_ENDPOINT"),
+            String::from("https://a-model.example/v1/chat/completions"),
+        ),
+        (
+            String::from("LLM_MODEL"),
+            String::from("a-model-a-deployment-deployed"),
+        ),
+        (
+            String::from("OPENAI_API_KEY"),
+            String::from("a-key-not-a-real-one"),
+        ),
+        (String::from("LLM_ORGANISATION"), String::from("ollama")),
+    ])
+}
+
+/// The environment where no organisation reasons, **and the name it carries is nobody's.**
+fn the_environment_where_no_organisation_reasons() -> TheEnvironment {
+    TheEnvironment::of(vec![
+        (
+            String::from("LLM_ENDPOINT"),
+            String::from("https://a-model.example/v1/chat/completions"),
+        ),
+        (
+            String::from("LLM_MODEL"),
+            String::from("a-model-a-deployment-deployed"),
+        ),
+        (
+            String::from("OPENAI_API_KEY"),
+            String::from("a-key-not-a-real-one"),
+        ),
+        (String::from("LLM_ORGANISATION"), String::from("anthropic")),
+    ])
 }

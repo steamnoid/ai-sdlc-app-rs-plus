@@ -2255,6 +2255,12 @@ who ran the binary is the operator and a run that refused to start without a nam
 to give is a run that does not run. **A fallback for the model's address would send a question to a
 machine nobody named, which is why that one is refused and this one is not.**
 
+**`LLM_ORGANISATION`** — who does the reasoning on this deployment, in the specification's own
+spelling. Absent, it travels as nothing and the desk refuses before it copies anything. **A name
+nobody wrote down is refused where it is read**, because a run reasoning with the wrong
+organisation spends money and answers in the wrong shape — so the refusal names the variable and
+the four there are: `openai`, `ollama`, `openai_compatible`, `openai_responses`.
+
 **`WhatARunWasAskedFor`** — what a person typed, **as already-validated types**, because everything a
 person types is something the domain has an opinion about. **It is the only place in this system that
 decides what a person has to type**, and the sibling's front door says the same about its own —

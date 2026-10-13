@@ -76,6 +76,11 @@ pub enum WhatWasAskedForThatCannotMeanAnything {
         /// What was typed.
         what_was_said: String,
     },
+    /// Who reasons about the run was named by nobody here.
+    NoOrganisationThatReasons {
+        /// What was named.
+        what_was_said: String,
+    },
 }
 
 impl std::fmt::Display for WhatWasAskedForThatCannotMeanAnything {
@@ -92,6 +97,10 @@ impl std::fmt::Display for WhatWasAskedForThatCannotMeanAnything {
             ),
             Self::NothingToDo { what_was_said } => format!(
                 "`--do` is what the run should change, in your own words, and `{what_was_said}` says nothing"
+            ),
+            Self::NoOrganisationThatReasons { what_was_said } => format!(
+                "`LLM_ORGANISATION` is who reasons about the run — openai, ollama, \
+                 openai_compatible or openai_responses — and `{what_was_said}` is none of them"
             ),
         };
         write!(formatter, "{why_not}")

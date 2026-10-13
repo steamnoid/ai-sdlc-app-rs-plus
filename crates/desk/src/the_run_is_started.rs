@@ -53,6 +53,8 @@ pub struct WhatThisDeskWasGiven {
     pub the_key: Option<String>,
     /// Who answers at the gates, **in their own words.**
     pub who_answers: String,
+    /// Who reasons about the run, **and nothing travels when nobody was named.**
+    pub which_organisation: Option<WhichOrganisationReasons>,
 }
 
 /// Why this desk could not start a run, **and each is a fact about a different thing.**
@@ -65,6 +67,9 @@ pub enum WhyThisRunCouldNotStart {
     },
     /// No key was supplied, **and a delivery without one is a branch nothing authenticated pushed.**
     NoKeyWasSupplied,
+    /// Nobody named who reasons about the run, **and a run that does not know who reasons about
+    /// it has nobody to ask.**
+    NoOrganisationWasConfigured,
     /// The terminal is named in a machine's namespace, **and a decider named that way cannot produce
     /// a ruling even to refuse with.**
     TheTerminalIsAMachine {
@@ -90,6 +95,10 @@ impl std::fmt::Display for WhyThisRunCouldNotStart {
             Self::NoKeyWasSupplied => {
                 String::from("no key was supplied, and a delivery without one is nothing")
             }
+            Self::NoOrganisationWasConfigured => String::from(
+                "no organisation that reasons was configured, and a run that does not know who \
+                 reasons about it has nobody to ask",
+            ),
             Self::TheTerminalIsAMachine { what_it_says_it_is } => format!(
                 "the terminal calls itself '{what_it_says_it_is}', and a decider in a machine's \
                  namespace cannot produce a ruling even to refuse with"
@@ -110,6 +119,7 @@ pub fn the_run_is_started_with(
     what_this_desk_was_given: &mut WhatThisDeskWasGiven,
 ) -> Result<String, WhyThisRunCouldNotStart> {
     let mut whoever_answers = a_person_at_the_terminal(what_this_desk_was_given)?;
+    let who_reasoned = which_organisation_reasons(what_this_desk_was_given)?;
     let mut the_project = the_project_this_desk_writes_to(what_this_desk_was_given);
     let mut the_program = the_program_that_delivers(what_this_desk_was_given)?;
     let mut a_model = the_model_this_desk_asks(what_this_desk_was_given)?;
@@ -119,6 +129,7 @@ pub fn the_run_is_started_with(
         &the_run,
         &mut the_project,
         &mut a_model,
+        who_reasoned,
         &mut whoever_answers,
         &what_there_is,
         &mut the_program,
@@ -167,6 +178,7 @@ fn the_run_is_run(
     the_run: &WhereARunStands,
     the_project: &mut impl TheProjectOnDisk,
     a_model: &mut impl AReasoningModel,
+    who_reasoned: WhichOrganisationReasons,
     whoever_answers: &mut impl APersonToDecide,
     what_there_is: &WhatThereIsToDeliver,
     the_program: &mut impl AProgramWeRun,
@@ -175,11 +187,20 @@ fn the_run_is_run(
         the_run,
         the_project,
         a_model,
-        WhichOrganisationReasons::Openai,
+        who_reasoned,
         whoever_answers,
         what_there_is,
         the_program,
     )
+}
+
+/// Who reasons about the run, **and a run that does not know has nobody to ask.**
+fn which_organisation_reasons(
+    what_this_desk_was_given: &WhatThisDeskWasGiven,
+) -> Result<WhichOrganisationReasons, WhyThisRunCouldNotStart> {
+    what_this_desk_was_given
+        .which_organisation
+        .ok_or(WhyThisRunCouldNotStart::NoOrganisationWasConfigured)
 }
 
 /// The page the run left, **or the refusal when it left none.**

@@ -5,6 +5,7 @@
 //! one, with what key, and who answers at the gates. **A model nobody configured travels as
 //! nothing**, and the desk still refuses before it copies anything.
 
+use aisdlc_domain::which_organisation_reasons::WhichOrganisationReasons;
 use aisdlc_outside::the_environment::TheEnvironment;
 
 use crate::the_run_is_started::WhatThisDeskWasGiven;
@@ -24,6 +25,9 @@ const THE_KEY_A_DEPLOYMENT_SUPPLIED: &str = "OPENAI_API_KEY";
 /// Who answers at the gates, as a deployment named them.
 const WHO_ANSWERS_AT_THE_GATES: &str = "AISDLC_WHO_DECIDES";
 
+/// Who does the reasoning here, as a deployment named them.
+const WHO_DOES_THE_REASONING_HERE: &str = "LLM_ORGANISATION";
+
 /// Who answers when nobody was named, **because the person who ran the binary is the operator.**
 const THE_ONE_RUNNING_THE_BINARY: &str = "the operator";
 
@@ -39,6 +43,7 @@ pub fn what_the_process_told_this_desk(
         which_model: the_variable(WHICH_MODEL_ANSWERS_THERE, the_environment),
         the_key: the_variable(THE_KEY_A_DEPLOYMENT_SUPPLIED, the_environment),
         who_answers: who_answers_at_the_gates(the_environment),
+        which_organisation: which_organisation_reasons_here(the_environment)?,
     })
 }
 
@@ -53,4 +58,20 @@ fn the_variable(its_name: &str, the_environment: &TheEnvironment) -> Option<Stri
 fn who_answers_at_the_gates(the_environment: &TheEnvironment) -> String {
     the_variable(WHO_ANSWERS_AT_THE_GATES, the_environment)
         .unwrap_or_else(|| String::from(THE_ONE_RUNNING_THE_BINARY))
+}
+
+/// Who reasons about the run, **and nothing when nobody was named.**
+fn which_organisation_reasons_here(
+    the_environment: &TheEnvironment,
+) -> Result<Option<WhichOrganisationReasons>, WhatWasAskedForThatCannotMeanAnything> {
+    let Some(what_was_said) = the_variable(WHO_DOES_THE_REASONING_HERE, the_environment) else {
+        return Ok(None);
+    };
+    WhichOrganisationReasons::try_from(what_was_said.as_str())
+        .map(Some)
+        .map_err(
+            |_why_not| WhatWasAskedForThatCannotMeanAnything::NoOrganisationThatReasons {
+                what_was_said,
+            },
+        )
 }

@@ -86,6 +86,9 @@ fn the_collaborators_a_deployment_configured() -> WhatThisDeskWasGiven {
         which_model: Some(String::from("a-model-a-deployment-deployed")),
         the_key: Some(String::from("a-key-not-a-real-one")),
         who_answers: String::from("paligakrzychu"),
+        which_organisation: Some(
+            aisdlc_domain::which_organisation_reasons::WhichOrganisationReasons::Openai,
+        ),
     }
 }
 
