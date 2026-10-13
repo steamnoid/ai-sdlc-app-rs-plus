@@ -37,13 +37,17 @@ fn what_a_filing_became_stands_at_the_first_stage() {
     assert_eq!(
         where_the_run_stands
             .which_artifact_it_is_on()
-            .map(|which| which.to_string()),
+            .map(ToString::to_string),
         Some(String::from("DiscoveryReport")),
         "**because every run of the pipeline starts by reading the repository** — and a run \
          standing nowhere has no artifact anybody could rule on."
     );
     assert_eq!(
-        where_the_run_stands.the_work_item_it_is().the_work_item_id().to_string().as_str(),
+        where_the_run_stands
+            .the_work_item_it_is()
+            .the_work_item_id()
+            .to_string()
+            .as_str(),
         "steamnoid/wellbeing-tracker-public#11",
         "**because the work a run does is the work the filing asked for** — and a run working \
          under another name answers another request."
@@ -61,10 +65,9 @@ fn the_run_taking_up_what_a_filing_became() -> aisdlc_run::where_a_run_stands::W
 fn the_work_a_filing_became() -> aisdlc_run::the_work_each_filing_becomes::WhatTheRunWillWorkOn {
     let where_it_was_filed =
         String::from("https://github.com/steamnoid/wellbeing-tracker-public/issues/11");
-    let what_was_read = aisdlc_run::an_issue_read::AnIssueRead::the_issue_read(
-        &what_github_answered(),
-    )
-    .expect("GitHub answered with a filing");
+    let what_was_read =
+        aisdlc_run::an_issue_read::AnIssueRead::the_issue_read(&what_github_answered())
+            .expect("GitHub answered with a filing");
     let mut works = aisdlc_run::the_work_each_filing_becomes::the_work_each_filing_becomes(
         &aisdlc_domain::repository::Repository::try_from("steamnoid/wellbeing-tracker-public")
             .expect("two halves"),
