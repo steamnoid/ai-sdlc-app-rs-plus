@@ -150,10 +150,7 @@ impl aisdlc_run::TheProjectOnDisk for AProjectHoldingAListing {
         self.what_is_in_it.clone()
     }
 
-    fn the_text_of(
-        &mut self,
-        _a_path: &aisdlc_run::ThePathInsideTheProject,
-    ) -> Option<String> {
+    fn the_text_of(&mut self, _a_path: &aisdlc_run::ThePathInsideTheProject) -> Option<String> {
         None
     }
 
@@ -183,8 +180,8 @@ impl aisdlc_run::a_program_we_run::AProgramWeRun for AProgramThatCopies {
         &self,
         what_it_is_asked_to_do: &aisdlc_run::what_we_tell_a_program_to_do::WhatWeTellAProgramToDo,
     ) -> aisdlc_run::a_program_we_run::WhatTheProgramSaid {
-        use aisdlc_run::what_we_tell_a_program_to_do::WhatWeTellAProgramToDo as Asked;
         use aisdlc_run::a_program_we_run::WhatTheProgramSaid as Said;
+        use aisdlc_run::what_we_tell_a_program_to_do::WhatWeTellAProgramToDo as Asked;
         match what_it_is_asked_to_do {
             Asked::CloneTheRepository { .. } => Said::of(true, ""),
             Asked::TheCommitItStandsOn { .. } => Said::of(true, THE_COMMIT),
@@ -271,9 +268,7 @@ impl aisdlc_run::a_git_hub_we_write_to::AGitHubWeWriteTo for AGitHubThatFiles {
             format!("https://github.com/steamnoid/wellbeing-tracker-public/issues/{its_number}");
         *self.what_github_holds.0.borrow_mut() =
             what_github_answered_at(&where_it_went, its_number);
-        Ok(
-            aisdlc_run::a_git_hub_we_write_to::WhereGitHubAnswered::an_address_at(&where_it_went),
-        )
+        Ok(aisdlc_run::a_git_hub_we_write_to::WhereGitHubAnswered::an_address_at(&where_it_went))
     }
 }
 
@@ -333,9 +328,7 @@ impl ADeploymentAndItsCheckout {
     }
 
     /// What this deployment read from its own checkout.
-    fn what_it_reads(
-        &mut self,
-    ) -> aisdlc_run::what_a_creative_run_reads::WhatACreativeRunRead {
+    fn what_it_reads(&mut self) -> aisdlc_run::what_a_creative_run_reads::WhatACreativeRunRead {
         let where_it_lands = the_destination_nothing_stands_at("files-what-it-read");
         let mut the_project = AProjectHoldingAListing::holding_readme(where_it_lands.clone());
         what_a_creative_run_reads_from_its_own_checkout(
