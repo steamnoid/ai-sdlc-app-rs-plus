@@ -8,24 +8,32 @@
 //! about a repository before copying it reasons about a description, which is the defect the
 //! checkout exists to prevent.
 
+use aisdlc_run::a_program_we_run::WhatTheProgramSaid;
 use aisdlc_run::what_a_creative_run_reads::{
     ACheckoutThatCouldNotBeRead, what_a_creative_run_reads_from_its_own_checkout,
 };
 
+/// The commit the copy stands on, as git wrote it.
+const THE_COMMIT: &str = "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8";
+
+/// The ref the copy stands on.
+const THE_REF: &str = "main";
+
+/// The address the code was written in, which may only be read.
+const THE_ADDRESS_THE_CODE_WAS_WRITTEN_IN: &str =
+    "https://github.com/steamnoid/wellbeing-tracker-public";
+
 #[test]
 fn a_creative_run_reads_what_is_in_the_checkout_it_made() {
     let where_it_lands = the_destination_nothing_stands_at("reads-what-is-in-it");
-    let mut the_project = AProjectHoldingAListing::holding(
-        where_it_lands.clone(),
-        vec![String::from("README.md")],
-    );
+    let mut the_project =
+        AProjectHoldingAListing::holding(where_it_lands.clone(), vec![String::from("README.md")]);
     let mut the_program = AProgramThatCopies::copying_everything();
 
     let read = what_a_creative_run_reads_from_its_own_checkout(
         &mut the_program,
-        &the_project,
-        &the_request_to_clone_into(&where_it_lands),
         &mut the_project,
+        &the_request_to_clone_into(&where_it_lands),
     )
     .expect("nothing stood at the destination and git answered");
 
@@ -51,9 +59,8 @@ fn a_destination_that_holds_something_is_not_cloned_over() {
 
     let refused = what_a_creative_run_reads_from_its_own_checkout(
         &mut the_program,
-        &the_project,
-        &the_request_to_clone_into(&where_it_lands),
         &mut the_project,
+        &the_request_to_clone_into(&where_it_lands),
     );
 
     assert!(
@@ -70,14 +77,12 @@ fn a_destination_that_holds_something_is_not_cloned_over() {
 fn a_repository_git_would_not_copy_is_no_checkout() {
     let where_it_lands = the_destination_nothing_stands_at("git-would-not-copy");
     let mut the_project = AProjectHoldingAListing::holding(where_it_lands.clone(), vec![]);
-    let mut the_program =
-        AProgramThatCopies::refusing_the_clone("could not read repository");
+    let mut the_program = AProgramThatCopies::refusing_the_clone("could not read repository");
 
     let refused = what_a_creative_run_reads_from_its_own_checkout(
         &mut the_program,
-        &the_project,
-        &the_request_to_clone_into(&where_it_lands),
         &mut the_project,
+        &the_request_to_clone_into(&where_it_lands),
     );
 
     assert!(
@@ -93,15 +98,16 @@ fn a_repository_git_would_not_copy_is_no_checkout() {
 #[test]
 fn a_project_somewhere_else_is_not_the_run_own_checkout() {
     let where_it_lands = the_destination_nothing_stands_at("somewhere-else");
-    let mut the_project =
-        AProjectHoldingAListing::holding(the_destination_nothing_stands_at("not-the-clone"), vec![]);
+    let mut the_project = AProjectHoldingAListing::holding(
+        the_destination_nothing_stands_at("not-the-clone"),
+        vec![],
+    );
     let mut the_program = AProgramThatCopies::copying_everything();
 
     let refused = what_a_creative_run_reads_from_its_own_checkout(
         &mut the_program,
-        &the_project,
-        &the_request_to_clone_into(&where_it_lands),
         &mut the_project,
+        &the_request_to_clone_into(&where_it_lands),
     );
 
     assert!(
@@ -160,10 +166,7 @@ struct AProjectHoldingAListing {
 
 impl AProjectHoldingAListing {
     /// A project holding a listing at a place.
-    fn holding(
-        where_it_lives: std::path::PathBuf,
-        what_is_in_it: Vec<String>,
-    ) -> Self {
+    fn holding(where_it_lives: std::path::PathBuf, what_is_in_it: Vec<String>) -> Self {
         Self {
             where_it_lives,
             what_is_in_it,
@@ -180,10 +183,7 @@ impl aisdlc_run::TheProjectOnDisk for AProjectHoldingAListing {
         self.what_is_in_it.clone()
     }
 
-    fn the_text_of(
-        &mut self,
-        _a_path: &aisdlc_run::ThePathInsideTheProject,
-    ) -> Option<String> {
+    fn the_text_of(&mut self, _a_path: &aisdlc_run::ThePathInsideTheProject) -> Option<String> {
         None
     }
 
@@ -224,40 +224,34 @@ impl AProgramThatCopies {
             refuses_the_clone: Some(String::from(what_git_said)),
         }
     }
+
+    /// What the clone is answered with, **and the refusal comes first because a run that was
+    /// refused has no copy to ask about.**
+    fn what_the_clone_is_answered_with(&self) -> WhatTheProgramSaid {
+        match &self.refuses_the_clone {
+            Some(what_git_said) => WhatTheProgramSaid::of(false, what_git_said),
+            None => WhatTheProgramSaid::of(true, ""),
+        }
+    }
+
+    /// Where the code was written, which may only be read.
+    fn where_the_code_was_written() -> WhatTheProgramSaid {
+        WhatTheProgramSaid::of(true, THE_ADDRESS_THE_CODE_WAS_WRITTEN_IN)
+    }
 }
 
 impl aisdlc_run::a_program_we_run::AProgramWeRun for AProgramThatCopies {
     fn run(
         &self,
         what_it_is_asked_to_do: &aisdlc_run::what_we_tell_a_program_to_do::WhatWeTellAProgramToDo,
-    ) -> aisdlc_run::a_program_we_run::WhatTheProgramSaid {
+    ) -> WhatTheProgramSaid {
         use aisdlc_run::what_we_tell_a_program_to_do::WhatWeTellAProgramToDo as Asked;
         match what_it_is_asked_to_do {
-            Asked::CloneTheRepository { .. } => match &self.refuses_the_clone {
-                Some(what_git_said) => {
-                    aisdlc_run::a_program_we_run::WhatTheProgramSaid::of(false, what_git_said)
-                }
-                None => aisdlc_run::a_program_we_run::WhatTheProgramSaid::of(true, ""),
-            },
-            Asked::TheCommitItStandsOn { .. } => {
-                aisdlc_run::a_program_we_run::WhatTheProgramSaid::of(
-                    true,
-                    "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8",
-                )
-            }
-            Asked::TheRefItStandsOn { .. } => {
-                aisdlc_run::a_program_we_run::WhatTheProgramSaid::of(true, "main")
-            }
-            Asked::NameWhereTheCodeWasWrittenIn { .. } => {
-                aisdlc_run::a_program_we_run::WhatTheProgramSaid::of(
-                    true,
-                    "https://github.com/steamnoid/wellbeing-tracker-public",
-                )
-            }
-            _ => aisdlc_run::a_program_we_run::WhatTheProgramSaid::of(
-                false,
-                "not a question about a clone",
-            ),
+            Asked::CloneTheRepository { .. } => self.what_the_clone_is_answered_with(),
+            Asked::TheCommitItStandsOn { .. } => WhatTheProgramSaid::of(true, THE_COMMIT),
+            Asked::TheRefItStandsOn { .. } => WhatTheProgramSaid::of(true, THE_REF),
+            Asked::NameWhereTheCodeWasWrittenIn { .. } => Self::where_the_code_was_written(),
+            _ => WhatTheProgramSaid::of(false, "not a question about a clone"),
         }
     }
 }
