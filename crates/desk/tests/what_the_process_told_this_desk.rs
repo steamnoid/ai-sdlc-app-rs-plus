@@ -62,7 +62,10 @@ fn the_repository_a_person_typed_reaches_the_desk() {
     let told = the_desk_as_it_was_told(&the_environment_where_everything_is_set());
 
     assert_eq!(
-        told.what_a_person_was_asked_for.which_repository().to_string().as_str(),
+        told.what_a_person_was_asked_for
+            .which_repository()
+            .to_string()
+            .as_str(),
         "steamnoid/wellbeing-tracker-public",
         "**because the work a run does is the work a person typed**"
     );
@@ -70,8 +73,7 @@ fn the_repository_a_person_typed_reaches_the_desk() {
 
 #[test]
 fn nothing_typed_is_refused_by_naming_what_is_missing() {
-    let refused =
-        what_the_process_told_this_desk(&[], &the_environment_where_everything_is_set());
+    let refused = what_the_process_told_this_desk(&[], &the_environment_where_everything_is_set());
 
     assert!(
         matches!(
@@ -138,19 +140,40 @@ fn where_this_test_keeps_its_projects() -> String {
 /// The environment where everything is set, **as a value and never as a reading.**
 fn the_environment_where_everything_is_set() -> TheEnvironment {
     TheEnvironment::of(vec![
-        (String::from("LLM_ENDPOINT"), String::from("https://a-model.example/v1/chat/completions")),
-        (String::from("LLM_MODEL"), String::from("a-model-a-deployment-deployed")),
-        (String::from("OPENAI_API_KEY"), String::from("a-key-not-a-real-one")),
-        (String::from("AISDLC_WHO_DECIDES"), String::from("paligakrzychu")),
+        (
+            String::from("LLM_ENDPOINT"),
+            String::from("https://a-model.example/v1/chat/completions"),
+        ),
+        (
+            String::from("LLM_MODEL"),
+            String::from("a-model-a-deployment-deployed"),
+        ),
+        (
+            String::from("OPENAI_API_KEY"),
+            String::from("a-key-not-a-real-one"),
+        ),
+        (
+            String::from("AISDLC_WHO_DECIDES"),
+            String::from("paligakrzychu"),
+        ),
     ])
 }
 
 /// The environment where no decider is named, **and the one running the binary still is one.**
 fn the_environment_where_no_decider_is_named() -> TheEnvironment {
     TheEnvironment::of(vec![
-        (String::from("LLM_ENDPOINT"), String::from("https://a-model.example/v1/chat/completions")),
-        (String::from("LLM_MODEL"), String::from("a-model-a-deployment-deployed")),
-        (String::from("OPENAI_API_KEY"), String::from("a-key-not-a-real-one")),
+        (
+            String::from("LLM_ENDPOINT"),
+            String::from("https://a-model.example/v1/chat/completions"),
+        ),
+        (
+            String::from("LLM_MODEL"),
+            String::from("a-model-a-deployment-deployed"),
+        ),
+        (
+            String::from("OPENAI_API_KEY"),
+            String::from("a-key-not-a-real-one"),
+        ),
     ])
 }
 
