@@ -59,6 +59,18 @@ impl APullRequestToOpen {
         )
     }
 
+    /// The title reviewers read first, **and it is the filing's because a title composed by a
+    /// model is prose nobody checked.**
+    pub fn the_title(&self) -> &str {
+        self.the_title.as_str()
+    }
+
+    /// The body reviewers check, **and it is the filing's words with the address they were read
+    /// at.**
+    pub fn the_body(&self) -> &str {
+        self.the_body.as_str()
+    }
+
     /// The body GitHub is given, **built by the JSON library and never by a hand.**
     ///
     /// **The head names the fork and the base names what is being changed.** A head naming the

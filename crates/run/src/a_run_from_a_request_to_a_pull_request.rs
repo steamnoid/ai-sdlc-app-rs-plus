@@ -70,11 +70,13 @@ impl WhatThereIsToDeliver {
         }
     }
 
-    fn the_branch(&self) -> &ABranchToPush {
+    /// The branch this delivery pushes.
+    pub fn the_branch(&self) -> &ABranchToPush {
         &self.which_branch
     }
 
-    fn the_request(&self) -> &APullRequestToOpen {
+    /// The request this delivery opens.
+    pub fn the_request(&self) -> &APullRequestToOpen {
         &self.what_to_open
     }
 

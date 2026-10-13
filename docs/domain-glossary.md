@@ -2460,6 +2460,16 @@ already-validated types — **so a constructor that could be refused would be a 
 nobody could ever produce**, and a refusal nobody can produce is a place a reader would look for a
 fault.
 
+**`what_there_is_to_deliver_for_one_run`** — what one filing's run delivers, derived from what
+the run works on rather than typed beside it. **The branch is named after the work, the title is the filing's, and
+the body is the filing's words with the address they were read at**, because a title composed by
+a model is prose nobody checked on the one page every reviewer reads first. **A run that answers
+nothing has nothing to deliver, and a delivery it cannot name is refused rather than invented.**
+
+**`NothingToDeliverForOneRun`** — why there is nothing to deliver for one run. No request to
+answer is a run that does not know what to do, and the other two carry the refusal whole: a
+branch git cannot take, and a request GitHub would refuse.
+
 **`WhatARunLeft::which_pull_request` is `&AnOpenedPullRequest` and not an `Option`** because a run
 that was refused has no pull request and a reader asking this of it is asking the wrong question;
 **the presence is read from the run's stage**, and the `expect` says so in words.
