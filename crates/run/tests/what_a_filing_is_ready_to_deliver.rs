@@ -62,7 +62,7 @@ fn what_a_filing_became_delivers_on_a_branch_named_after_its_work() {
 
 #[test]
 fn a_filing_with_no_title_has_nothing_to_deliver() {
-    let refused = the_filing_ready_to_deliver_result("");
+    let refused = the_filing_becoming_ready("");
 
     assert!(
         matches!(
@@ -107,12 +107,11 @@ fn a_run_answering_nothing_has_nothing_to_deliver() {
 
 /// The filing ready to deliver, **titled as told.**
 fn the_filing_ready_to_deliver(with_title: &str) -> WhatAFilingIsReadyToDeliver {
-    the_filing_ready_to_deliver_result(with_title)
-        .expect("a filing has a title, words and an address")
+    the_filing_becoming_ready(with_title).expect("a filing has a title, words and an address")
 }
 
 /// The filing becoming ready, **or the refusal naming what it cannot name.**
-fn the_filing_ready_to_deliver_result(
+fn the_filing_becoming_ready(
     with_title: &str,
 ) -> Result<WhatAFilingIsReadyToDeliver, AFilingThatDidNotDeliver> {
     what_a_filing_is_ready_to_deliver(
@@ -133,10 +132,9 @@ fn the_work_a_filing_became(
 ) -> aisdlc_run::the_work_each_filing_becomes::WhatTheRunWillWorkOn {
     let where_it_was_filed =
         String::from("https://github.com/steamnoid/wellbeing-tracker-public/issues/11");
-    let what_was_read = aisdlc_run::an_issue_read::AnIssueRead::the_issue_read(
-        &what_github_answered(with_title),
-    )
-    .expect("GitHub answered with a filing");
+    let what_was_read =
+        aisdlc_run::an_issue_read::AnIssueRead::the_issue_read(&what_github_answered(with_title))
+            .expect("GitHub answered with a filing");
     let mut works = aisdlc_run::the_work_each_filing_becomes::the_work_each_filing_becomes(
         &aisdlc_domain::repository::Repository::try_from("steamnoid/wellbeing-tracker-public")
             .expect("two halves"),
@@ -149,14 +147,15 @@ fn the_work_a_filing_became(
 
 /// The work picked up once, **awaiting an agent that already holds it.**
 fn the_work_picked_up_once() -> aisdlc_run::the_work_each_filing_becomes::WhatTheRunWillWorkOn {
-    let requested =
-        aisdlc_domain::commissioned_request::CommissionedRequest::asked_for(String::from("a title"), String::from("some words"))
-            .expect("a title and words are something");
-    let picked_up =
-        aisdlc_run::a_run_picks_up_the_work::a_run_picks_up_the_work_it_was_given(
-            &the_work_standing_at("WELLBEINGT-42"),
-        )
-        .expect("a work item standing where work begins");
+    let requested = aisdlc_domain::commissioned_request::CommissionedRequest::asked_for(
+        String::from("a title"),
+        String::from("some words"),
+    )
+    .expect("a title and words are something");
+    let picked_up = aisdlc_run::a_run_picks_up_the_work::a_run_picks_up_the_work_it_was_given(
+        &the_work_standing_at("WELLBEINGT-42"),
+    )
+    .expect("a work item standing where work begins");
     aisdlc_run::the_work_each_filing_becomes::WhatTheRunWillWorkOn {
         the_work_item: picked_up,
         the_work_request: Some(requested),
@@ -172,9 +171,7 @@ fn the_work_answering_nothing() -> aisdlc_run::the_work_each_filing_becomes::Wha
 }
 
 /// The work standing at a name, **where work begins and with nobody holding it.**
-fn the_work_standing_at(
-    a_name: &str,
-) -> aisdlc_domain::work_item::WorkItem {
+fn the_work_standing_at(a_name: &str) -> aisdlc_domain::work_item::WorkItem {
     aisdlc_domain::work_item::WorkItem::standing_at(
         aisdlc_domain::work_item_id::WorkItemId::try_from(a_name).expect("a name"),
         aisdlc_domain::who_commissioned::WhoCommissioned::try_from("a person").expect("somebody"),

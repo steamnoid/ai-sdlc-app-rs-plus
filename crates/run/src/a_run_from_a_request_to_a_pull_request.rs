@@ -47,6 +47,20 @@ pub struct WhatThereIsToDeliver {
     the_credential: ACredential,
 }
 
+impl std::fmt::Debug for WhatThereIsToDeliver {
+    /// The credential prints as what it prints everywhere else, **and never as itself** — a
+    /// derived `Debug` is one `{:?}` away from a log, and this is the one place a reader is
+    /// allowed to look at a delivery.
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter
+            .debug_struct("WhatThereIsToDeliver")
+            .field("which_branch", &self.which_branch)
+            .field("what_to_open", &self.what_to_open)
+            .field("the_credential", &self.the_credential.to_string())
+            .finish()
+    }
+}
+
 impl WhatThereIsToDeliver {
     /// What this run will push and open, **and there is no clone among them any more.**
     ///
