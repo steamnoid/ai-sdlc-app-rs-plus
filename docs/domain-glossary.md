@@ -2227,6 +2227,22 @@ approvals, because a list of three rulings that says nothing about them reads as
 artifact would put it in the version table **where there is no version to give it — a run has one
 page, and rewriting it over the last is exactly what a version exists to prevent.**
 
+**`WhatThisDeskWasGiven`** — everything a deployment configured before a run starts, **and every field
+is a fact somebody typed somewhere.** **A fallback for any of them is a lie with a position** — which is
+what happened the first time the sibling ran, when nothing was configured and the run went to a local
+address nobody had read.
+
+**`WhyThisRunCouldNotStart`** — why the desk refused, **and each is a fact about a different thing.**
+**A refusal happens before the first question reaches a model and before anything is copied**, because
+a desk that starts a run it could not configure has started nothing — **and has copied a repository.**
+
+**A terminal named in a machine's namespace is refused at the desk and not at the ruling**, so nobody's
+attention is spent on a document a machine was going to be refused for anyway.
+
+**Two programs on one host, and they are two because the model is asked over one connection and the
+delivery runs `git` and `gh` over another** — a single program handed to both would be a borrow of one
+thing by two owners, and the fix for that is two things that own themselves.
+
 **`WhatARunWasAskedFor`** — what a person typed, **as already-validated types**, because everything a
 person types is something the domain has an opinion about. **It is the only place in this system that
 decides what a person has to type**, and the sibling's front door says the same about its own —
