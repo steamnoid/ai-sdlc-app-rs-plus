@@ -1353,6 +1353,12 @@ work rather than a note about one. **The refusal is the domain's and not this fi
 move composed here would be a second transition table — and a second table is one nobody reads when
 the first one is the specification.
 
+**`the_work_a_filing_became_is_taken_up`** — what a filing became, taken up to the first stage. A
+filing becomes the product analyst's work standing at `IDLE`; the run picks it up with the agent
+its own discipline names and takes it into that agent's hands, because the walk asks agents and
+an agent that holds nothing answers nothing. **The first artifact is the discovery report**,
+because every run of the pipeline starts by reading the repository.
+
 **`WhyAnAnswerIsNotAFiling`** — why an answer is not a filing, **named rather than a paragraph.**
 **"There is no filing" and "this system cannot read this" are different facts**, and one is worth
 retrying while the other is worth reading the number again. **A far end having a bad minute is not a

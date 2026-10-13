@@ -58,6 +58,7 @@ pub mod the_summary_of_a_run_is_written;
 pub mod the_tests_are_run_in_a_container;
 pub mod the_whole_of_a_run;
 pub mod the_words_inside_the_endpoints_envelope;
+pub mod the_work_a_filing_became_is_taken_up;
 pub mod the_work_each_filing_becomes;
 pub mod what_a_creative_run_reads;
 pub mod what_a_model_said;
