@@ -2243,6 +2243,18 @@ attention is spent on a document a machine was going to be refused for anyway.
 delivery runs `git` and `gh` over another** — a single program handed to both would be a borrow of one
 thing by two owners, and the fix for that is two things that own themselves.
 
+**`what_the_process_told_this_desk`** — what a person typed read together with what the process was
+told, into everything a run starts with. **The environment travels as a value and never as a
+reading**, because a function that reads its own configuration has moved a decision out of a type
+and into a line of code. A model nobody configured travels as nothing, **and the desk still refuses
+before it copies anything** — that refusal names what is missing rather than an address nobody read.
+
+**`AISDLC_WHO_DECIDES`** — who answers at the gates on this deployment, transcribed from the
+sibling's front door rather than invented. Absent, the desk reads `the operator`, because the person
+who ran the binary is the operator and a run that refused to start without a name nobody was told
+to give is a run that does not run. **A fallback for the model's address would send a question to a
+machine nobody named, which is why that one is refused and this one is not.**
+
 **`WhatARunWasAskedFor`** — what a person typed, **as already-validated types**, because everything a
 person types is something the domain has an opinion about. **It is the only place in this system that
 decides what a person has to type**, and the sibling's front door says the same about its own —
