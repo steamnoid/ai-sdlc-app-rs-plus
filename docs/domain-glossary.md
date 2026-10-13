@@ -2466,6 +2466,10 @@ the body is the filing's words with the address they were read at**, because a t
 a model is prose nobody checked on the one page every reviewer reads first. **A run that answers
 nothing has nothing to deliver, and a delivery it cannot name is refused rather than invented.**
 
+**`NothingToDeliverForOneRun`** — why there is nothing to deliver for one run. No request to
+answer is a run that does not know what to do, and the other two carry the refusal whole: a
+branch git cannot take, and a request GitHub would refuse.
+
 **`WhatARunLeft::which_pull_request` is `&AnOpenedPullRequest` and not an `Option`** because a run
 that was refused has no pull request and a reader asking this of it is asking the wrong question;
 **the presence is read from the run's stage**, and the `expect` says so in words.

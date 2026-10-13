@@ -103,7 +103,7 @@ fn the_work_a_filing_became() -> aisdlc_run::the_work_each_filing_becomes::WhatT
         aisdlc_run::an_issue_read::AnIssueRead::the_issue_read(&what_github_answered())
             .expect("GitHub answered with a filing");
     let mut works = aisdlc_run::the_work_each_filing_becomes::the_work_each_filing_becomes(
-        &the_repository(),
+        &the_repository_filings_are_filed_in(),
         &[what_was_read],
         &[where_it_was_filed],
     )
@@ -123,7 +123,7 @@ fn the_work_answering_nothing() -> aisdlc_run::the_work_each_filing_becomes::Wha
 fn the_work_answering_without_a_title()
 -> aisdlc_run::the_work_each_filing_becomes::WhatTheRunWillWorkOn {
     let requested = aisdlc_domain::commissioned_request::CommissionedRequest::asked_for(
-        String::from(""),
+        String::new(),
         String::from("some words"),
     )
     .expect("words are something");
@@ -151,7 +151,7 @@ fn the_work_standing_at(a_name: &str) -> aisdlc_domain::work_item::WorkItem {
     aisdlc_domain::work_item::WorkItem::standing_at(
         aisdlc_domain::work_item_id::WorkItemId::try_from(a_name).expect("a name"),
         aisdlc_domain::who_commissioned::WhoCommissioned::try_from("a person").expect("somebody"),
-        the_repository(),
+        the_repository_filings_are_filed_in(),
         aisdlc_domain::role::Role::try_from("DEV").expect("a discipline"),
         aisdlc_domain::stage::Stage::Idle,
     )
@@ -159,7 +159,7 @@ fn the_work_standing_at(a_name: &str) -> aisdlc_domain::work_item::WorkItem {
 }
 
 /// The repository filings are filed in.
-fn the_repository() -> aisdlc_domain::repository::Repository {
+fn the_repository_filings_are_filed_in() -> aisdlc_domain::repository::Repository {
     aisdlc_domain::repository::Repository::try_from("steamnoid/wellbeing-tracker-public")
         .expect("two halves")
 }
