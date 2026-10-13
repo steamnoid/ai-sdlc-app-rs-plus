@@ -2243,6 +2243,11 @@ attention is spent on a document a machine was going to be refused for anyway.
 delivery runs `git` and `gh` over another** — a single program handed to both would be a borrow of one
 thing by two owners, and the fix for that is two things that own themselves.
 
+**`what_there_is_to_deliver`** — what one delivery pushes and opens, built from what the desk was
+given rather than named beside it. **A delivery built without the deployment's key is refused
+rather than signed with a key from a test**, because a branch pushed with a key nobody deployed
+authenticates as nobody.
+
 **`what_the_process_told_this_desk`** — what a person typed read together with what the process was
 told, into everything a run starts with. **The environment travels as a value and never as a
 reading**, because a function that reads its own configuration has moved a decision out of a type
