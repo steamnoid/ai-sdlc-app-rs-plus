@@ -31,7 +31,9 @@ use aisdlc_run::a_credential::ACredential;
 use aisdlc_run::a_model_is_asked_how_it_rules::WhereAModelIs;
 use aisdlc_run::a_person_answers_at_a_terminal::APersonAtTheTerminal;
 use aisdlc_run::a_program_we_run::AProgramWeRun;
-use aisdlc_run::a_pull_request_is_opened::the_request_a_run_makes_of_its_own_change;
+use aisdlc_run::a_pull_request_is_opened::{
+    APullRequestToOpen, the_request_a_run_makes_of_its_own_change,
+};
 use aisdlc_run::a_run_from_a_request_to_a_pull_request::{
     ARunThatDidNotFinish, WhatARunLeft, WhatThereIsToDeliver,
     a_run_from_a_request_to_a_pull_request,
@@ -124,7 +126,7 @@ pub fn the_run_is_started_with(
     let mut the_program = the_program_that_delivers(what_this_desk_was_given)?;
     let mut a_model = the_model_this_desk_asks(what_this_desk_was_given)?;
     let the_run = a_run_of_this_work(what_this_desk_was_given)?;
-    let what_there_is = what_there_is_to_deliver(what_this_desk_was_given);
+    let what_there_is = what_there_is_to_deliver(what_this_desk_was_given)?;
     let left = the_run_is_run(
         &the_run,
         &mut the_project,
@@ -322,16 +324,32 @@ fn a_work_picked_up_by_its_first_agent(
 }
 
 /// What there is to deliver, **and the branch is named after the work and the run is over.**
-fn what_there_is_to_deliver(
+///
+/// **A delivery without the deployment's key is refused rather than signed with another**, because
+/// a branch pushed with a key nobody deployed authenticates as nobody.
+pub fn what_there_is_to_deliver(
     what_this_desk_was_given: &WhatThisDeskWasGiven,
-) -> WhatThereIsToDeliver {
+) -> Result<WhatThereIsToDeliver, WhyThisRunCouldNotStart> {
     let which_repository = what_this_desk_was_given
         .what_a_person_was_asked_for
         .which_repository()
         .clone();
     let which_branch = ABranchToPush::a_branch_named(THE_NAME_OF_THE_BRANCH)
         .expect("a branch this desk names every time is a branch a reader can find");
-    let what_to_open = the_request_a_run_makes_of_its_own_change(
+    let what_to_open = the_request_this_delivery_opens(which_repository);
+    let the_credential = a_credential(what_this_desk_was_given)?;
+    Ok(WhatThereIsToDeliver::for_this_run(
+        which_branch,
+        what_to_open,
+        the_credential,
+    ))
+}
+
+/// What this delivery opens, **and the head is the fork while the base is where the change goes.**
+fn the_request_this_delivery_opens(
+    which_repository: aisdlc_domain::repository::Repository,
+) -> APullRequestToOpen {
+    the_request_a_run_makes_of_its_own_change(
         which_repository.clone(),
         which_repository,
         THE_NAME_OF_THE_BRANCH,
@@ -339,11 +357,7 @@ fn what_there_is_to_deliver(
         THE_TITLE_OF_THE_PULL_REQUEST,
         THE_BODY_OF_THE_PULL_REQUEST,
     )
-    .expect("this desk names a title and a body every time");
-    let the_credential =
-        ACredential::the_key_a_deployment_supplied(THE_KEY_THIS_DESK_NAMES_FOR_ITS_OWN_TESTS)
-            .expect("this desk's own key is a key");
-    WhatThereIsToDeliver::for_this_run(which_branch, what_to_open, the_credential)
+    .expect("this desk names a title and a body every time")
 }
 
 /// Where a person can read what happened, **and it is the one file that answers it.**
@@ -388,6 +402,3 @@ const THE_TITLE_OF_THE_PULL_REQUEST: &str = "what this run changed";
 
 /// The pull request's body.
 const THE_BODY_OF_THE_PULL_REQUEST: &str = "A change this run made, and a test that says so.";
-
-/// The key this desk names for its own tests, **and nothing outside a test may use it.**
-const THE_KEY_THIS_DESK_NAMES_FOR_ITS_OWN_TESTS: &str = "a-key-not-a-real-one";
