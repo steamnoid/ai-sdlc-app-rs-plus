@@ -78,7 +78,9 @@ impl WhatThereIsToDeliver {
         &self.what_to_open
     }
 
-    fn the_key(&self) -> &ACredential {
+    /// The key this delivery acts with, **and it is the deployment's because the desk refused
+    /// to build one without it.**
+    pub fn the_key(&self) -> &ACredential {
         &self.the_credential
     }
 }

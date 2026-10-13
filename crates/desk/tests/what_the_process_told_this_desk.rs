@@ -129,8 +129,9 @@ fn what_a_person_typed() -> Vec<String> {
 /// desk that wrote into somebody's home would be the defect this test exists beside.
 fn where_this_test_keeps_its_projects() -> String {
     let where_it_is = std::env::temp_dir().join(format!(
-        "aisdlc-what-the-process-told-this-desk-{}",
-        std::process::id()
+        "aisdlc-what-the-process-told-this-desk-{}-{:?}",
+        std::process::id(),
+        std::thread::current().id()
     ));
     let _ = std::fs::remove_dir_all(&where_it_is);
     std::fs::create_dir_all(&where_it_is).expect("a directory this machine will hold");

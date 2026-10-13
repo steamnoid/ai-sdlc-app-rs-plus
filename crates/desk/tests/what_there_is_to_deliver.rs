@@ -11,10 +11,8 @@ use aisdlc_outside::the_environment::TheEnvironment;
 #[test]
 fn the_delivery_acts_with_the_key_a_deployment_supplied() {
     let given = the_desk_as_it_was_told(&the_environment_where_everything_is_set());
-    let what_there_is =
-        aisdlc_desk::the_run_is_started::what_there_is_to_deliver(&given).expect(
-            "a deployment supplied a key, and a delivery without it authenticates as nobody",
-        );
+    let what_there_is = aisdlc_desk::the_run_is_started::what_there_is_to_deliver(&given)
+        .expect("a deployment supplied a key, and a delivery without it authenticates as nobody");
     let the_key = aisdlc_run::a_credential::ACredential::the_key_a_deployment_supplied(
         "a-key-not-a-real-one",
     )
@@ -66,8 +64,9 @@ fn what_a_person_typed() -> Vec<String> {
 /// desk that wrote into somebody's home would be the defect this test exists beside.
 fn where_this_test_keeps_its_projects() -> String {
     let where_it_is = std::env::temp_dir().join(format!(
-        "aisdlc-what-there-is-to-deliver-{}",
-        std::process::id()
+        "aisdlc-what-there-is-to-deliver-{}-{:?}",
+        std::process::id(),
+        std::thread::current().id()
     ));
     let _ = std::fs::remove_dir_all(&where_it_is);
     std::fs::create_dir_all(&where_it_is).expect("a directory this machine will hold");
@@ -99,10 +98,7 @@ fn the_environment_where_a_key_is(the_key: Option<&str>) -> TheEnvironment {
             String::from("AISDLC_WHO_DECIDES"),
             String::from("paligakrzychu"),
         ),
-        (
-            String::from("LLM_ORGANISATION"),
-            String::from("ollama"),
-        ),
+        (String::from("LLM_ORGANISATION"), String::from("ollama")),
     ];
     if let Some(the_key) = the_key {
         what_it_held.push((String::from("OPENAI_API_KEY"), String::from(the_key)));
