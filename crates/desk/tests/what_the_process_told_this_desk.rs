@@ -256,9 +256,18 @@ fn no_organisation_named_is_refused_before_anything_is_copied() {
 /// The environment where an organisation reasons, **in the specification's own spelling.**
 fn the_environment_where_an_organisation_reasons() -> TheEnvironment {
     TheEnvironment::of(vec![
-        (String::from("LLM_ENDPOINT"), String::from("https://a-model.example/v1/chat/completions")),
-        (String::from("LLM_MODEL"), String::from("a-model-a-deployment-deployed")),
-        (String::from("OPENAI_API_KEY"), String::from("a-key-not-a-real-one")),
+        (
+            String::from("LLM_ENDPOINT"),
+            String::from("https://a-model.example/v1/chat/completions"),
+        ),
+        (
+            String::from("LLM_MODEL"),
+            String::from("a-model-a-deployment-deployed"),
+        ),
+        (
+            String::from("OPENAI_API_KEY"),
+            String::from("a-key-not-a-real-one"),
+        ),
         (String::from("LLM_ORGANISATION"), String::from("ollama")),
     ])
 }
@@ -266,9 +275,18 @@ fn the_environment_where_an_organisation_reasons() -> TheEnvironment {
 /// The environment where no organisation reasons, **and the name it carries is nobody's.**
 fn the_environment_where_no_organisation_reasons() -> TheEnvironment {
     TheEnvironment::of(vec![
-        (String::from("LLM_ENDPOINT"), String::from("https://a-model.example/v1/chat/completions")),
-        (String::from("LLM_MODEL"), String::from("a-model-a-deployment-deployed")),
-        (String::from("OPENAI_API_KEY"), String::from("a-key-not-a-real-one")),
+        (
+            String::from("LLM_ENDPOINT"),
+            String::from("https://a-model.example/v1/chat/completions"),
+        ),
+        (
+            String::from("LLM_MODEL"),
+            String::from("a-model-a-deployment-deployed"),
+        ),
+        (
+            String::from("OPENAI_API_KEY"),
+            String::from("a-key-not-a-real-one"),
+        ),
         (String::from("LLM_ORGANISATION"), String::from("anthropic")),
     ])
 }
