@@ -2451,6 +2451,14 @@ request that is the whole of its record) and the two ways it did not finish. `Th
 run that failed in the pipeline and a run that failed at the delivery send a reader to two different
 files and must not read as one refusal.**
 
+**`what_a_filing_is_ready_to_deliver`** — what a filing is ready to deliver: the run taken up
+and answering, with what it delivers derived beside it. **Seven collaborators do not fit one
+signature a reader can hold**, so preparing a delivery and running it are two functions: this one
+takes the work and the key, and the run takes the rest. **`WhatAFilingIsReadyToDeliver`** — the
+taken-up run and what it delivers, kept together because a delivery run without its delivery is a
+run nobody can finish. **`AFilingThatDidNotDeliver`** — why it is not ready, carrying the
+refusal whole: the work was never taken up, or there was nothing to deliver.
+
 **`WhatThereIsToDeliver` groups the clone, the branch, the request and the key into one value**,
 because the four are one fact about one delivery **and a caller holding them separately could push a
 branch and open a pull request about a different one.**
