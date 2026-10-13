@@ -877,6 +877,10 @@ return value of `Err` is what a program that *was* asked and answered nothing al
 because `gh issue create` and `gh api` are two programs against one GitHub — **and one handle cannot be
 borrowed twice, which the compiler said before I did.**
 
+**`a_creative_run_files_what_it_read`** — what a creative run files from what it read from its own
+checkout, joining the copy to the filings. **The listing filed about is the listing read off the
+copy**, because an offer grounded in another directory's names files issues about files nobody holds.
+
 **`WhatAModelSaid`** — what a run asked a model, what it answered and how long it took, said as it
 happens. **Not to be confused with the durable record of a whole run**, which is written afterwards;
 **this is one call, alive while it is happening.**
